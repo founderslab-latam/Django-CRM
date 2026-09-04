@@ -1,0 +1,81 @@
+{
+  "common": {
+    "app": {
+      "name": "BottleCRM"
+    },
+    "language_switcher": {
+      "label": "Idioma",
+      "english": "Inglés",
+      "spanish": "Español"
+    },
+    "sidebar": {
+      "nav": {
+        "landmark": "Principal",
+        "group": {
+          "sell": "Vender",
+          "serve": "Atender",
+          "bill": "Facturar",
+          "run": "Administrar"
+        },
+        "today": "Hoy",
+        "pipeline": "Flujo de ventas",
+        "leads": "Prospectos",
+        "accounts": "Cuentas",
+        "contacts": "Contactos",
+        "goals": "Metas",
+        "tasks": "Tareas",
+        "tickets": "Tickets",
+        "knowledge_base": "Base de conocimientos",
+        "documents": "Documentos",
+        "invoices": "Facturas",
+        "timesheet": "Registro de horas",
+        "team": "Equipo y accesos",
+        "settings": "Configuración",
+        "search": "Buscar",
+        "notifications": "Notificaciones",
+        "profile": "Tu perfil",
+        "help": "Ayuda",
+        "download_app": "Descargar la app",
+        "sign_out": "Cerrar sesión"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "head_title": "Iniciar sesión · BottleCRM",
+      "meta_description": "Inicia sesión en BottleCRM para gestionar tus contactos, negocios y hacer crecer tu empresa.",
+      "heading": "Iniciar sesión",
+      "subheading": "Bienvenido de nuevo. Elige cómo quieres continuar.",
+      "redirecting": "Redirigiendo…",
+      "continue_with_google": "Continuar con Google",
+      "divider_or": "o",
+      "magic_link_sent_heading": "Revisa tu correo.",
+      "magic_link_sent_detail": "Te enviamos un enlace de acceso. Vence en 10 minutos.",
+      "email_label": "Correo electrónico",
+      "email_placeholder": "tu@empresa.com",
+      "sending": "Enviando…",
+      "continue_with_email": "Continuar con correo electrónico",
+      "generic_error": "Algo salió mal. Inténtalo de nuevo.",
+      "signup_hint": "¿Nuevo aquí? Ingresa tu correo arriba para comenzar.",
+      "footer_privacy": "Privacidad",
+      "footer_terms": "Términos",
+      "footer_github": "GitHub"
+    }
+  },
+  "dashboard": {
+    "today": {
+      "title": "Hoy",
+      "all_clear": "No hay nada pendiente por ahora: tienes el día despejado.",
+      "summary_no_quiet": "{count, plural, one {Tienes # pendiente} other {Tienes # pendientes}} hoy.",
+      "summary_with_quiet": "{count, plural, one {Tienes # pendiente} other {Tienes # pendientes}} hoy. {quietDeals, plural, one {# negocio} other {# negocios}} por un valor de {quietValue} {quietDeals, plural, one {lleva} other {llevan}} tiempo sin actividad.",
+      "everything_done": "Eso es todo lo que vence hoy.",
+      "more_waiting": "más por atender:",
+      "inbox_zero_title": "Bandeja vacía por hoy",
+      "inbox_zero_detail": "No hay tickets, facturas, negocios inactivos ni tareas vencidas. Lo que se acerca aparece más abajo.",
+      "goals_heading": "Cómo vas",
+      "goal_progress": "{progress} de {target}",
+      "later_heading": "Más tarde esta semana",
+      "cleared_yesterday_prefix": "Ayer completaste"
+    }
+  }
+}

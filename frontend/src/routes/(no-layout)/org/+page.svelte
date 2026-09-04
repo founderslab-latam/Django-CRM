@@ -6,7 +6,10 @@
   import { Building2, LogOut, Plus, ChevronRight } from '@lucide/svelte';
   import { enhance } from '$app/forms';
 
-  let { data = { orgs: [] } } = $props();
+  // `locale` in the default below only satisfies the type merged in from
+  // the root layout's i18n load (see src/routes/+layout.server.js) - it's
+  // never actually used before real `data` arrives.
+  let { data = { orgs: [], locale: 'en' } } = $props();
   let orgs = $derived(data?.orgs ?? []);
 
   let loading = $state(false);

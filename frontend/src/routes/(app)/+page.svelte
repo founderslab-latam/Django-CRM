@@ -4,6 +4,7 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import { money, count } from '$lib/v2/format.js';
   import { Target } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any }} */
   let { data } = $props();
@@ -34,13 +35,12 @@
           ? 'var(--v2-clay)'
           : 'var(--v2-slate)';
 
-  const plural = (/** @type {number} */ n, /** @type {string} */ one, /** @type {string} */ many) =>
-    `${n} ${n === 1 ? one : many}`;
-
-  // Built as one string rather than conditional markup: the "quiet deals"
-  // clause only makes sense when there are any, and the numbers are often zero
-  // in a real org, so the copy adapts instead of reading "0 deals … have gone
-  // quiet."
+  // Built as one translated string rather than conditional markup: the "quiet
+  // deals" clause only makes sense when there are any, and the numbers are
+  // often zero in a real org, so the copy adapts instead of reading "0 deals
+  // … have gone quiet." Pluralisation is delegated to the catalog (ICU plural
+  // syntax) rather than assembled here, so each locale can inflect on its own
+  // rules instead of inheriting English's singular/plural split.
   //
   // It used to close with "Those are first", which was generated from a count
   // rather than from the sort it described. Quiet deals rank below overdue
@@ -48,12 +48,16 @@
   // list the sentence had just promised to lead with.
   let subText = $derived(
     summary.count === 0
-      ? 'Nothing needs you right now: you’re all clear for today.'
+      ? $_('dashboard.today.all_clear')
       : summary.quiet_deals === 0
-        ? `${plural(summary.count, 'thing wants', 'things want')} you today.`
-        : `${plural(summary.count, 'thing wants', 'things want')} you today. ` +
-          `${plural(summary.quiet_deals, 'deal', 'deals')} worth ${money(summary.quiet_value, data.org.currency)} ` +
-          `${summary.quiet_deals === 1 ? 'has' : 'have'} gone quiet.`
+        ? $_('dashboard.today.summary_no_quiet', { values: { count: summary.count } })
+        : $_('dashboard.today.summary_with_quiet', {
+            values: {
+              count: summary.count,
+              quietDeals: summary.quiet_deals,
+              quietValue: money(summary.quiet_value, data.org.currency)
+            }
+          })
   );
 
   // The queue shows the most urgent 8. Everything past that is real work with
@@ -62,7 +66,7 @@
   let hidden = $derived(Math.max(0, summary.count - summary.shown));
 </script>
 
-<PageHeader title="Today">
+<PageHeader title={$_('dashboard.today.title')}>
   {#snippet sub()}{subText}{/snippet}
 </PageHeader>
 
@@ -96,11 +100,13 @@
     {/each}
 
     {#if queue.length && hidden === 0}
-      <p class="v2-sub" style="margin:15px 0 21px;font-size:12.5px">That’s everything due today.</p>
+      <p class="v2-sub" style="margin:15px 0 21px;font-size:12.5px">
+        {$_('dashboard.today.everything_done')}
+      </p>
     {:else if queue.length}
       <p class="v2-sub" style="margin:15px 0 21px;font-size:12.5px">
         <span class="v2-num">{hidden}</span>
-        {hidden === 1 ? 'more is' : 'more are'} waiting:
+        {$_('dashboard.today.more_waiting', { values: { count: hidden } })}
         {#each summary.sources as source, i (source.href)}<a
             href={resolve(source.href)}
             style="color:inherit">{source.count} {source.label}</a
@@ -109,9 +115,11 @@
     {:else}
       <div class="v2-card" style="margin-bottom:8px">
         <div class="v2-pad" style="padding:20px;text-align:center">
-          <div style="font-weight:640;letter-spacing:-0.012em">Inbox zero for today</div>
+          <div style="font-weight:640;letter-spacing:-0.012em">
+            {$_('dashboard.today.inbox_zero_title')}
+          </div>
           <div class="v2-sub" style="margin-top:3px">
-            No overdue tickets, invoices, quiet deals or tasks. Anything coming up is below.
+            {$_('dashboard.today.inbox_zero_detail')}
           </div>
         </div>
       </div>
@@ -129,7 +137,7 @@
     {#if goals.length}
       <div class="v2-label" style="margin:6px 0 9px">
         <Target size={12} style="vertical-align:-1px;margin-right:4px" />
-        Where you stand
+        {$_('dashboard.today.goals_heading')}
       </div>
       <div class="goals">
         {#each goals as g (g.id)}
@@ -144,7 +152,12 @@
               <i style="width:{g.progress_percent}%;background:{goalColor(g)}"></i>
             </div>
             <div class="v2-sub" style="font-size:11.5px;margin-top:6px">
-              {goalValue(g, g.progress_value)} of {goalValue(g, g.target_value)}
+              {$_('dashboard.today.goal_progress', {
+                values: {
+                  progress: goalValue(g, g.progress_value),
+                  target: goalValue(g, g.target_value)
+                }
+              })}
             </div>
           </a>
         {/each}
@@ -152,7 +165,7 @@
     {/if}
 
     {#if later.length}
-      <div class="v2-label" style="margin:6px 0 9px">Later this week</div>
+      <div class="v2-label" style="margin:6px 0 9px">{$_('dashboard.today.later_heading')}</div>
       {#each later as row (row.id)}
         <div
           style="display:flex;gap:13px;align-items:baseline;padding:9px 3px;border-bottom:1px solid var(--v2-line-soft)"
@@ -169,7 +182,8 @@
 
     {#if summary.cleared_yesterday > 0}
       <p class="v2-sub" style="margin-top:20px;font-size:12px">
-        Yesterday you cleared <span class="v2-num">{summary.cleared_yesterday}</span>.
+        {$_('dashboard.today.cleared_yesterday_prefix')}
+        <span class="v2-num">{summary.cleared_yesterday}</span>.
       </p>
     {/if}
   </div>

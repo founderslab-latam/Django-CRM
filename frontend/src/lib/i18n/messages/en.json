@@ -1,0 +1,81 @@
+{
+  "common": {
+    "app": {
+      "name": "BottleCRM"
+    },
+    "language_switcher": {
+      "label": "Language",
+      "english": "English",
+      "spanish": "Spanish"
+    },
+    "sidebar": {
+      "nav": {
+        "landmark": "Main",
+        "group": {
+          "sell": "Sell",
+          "serve": "Serve",
+          "bill": "Bill",
+          "run": "Run"
+        },
+        "today": "Today",
+        "pipeline": "Pipeline",
+        "leads": "Leads",
+        "accounts": "Accounts",
+        "contacts": "Contacts",
+        "goals": "Goals",
+        "tasks": "Tasks",
+        "tickets": "Tickets",
+        "knowledge_base": "Knowledge base",
+        "documents": "Documents",
+        "invoices": "Invoices",
+        "timesheet": "Timesheet",
+        "team": "Team and access",
+        "settings": "Settings",
+        "search": "Search",
+        "notifications": "Notifications",
+        "profile": "Your profile",
+        "help": "Help",
+        "download_app": "Download app",
+        "sign_out": "Sign out"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "head_title": "Sign in · BottleCRM",
+      "meta_description": "Sign in to BottleCRM to manage your contacts, deals, and grow your business.",
+      "heading": "Sign in",
+      "subheading": "Welcome back. Choose how you'd like to continue.",
+      "redirecting": "Redirecting…",
+      "continue_with_google": "Continue with Google",
+      "divider_or": "or",
+      "magic_link_sent_heading": "Check your email.",
+      "magic_link_sent_detail": "We sent a sign-in link. It expires in 10 minutes.",
+      "email_label": "Email address",
+      "email_placeholder": "you@company.com",
+      "sending": "Sending…",
+      "continue_with_email": "Continue with email",
+      "generic_error": "Something went wrong. Please try again.",
+      "signup_hint": "New here? Enter your email above to get started.",
+      "footer_privacy": "Privacy",
+      "footer_terms": "Terms",
+      "footer_github": "GitHub"
+    }
+  },
+  "dashboard": {
+    "today": {
+      "title": "Today",
+      "all_clear": "Nothing needs you right now: you’re all clear for today.",
+      "summary_no_quiet": "{count, plural, one {# thing wants} other {# things want}} you today.",
+      "summary_with_quiet": "{count, plural, one {# thing wants} other {# things want}} you today. {quietDeals, plural, one {# deal} other {# deals}} worth {quietValue} {quietDeals, plural, one {has} other {have}} gone quiet.",
+      "everything_done": "That’s everything due today.",
+      "more_waiting": "{count, plural, one {more is waiting:} other {more are waiting:}}",
+      "inbox_zero_title": "Inbox zero for today",
+      "inbox_zero_detail": "No overdue tickets, invoices, quiet deals or tasks. Anything coming up is below.",
+      "goals_heading": "Where you stand",
+      "goal_progress": "{progress} of {target}",
+      "later_heading": "Later this week",
+      "cleared_yesterday_prefix": "Yesterday you cleared"
+    }
+  }
+}

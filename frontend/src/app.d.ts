@@ -7,6 +7,10 @@ declare global {
       user?: any; // You might want to replace 'any' with a more specific type for user
       org?: any; // You might want to replace 'any' with a more specific type for org
       org_name?: string;
+      // i18n pilot: resolved in hooks.server.js from the `locale` cookie,
+      // always one of the supported locales in $lib/i18n (never absent by
+      // the time a route's load() runs).
+      locale?: string;
       org_settings?: {
         default_currency?: string;
         currency_symbol?: string;

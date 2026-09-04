@@ -14,6 +14,7 @@ import { redirect } from '@sveltejs/kit';
 import axios from 'axios';
 import { env } from '$env/dynamic/public';
 import { describeError } from '$lib/server/log-safe.js';
+import { setupI18n, resolveLocale, LOCALE_COOKIE_NAME } from '$lib/i18n/index.js';
 
 const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -175,6 +176,14 @@ async function switchOrg(accessToken, orgId, refreshToken) {
 export const handleError = Sentry.handleErrorWithSentry();
 
 export const handle = sequence(Sentry.sentryHandle(), async function _handle({ event, resolve }) {
+  // i18n pilot: resolve the request's locale from the `locale` cookie (no
+  // URL prefix - see $lib/i18n for the key convention and supported locale
+  // list) and load its catalog before anything renders, so the SSR HTML
+  // comes back in the right language from the first response instead of
+  // flashing from one locale to another.
+  event.locals.locale = resolveLocale(event.cookies.get(LOCALE_COOKIE_NAME));
+  await setupI18n(event.locals.locale);
+
   // Get tokens from cookies
   /** @type {string | undefined} */
   let accessToken = event.cookies.get('jwt_access');
@@ -348,5 +357,10 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
     }
   }
 
-  return resolve(event);
+  // i18n pilot: fill in the `%lang%` placeholder in app.html with the
+  // locale resolved above, so `<html lang>` matches the SSR content from
+  // the very first response instead of always reading "en".
+  return resolve(event, {
+    transformPageChunk: ({ html }) => html.replace('%lang%', event.locals.locale)
+  });
 });

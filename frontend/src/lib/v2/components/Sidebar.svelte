@@ -25,6 +25,8 @@
     LogOut
   } from '@lucide/svelte';
   import { t } from '$lib/terminology.js';
+  import { _ } from '$lib/i18n/index.js';
+  import LanguageSwitcher from './LanguageSwitcher.svelte';
 
   /**
    * One flat tree, grouped by what the person is doing rather than by which
@@ -63,47 +65,86 @@
     onsearch = () => {}
   } = $props();
 
+  /**
+   * One shape for every nav destination, so mapping over the (structurally
+   * varied) `GROUPS` items below doesn't collapse into a narrower union that
+   * drops fields particular items don't set (`exact`, `count`, `termKey`,
+   * `admin`).
+   *
+   * @typedef {{
+   *   href: string,
+   *   labelKey: string,
+   *   icon: import('svelte').Component,
+   *   exact?: boolean,
+   *   count?: string,
+   *   termKey?: string,
+   *   admin?: boolean
+   * }} NavItem
+   */
+
+  /** @type {{ labelKey: string, items: NavItem[] }[]} */
   const GROUPS = [
     {
-      label: 'Sell',
+      labelKey: 'common.sidebar.nav.group.sell',
       items: [
-        { href: '/', label: 'Today', icon: Sun, exact: true },
+        { href: '/', labelKey: 'common.sidebar.nav.today', icon: Sun, exact: true },
         {
           href: '/pipeline',
-          label: 'Pipeline',
+          labelKey: 'common.sidebar.nav.pipeline',
           icon: Columns3,
           count: 'pipeline',
           termKey: 'opportunity.plural'
         },
-        { href: '/leads', label: 'Leads', icon: Target, count: 'leads', termKey: 'lead.plural' },
-        { href: '/accounts', label: 'Accounts', icon: Building2, termKey: 'account.plural' },
-        { href: '/contacts', label: 'Contacts', icon: Users, termKey: 'contact.plural' },
-        { href: '/goals', label: 'Goals', icon: Trophy }
+        {
+          href: '/leads',
+          labelKey: 'common.sidebar.nav.leads',
+          icon: Target,
+          count: 'leads',
+          termKey: 'lead.plural'
+        },
+        {
+          href: '/accounts',
+          labelKey: 'common.sidebar.nav.accounts',
+          icon: Building2,
+          termKey: 'account.plural'
+        },
+        {
+          href: '/contacts',
+          labelKey: 'common.sidebar.nav.contacts',
+          icon: Users,
+          termKey: 'contact.plural'
+        },
+        { href: '/goals', labelKey: 'common.sidebar.nav.goals', icon: Trophy }
       ]
     },
     {
-      label: 'Serve',
+      labelKey: 'common.sidebar.nav.group.serve',
       items: [
-        { href: '/tasks', label: 'Tasks', icon: CircleCheck, count: 'tasks' },
+        { href: '/tasks', labelKey: 'common.sidebar.nav.tasks', icon: CircleCheck, count: 'tasks' },
         // Approvals and Analytics live under Tickets as section tabs. They are
         // not separate destinations, so they do not get separate nav entries,
         // one level of navigation, and the tab strip carries the rest.
-        { href: '/tickets', label: 'Tickets', icon: LifeBuoy, count: 'tickets' },
-        { href: '/solutions', label: 'Knowledge base', icon: BookOpen },
-        { href: '/documents', label: 'Documents', icon: FileText }
+        {
+          href: '/tickets',
+          labelKey: 'common.sidebar.nav.tickets',
+          icon: LifeBuoy,
+          count: 'tickets'
+        },
+        { href: '/solutions', labelKey: 'common.sidebar.nav.knowledge_base', icon: BookOpen },
+        { href: '/documents', labelKey: 'common.sidebar.nav.documents', icon: FileText }
       ]
     },
     {
-      label: 'Bill',
+      labelKey: 'common.sidebar.nav.group.bill',
       items: [
         {
           href: '/invoices',
-          label: 'Invoices',
+          labelKey: 'common.sidebar.nav.invoices',
           icon: Receipt,
           count: 'invoices',
           termKey: 'invoice.plural'
         },
-        { href: '/timesheet', label: 'Timesheet', icon: Clock }
+        { href: '/timesheet', labelKey: 'common.sidebar.nav.timesheet', icon: Clock }
       ]
     },
     {
@@ -113,24 +154,30 @@
       // Team is admin-only. A member reaches it only to be told so. Settings
       // is not: the hub is readable by any member (it just omits admin-only
       // counts), so it stays for everyone.
-      label: 'Run',
+      labelKey: 'common.sidebar.nav.group.run',
       items: [
-        { href: '/team', label: 'Team and access', icon: UserCog, admin: true },
-        { href: '/settings', label: 'Settings', icon: SlidersHorizontal }
+        { href: '/team', labelKey: 'common.sidebar.nav.team', icon: UserCog, admin: true },
+        { href: '/settings', labelKey: 'common.sidebar.nav.settings', icon: SlidersHorizontal }
       ]
     }
   ];
 
   // Drop admin-only items for members, resolve any relabelled entity through
-  // the terminology map, then drop any group left with nothing.
+  // the terminology map (falling back to the translated label, never the
+  // untranslated key), then drop any group left with nothing.
   let groups = $derived(
     GROUPS.map((group) => ({
       ...group,
+      label: $_(group.labelKey),
       items: group.items
         .filter((item) => role === 'ADMIN' || !item.admin)
-        .map((item) =>
-          item.termKey ? { ...item, label: t(terminology, item.termKey, item.label) } : item
-        )
+        .map((item) => {
+          const fallback = $_(item.labelKey);
+          return {
+            ...item,
+            label: item.termKey ? t(terminology, item.termKey, fallback) : fallback
+          };
+        })
     })).filter((group) => group.items.length > 0)
   );
 
@@ -138,7 +185,7 @@
     exact ? page.url.pathname === href : page.url.pathname.startsWith(href);
 </script>
 
-<nav class="v2-nav" aria-label="Main">
+<nav class="v2-nav" aria-label={$_('common.sidebar.nav.landmark')}>
   <div class="v2-org">
     <span class="v2-mark">{org.name.slice(0, 1)}</span>
     <b>{org.name}</b>
@@ -169,7 +216,7 @@
   <div class="v2-nav-foot">
     <button class="v2-link v2-nav-search" type="button" onclick={onsearch}>
       <Search />
-      Search
+      {$_('common.sidebar.nav.search')}
       <span class="v2-count">⌘K</span>
     </button>
     <!-- Personal, not work: your own feed sits with your own profile rather
@@ -180,19 +227,22 @@
       aria-current={isActive('/notifications', false) ? 'page' : undefined}
     >
       <Bell />
-      Notifications
+      {$_('common.sidebar.nav.notifications')}
       {#if counts.notifications}
         <span class="v2-count">{counts.notifications}</span>
       {/if}
     </a>
     <a class="v2-link" href={resolve('/profile')}>
       <CircleUser />
-      Your profile
+      {$_('common.sidebar.nav.profile')}
     </a>
     <a class="v2-link" href={resolve('/help')}>
       <CircleHelp />
-      Help
+      {$_('common.sidebar.nav.help')}
     </a>
+    <!-- i18n pilot infra (Developer A): cookie-based language switcher, see
+         LanguageSwitcher.svelte. -->
+    <LanguageSwitcher />
     <!-- The phone app for people on the hosted service. No pulsing dot. A
          download link is not something that needs you right now, and v2 keeps
          attention for the things that do. -->
@@ -203,14 +253,14 @@
       rel="noopener noreferrer"
     >
       <Smartphone />
-      Download app
+      {$_('common.sidebar.nav.download_app')}
     </a>
     <!-- Leaving the app. Last in the list, and a plain link. /logout is a
          server load that clears the auth cookies and redirects to /login, so a
          GET navigation is all it takes and no data-fetching component follows. -->
     <a class="v2-link" href={resolve('/logout')} data-sveltekit-reload>
       <LogOut />
-      Sign out
+      {$_('common.sidebar.nav.sign_out')}
     </a>
   </div>
 </nav>
