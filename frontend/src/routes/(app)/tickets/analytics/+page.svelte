@@ -16,6 +16,8 @@
    * in ninety minutes are not the same event. Attainment is reported per
    * priority, against that priority's own target, or not at all.
    */
+  import { _ } from '$lib/i18n/index.js';
+  import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
@@ -67,15 +69,19 @@
   let net = $derived(totals.opened - totals.closed);
 </script>
 
-<PageHeader title="Service analytics">
+<PageHeader title={$_('cases.analytics.title')}>
   {#snippet sub()}
     {#if canView}
-      Last <span class="v2-num">{totals.window_days}</span> days
+      {$_('cases.analytics.sub_last_days_prefix')}
+      <span class="v2-num">{totals.window_days}</span>
+      {$_('cases.analytics.sub_last_days_suffix')}
       {#if totals.business_hours_applied}
-        · measured in business hours ({totals.calendar_name})
+        · {$_('cases.analytics.sub_business_hours', {
+          values: { calendar: totals.calendar_name }
+        })}
       {/if}
     {:else}
-      Service health
+      {$_('cases.analytics.sub_service_health')}
     {/if}
   {/snippet}
 </PageHeader>
@@ -88,35 +94,38 @@
          so a capped card pinned to the left leaves the rest of a wide screen
          empty. margin-inline centres the column. -->
     <div class="v2-card" style="padding:20px 22px;max-width:520px;margin-inline:auto">
-      <strong>This dashboard is for administrators.</strong>
+      <strong>{$_('cases.analytics.admins_only_heading')}</strong>
       <p>
-        Opened and closed volume, first-response attainment and the queue breakdown are
-        whole-organisation figures, so they are limited to admins. Your own tickets are on the <a
-          href={resolve('/tickets')}>Tickets</a
-        > tab.
+        {$_('cases.analytics.admins_only_body_prefix')}
+        <a href={resolve('/tickets')}>{$_('cases.analytics.admins_only_tickets_link')}</a>
+        {$_('cases.analytics.admins_only_body_suffix')}
       </p>
     </div>
   </div>
 {:else}
   <div class="v2-pad" style="padding-top:16px;flex:none">
     <div class="v2-stats">
-      <StatCard label="Opened" value={count(totals.opened)} tone="ink" />
-      <StatCard label="Closed" value={count(totals.closed)} tone="moss" />
+      <StatCard label={$_('cases.analytics.stat_opened')} value={count(totals.opened)} tone="ink" />
       <StatCard
-        label="Backlog"
+        label={$_('cases.analytics.stat_closed')}
+        value={count(totals.closed)}
+        tone="moss"
+      />
+      <StatCard
+        label={$_('cases.analytics.stat_backlog')}
         value={count(totals.open_now)}
         tone={net > 0 ? 'clay' : 'slate'}
         detail={net > 0
-          ? `Grew by ${net} over the window`
+          ? $_('cases.analytics.stat_backlog_grew', { values: { count: net } })
           : net < 0
-            ? `Shrank by ${Math.abs(net)} over the window`
-            : 'Level over the window'}
+            ? $_('cases.analytics.stat_backlog_shrank', { values: { count: Math.abs(net) } })
+            : $_('cases.analytics.stat_backlog_level')}
       />
       <StatCard
-        label="Median resolution"
+        label={$_('cases.analytics.stat_median_resolution')}
         value={`${totals.median_resolution_hours}h`}
         tone="slate"
-        detail="Median, not mean. One three-week ticket should not move it"
+        detail={$_('cases.analytics.stat_median_resolution_detail')}
       />
     </div>
   </div>
@@ -126,15 +135,20 @@
       <!-- Volume -->
       <div class="v2-card" style="padding:16px 18px 14px;margin-bottom:18px">
         <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:14px">
-          <div class="v2-label">Opened and closed, per day</div>
+          <div class="v2-label">{$_('cases.analytics.volume_title')}</div>
           <span class="v2-sub" style="font-size:11.5px;margin-left:auto">
-            <i class="v2-swatch v2-swatch-in"></i>opened
-            <i class="v2-swatch" style="margin-left:10px"></i>closed
+            <i class="v2-swatch v2-swatch-in"></i>{$_('cases.analytics.legend_opened')}
+            <i class="v2-swatch" style="margin-left:10px"></i>{$_('cases.analytics.legend_closed')}
           </span>
         </div>
         <div class="v2-cols">
           {#each data.volume as d (d.date)}
-            <div class="v2-col" title="{shortDate(d.date)}, {d.opened} opened, {d.closed} closed">
+            <div
+              class="v2-col"
+              title={$_('cases.analytics.volume_bar_title', {
+                values: { date: shortDate(d.date), opened: d.opened, closed: d.closed }
+              })}
+            >
               <i class="in" style="height:{(d.opened / peak) * 100}%"></i>
               <i class="out" style="height:{(d.closed / peak) * 100}%"></i>
             </div>
@@ -151,10 +165,11 @@
       <div class="v2-split" style="margin-bottom:18px">
         <!-- First response -->
         <div class="v2-card" style="padding:16px 18px">
-          <div class="v2-label" style="margin-bottom:4px">First response, against target</div>
+          <div class="v2-label" style="margin-bottom:4px">
+            {$_('cases.analytics.first_response_title')}
+          </div>
           <p class="v2-sub" style="font-size:11.5px;margin:0 0 14px">
-            Each priority carries its own target from the escalation policy, so each one is scored
-            against its own promise.
+            {$_('cases.analytics.first_response_note')}
           </p>
           {#each data.firstResponse as r (r.priority)}
             {@const pct = attainment(r)}
@@ -162,9 +177,14 @@
               <div
                 style="display:flex;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:5px"
               >
-                <b style="font-weight:600">{r.priority}</b>
+                <b style="font-weight:600">{$_(casePriorityKey(r.priority))}</b>
                 <span class="v2-sub" style="font-size:11.5px">
-                  target {duration(r.target_minutes)} · median {duration(r.median_minutes)}
+                  {$_('cases.analytics.first_response_target_median', {
+                    values: {
+                      target: duration(r.target_minutes),
+                      median: duration(r.median_minutes)
+                    }
+                  })}
                 </span>
                 <span
                   class="v2-num"
@@ -179,12 +199,16 @@
                 <i style="width:{pct ?? 0}%;background:{barColor(pct)}"></i>
               </div>
               <div class="v2-bar-legend">
-                <span><span class="v2-num">{r.met}</span> in time</span>
+                <span
+                  ><span class="v2-num">{r.met}</span>
+                  {$_('cases.analytics.first_response_in_time')}</span
+                >
                 <span>
                   {#if r.missed}
-                    <span class="v2-num" style="color:var(--v2-rust)">{r.missed}</span> late
+                    <span class="v2-num" style="color:var(--v2-rust)">{r.missed}</span>
+                    {$_('cases.analytics.first_response_late')}
                   {:else}
-                    none late
+                    {$_('cases.analytics.first_response_none_late')}
                   {/if}
                 </span>
               </div>
@@ -194,9 +218,9 @@
 
         <!-- Mix -->
         <div class="v2-card" style="padding:16px 18px">
-          <div class="v2-label" style="margin-bottom:4px">What the queue is made of</div>
+          <div class="v2-label" style="margin-bottom:4px">{$_('cases.analytics.mix_title')}</div>
           <p class="v2-sub" style="font-size:11.5px;margin:0 0 14px">
-            Incidents and problems are work; questions are usually a gap in the knowledge base.
+            {$_('cases.analytics.mix_note')}
           </p>
           {#each data.byType as t (t.case_type)}
             {@const share = Math.round(
@@ -204,7 +228,7 @@
             )}
             <div style="margin-bottom:13px">
               <div style="display:flex;align-items:baseline;font-size:12.5px;margin-bottom:5px">
-                <span>{t.case_type}</span>
+                <span>{$_(caseTypeKey(t.case_type))}</span>
                 <span class="v2-sub v2-num" style="margin-left:auto;font-size:12px">
                   {t.count} · {share}%
                 </span>
@@ -216,24 +240,28 @@
           {#if data.byType.find((t) => t.case_type === 'Question')}
             <p class="v2-sub" style="font-size:11.5px;margin:16px 0 0">
               <a href={resolve('/solutions')} style="color:inherit">
-                {data.byType.find((t) => t.case_type === 'Question').count} questions in this window
-              </a>. The ones that repeat belong in the knowledge base.
+                {$_('cases.analytics.mix_questions_link', {
+                  values: {
+                    count: data.byType.find((t) => t.case_type === 'Question').count
+                  }
+                })}
+              </a>. {$_('cases.analytics.mix_questions_tail')}
             </p>
           {/if}
         </div>
       </div>
 
       <!-- Per agent -->
-      <div class="v2-label" style="margin-bottom:10px">Who is carrying it</div>
+      <div class="v2-label" style="margin-bottom:10px">{$_('cases.analytics.agents_title')}</div>
       <div class="v2-table-wrap">
         <table class="v2-table">
           <thead>
             <tr>
-              <th>Agent</th>
-              <th class="v2-r">Open now</th>
-              <th class="v2-r">Closed this week</th>
-              <th class="v2-r">Median first response</th>
-              <th class="v2-r">Missed target</th>
+              <th>{$_('cases.analytics.agent_col_agent')}</th>
+              <th class="v2-r">{$_('cases.analytics.agent_col_open_now')}</th>
+              <th class="v2-r">{$_('cases.analytics.agent_col_closed_week')}</th>
+              <th class="v2-r">{$_('cases.analytics.agent_col_median_first_response')}</th>
+              <th class="v2-r">{$_('cases.analytics.agent_col_missed_target')}</th>
             </tr>
           </thead>
           <tbody>
@@ -277,15 +305,16 @@
         <Clock size={15} style="color:var(--v2-slate);flex:none;margin-top:2px" />
         <p class="v2-sub" style="font-size:12px;margin:0">
           {#if totals.business_hours_applied}
-            Elapsed time is counted inside {totals.calendar_name}, so evenings, weekends and
-            holidays do not count against a target.
+            {$_('cases.analytics.clock_business_hours', {
+              values: { calendar: totals.calendar_name }
+            })}
             <a href={resolve('/settings/business-hours')} style="color:inherit"
-              >Change the calendar</a
+              >{$_('cases.analytics.clock_change_calendar_link')}</a
             >.
           {:else}
-            Elapsed time is counted around the clock, no business-hours calendar is set, so evenings
-            and weekends count against a target.
-            <a href={resolve('/settings/business-hours')} style="color:inherit">Set up a calendar</a
+            {$_('cases.analytics.clock_around_the_clock')}
+            <a href={resolve('/settings/business-hours')} style="color:inherit"
+              >{$_('cases.analytics.clock_setup_calendar_link')}</a
             >.
           {/if}
         </p>

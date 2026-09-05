@@ -3,6 +3,8 @@
   import { page } from '$app/state';
   import { invalidateAll } from '$app/navigation';
   import { SvelteSet } from 'svelte/reactivity';
+  import { _ } from '$lib/i18n/index.js';
+  import { casePriorityKey, caseStatusKey, caseTypeKey } from '$lib/cases/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
@@ -45,12 +47,19 @@
    */
   function summaryText(kind, s) {
     const parts = [
-      `${kind === 'delete' ? s.deleted : s.updated} ${kind === 'delete' ? 'deleted' : 'updated'}`
+      kind === 'delete'
+        ? $_('cases.list.bulk_deleted', { values: { count: s.deleted } })
+        : $_('cases.list.bulk_updated', { values: { count: s.updated } })
     ];
-    if (s.no_access) parts.push(`${s.no_access} skipped (no access)`);
-    if (s.approval_required) parts.push(`${s.approval_required} need approval`);
-    if (s.closed_on_required) parts.push(`${s.closed_on_required} missing close date`);
-    if (s.invalid) parts.push(`${s.invalid} invalid`);
+    if (s.no_access)
+      parts.push($_('cases.list.bulk_skipped_no_access', { values: { count: s.no_access } }));
+    if (s.approval_required)
+      parts.push($_('cases.list.bulk_need_approval', { values: { count: s.approval_required } }));
+    if (s.closed_on_required)
+      parts.push(
+        $_('cases.list.bulk_missing_close_date', { values: { count: s.closed_on_required } })
+      );
+    if (s.invalid) parts.push($_('cases.list.bulk_invalid', { values: { count: s.invalid } }));
     return parts.join(' · ');
   }
 
@@ -73,22 +82,34 @@
     if (t.first_response_at) {
       const took =
         (new Date(t.first_response_at).getTime() - new Date(t.opened_at).getTime()) / 6e4;
-      return { state: 'met', label: `Met in ${fmtMins(took)}`, tone: 'moss' };
+      return {
+        state: 'met',
+        label: $_('cases.list.first_reply_met', { values: { duration: fmtMins(took) } }),
+        tone: 'moss'
+      };
     }
     if (!t.first_response_deadline) {
-      return { state: 'none', label: 'No target', tone: 'slate' };
+      return { state: 'none', label: $_('cases.list.first_reply_no_target'), tone: 'slate' };
     }
     const now = Date.now();
     const opened = new Date(t.opened_at).getTime();
     const due = new Date(t.first_response_deadline).getTime();
     if (now >= due) {
-      return { state: 'breached', label: `${fmtMins((now - due) / 6e4)} over`, tone: 'rust' };
+      return {
+        state: 'breached',
+        label: $_('cases.list.first_reply_over', {
+          values: { duration: fmtMins((now - due) / 6e4) }
+        }),
+        tone: 'rust'
+      };
     }
     const pct = Math.max(0, Math.min(100, Math.round(((now - opened) / (due - opened)) * 100)));
     return {
       state: 'running',
       pct,
-      label: `${fmtMins((due - now) / 6e4)} left`,
+      label: $_('cases.list.first_reply_left', {
+        values: { duration: fmtMins((due - now) / 6e4) }
+      }),
       tone: pct >= 75 ? 'rust' : pct >= 50 ? 'clay' : 'slate'
     };
   }
@@ -109,23 +130,28 @@
   };
 </script>
 
-<PageHeader title="Tickets">
+<PageHeader title={$_('cases.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.open)}</span> open ·
-    <span class="v2-num" style="color:var(--v2-rust)">{totals.urgent}</span> urgent ·
+    <span class="v2-num">{count(totals.open)}</span>
+    {$_('cases.list.sub_open', { values: { count: totals.open } })} ·
+    <span class="v2-num" style="color:var(--v2-rust)">{totals.urgent}</span>
+    {$_('cases.list.sub_urgent', { values: { count: totals.urgent } })} ·
     <!-- Not "breaching today". A breach depends on the org's business calendar
          and is a per-row calculation; nobody having replied yet is a fact the
          queue can establish, and it is the one that decides what to open. -->
-    <span class="v2-num">{count(totals.awaiting_reply)}</span> with no reply yet
+    <span class="v2-num">{count(totals.awaiting_reply)}</span>
+    {$_('cases.list.sub_no_reply')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn v2-btn-primary" href={resolve('/tickets/new')}><Plus />New ticket</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/tickets/new')}
+      ><Plus />{$_('cases.list.new_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
 {#if page.url.search}
   <p class="v2-sub" style="font-size:11.5px;margin:8px 0 0">
-    These numbers describe the filtered queue.
+    {$_('cases.list.filtered_notice')}
   </p>
 {/if}
 
@@ -159,25 +185,27 @@
   people={data.people}
   tags={data.tags}
   meId={data.meId}
-  meta="First-reply targets come from each ticket's SLA hours"
+  meta={$_('cases.list.filter_meta')}
 />
 
 <div class="v2-scroll">
   {#if tickets.length === 0}
     <!-- An empty queue is good news, so it does not read like a failure. -->
     <EmptyState
-      title={data.showAll ? 'No tickets here yet' : 'The queue is clear'}
-      body={data.showAll
-        ? 'Nothing has been raised in this workspace. Tickets arrive here from email, the portal, and anyone who replies to a closed one.'
-        : 'Nothing is waiting on your team right now. Closed and rejected tickets are still here. They are just not in the way.'}
+      title={data.showAll ? $_('cases.list.empty_all_title') : $_('cases.list.empty_open_title')}
+      body={data.showAll ? $_('cases.list.empty_all_body') : $_('cases.list.empty_open_body')}
     >
       {#snippet icon()}<LifeBuoy size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/tickets/new')}>New ticket</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/tickets/new')}
+          >{$_('cases.list.new_button')}</a
+        >
         {#if !data.showAll}
-          <a class="v2-btn" href={resolve('/tickets?all=1')}>Show closed too</a>
+          <a class="v2-btn" href={resolve('/tickets?all=1')}
+            >{$_('cases.list.show_closed_button')}</a
+          >
         {/if}
-        <a class="v2-btn" href={resolve('/solutions')}>Knowledge base</a>
+        <a class="v2-btn" href={resolve('/solutions')}>{$_('cases.list.knowledge_base_button')}</a>
       {/snippet}
     </EmptyState>
   {:else}
@@ -188,19 +216,19 @@
             <th style="width:34px">
               <input
                 type="checkbox"
-                aria-label="Select all loaded"
+                aria-label={$_('cases.list.select_all_aria')}
                 checked={tickets.length > 0 && selected.size === tickets.length}
                 onchange={toggleAll}
               />
             </th>
-            <th>Subject</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Type</th>
-            <th>Account</th>
-            <th>Assignee</th>
-            <th class="v2-r">Age</th>
-            <th style="width:130px">First reply</th>
+            <th>{$_('cases.list.col_subject')}</th>
+            <th>{$_('cases.list.col_priority')}</th>
+            <th>{$_('cases.list.col_status')}</th>
+            <th>{$_('cases.list.col_type')}</th>
+            <th>{$_('cases.list.col_account')}</th>
+            <th>{$_('cases.list.col_assignee')}</th>
+            <th class="v2-r">{$_('cases.list.col_age')}</th>
+            <th style="width:130px">{$_('cases.list.col_first_reply')}</th>
           </tr>
         </thead>
         <tbody>
@@ -210,7 +238,7 @@
               <td data-m="lead">
                 <input
                   type="checkbox"
-                  aria-label="Select ticket"
+                  aria-label={$_('cases.list.select_row_aria')}
                   checked={selected.has(t.id)}
                   onchange={() => toggle(t.id)}
                 />
@@ -220,12 +248,16 @@
                   <span class="v2-table-primary">{t.name}</span>
                 </a>
               </td>
-              <td><Pill tone={PRIORITY_TONE[t.priority]}>{t.priority}</Pill></td>
-              <td data-m="tag"><Pill tone={CASE_STATUS_TONE[t.status]}>{t.status}</Pill></td>
+              <td
+                ><Pill tone={PRIORITY_TONE[t.priority]}>{$_(casePriorityKey(t.priority))}</Pill></td
+              >
+              <td data-m="tag"
+                ><Pill tone={CASE_STATUS_TONE[t.status]}>{$_(caseStatusKey(t.status))}</Pill></td
+              >
               <!-- Nullable on the model and null on plenty of rows, so it says
                    so rather than printing an empty cell. -->
               <td class="v2-muted" data-m="hide" style="font-size:12.5px">
-                {t.case_type ?? '—'}
+                {t.case_type ? $_(caseTypeKey(t.case_type)) : '—'}
               </td>
               <td class="v2-muted" style="font-size:12.5px">
                 {#if t.account}
@@ -233,14 +265,16 @@
                     >{t.account.name}</a
                   >
                 {:else}
-                  No account
+                  {$_('cases.list.no_account')}
                 {/if}
               </td>
               <td data-m="hide">
                 {#if t.assignee}
                   <Avatar name={t.assignee} size={22} />
                 {:else}
-                  <span class="v2-muted" style="font-size:12.5px">Unassigned</span>
+                  <span class="v2-muted" style="font-size:12.5px"
+                    >{$_('cases.list.unassigned')}</span
+                  >
                 {/if}
               </td>
               <td class="v2-r v2-num v2-muted" data-m="meta">{shortAge(t.opened_at)}</td>
@@ -276,12 +310,16 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{tickets.length}</span> of
+      {$_('cases.list.showing_prefix')}
+      <span class="v2-num">{tickets.length}</span>
+      {$_('cases.list.of_connector')}
       <span class="v2-num">{count(totals.count)}</span>
       {#if !data.showAll}
-        · <a href={resolve('/tickets?all=1')} style="color:inherit">include closed</a>
+        · <a href={resolve('/tickets?all=1')} style="color:inherit"
+          >{$_('cases.list.include_closed_link')}</a
+        >
       {:else}
-        · <a href={resolve('/tickets')} style="color:inherit">open only</a>
+        · <a href={resolve('/tickets')} style="color:inherit">{$_('cases.list.open_only_link')}</a>
       {/if}
     </p>
   {/if}

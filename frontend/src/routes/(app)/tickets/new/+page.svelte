@@ -12,6 +12,7 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -39,11 +40,11 @@
     /** @type {Record<string, string>} */
     const e = {};
     const name = form.name.trim();
-    if (!name) e.name = 'A ticket needs a subject.';
+    if (!name) e.name = $_('cases.new.error_name_required');
     // `Case.name` is max_length=64, short for a subject line, but it is the
     // column, and a 65th character is a 400 from the serializer.
     else if (name.length > 64)
-      e.name = `Subjects are capped at 64 characters (this is ${name.length}).`;
+      e.name = $_('cases.new.error_name_too_long', { values: { length: name.length } });
     return e;
   });
 
@@ -63,14 +64,14 @@
   };
 </script>
 
-<PageHeader title="New ticket" center>
+<PageHeader title={$_('cases.new.title')} center>
   {#snippet crumb()}
-    <a href={resolve('/tickets')}>Tickets</a>
+    <a href={resolve('/tickets')}>{$_('cases.new.breadcrumb_tickets')}</a>
     <ChevronRight size={12} />
-    <span>New</span>
+    <span>{$_('cases.new.breadcrumb_new')}</span>
   {/snippet}
   {#snippet sub()}
-    What happened, how urgent it is, and who it is for.
+    {$_('cases.new.subheading')}
   {/snippet}
 </PageHeader>
 
@@ -84,14 +85,14 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this ticket</div>
+          <div style="font-weight:600">{$_('cases.new.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-name">Subject</label>
+      <label for="f-name">{$_('cases.new.label_subject')}</label>
       <input
         id="f-name"
         name="name"
@@ -106,31 +107,31 @@
         <!-- Worth saying up front, because it is an unusual rule for a
              helpdesk and the refusal is otherwise baffling: two tickets in one
              organisation cannot share a subject, ignoring capitals. -->
-        <p class="v2-hint">Has to be unique in this organisation, ignoring capitals.</p>
+        <p class="v2-hint">{$_('cases.new.hint_subject_unique')}</p>
       {/if}
     </div>
 
     <div class="triple">
       <div class="v2-field">
-        <label for="f-priority">Priority</label>
+        <label for="f-priority">{$_('cases.new.label_priority')}</label>
         <select id="f-priority" name="priority" class="v2-input" bind:value={form.priority}>
           {#each data.priorities as p (p.value)}
             <option value={p.value}>{p.label}</option>
           {/each}
         </select>
-        <p class="v2-hint">Sets the first-reply target.</p>
+        <p class="v2-hint">{$_('cases.new.hint_priority')}</p>
       </div>
       <div class="v2-field">
-        <label for="f-type">Type</label>
+        <label for="f-type">{$_('cases.new.label_type')}</label>
         <select id="f-type" name="case_type" class="v2-input" bind:value={form.case_type}>
-          <option value="">Not set</option>
+          <option value="">{$_('cases.new.option_type_not_set')}</option>
           {#each data.caseTypes as t (t.value)}
             <option value={t.value}>{t.label}</option>
           {/each}
         </select>
       </div>
       <div class="v2-field">
-        <label for="f-status">Status</label>
+        <label for="f-status">{$_('cases.new.label_status')}</label>
         <select id="f-status" name="status" class="v2-input" bind:value={form.status}>
           {#each data.statuses as s (s.value)}
             <option value={s.value}>{s.label}</option>
@@ -141,39 +142,39 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-account">Account</label>
+        <label for="f-account">{$_('cases.new.label_account')}</label>
         <select id="f-account" name="account" class="v2-input" bind:value={form.account}>
-          <option value="">Not linked</option>
+          <option value="">{$_('cases.new.option_account_not_linked')}</option>
           {#each data.accounts as a (a.id)}
             <option value={a.id}>{a.name}</option>
           {/each}
         </select>
-        <p class="v2-hint">Cannot be changed later. The API makes it read-only after creation.</p>
+        <p class="v2-hint">{$_('cases.new.hint_account')}</p>
       </div>
       <div class="v2-field">
-        <label for="f-owner">Assignee</label>
+        <label for="f-owner">{$_('cases.new.label_assignee')}</label>
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('cases.new.option_owner_nobody')}</option>
           {#each data.owners as o (o.id)}
             <option value={o.id}>{o.name}</option>
           {/each}
         </select>
-        <p class="v2-hint">Unassigned tickets still count against the clock.</p>
+        <p class="v2-hint">{$_('cases.new.hint_assignee')}</p>
       </div>
     </div>
 
     <div class="v2-field">
-      <label for="f-contacts">People affected</label>
+      <label for="f-contacts">{$_('cases.new.label_people_affected')}</label>
       <select id="f-contacts" name="contacts" class="v2-input" multiple size="4">
         {#each data.contacts as c (c.id)}
           <option value={c.id}>{c.name}</option>
         {/each}
       </select>
-      <p class="v2-hint">Optional. Hold ctrl or cmd to pick more than one.</p>
+      <p class="v2-hint">{$_('cases.new.hint_people_affected')}</p>
     </div>
 
     <div class="v2-field">
-      <label for="f-desc">What happened</label>
+      <label for="f-desc">{$_('cases.new.label_description')}</label>
       <textarea
         id="f-desc"
         name="description"
@@ -183,8 +184,8 @@
     </div>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit">Raise ticket</button>
-      <a class="v2-btn" href={resolve('/tickets')}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit">{$_('cases.new.create_button')}</button>
+      <a class="v2-btn" href={resolve('/tickets')}>{$_('cases.new.cancel_button')}</a>
     </div>
   </form>
 </div>

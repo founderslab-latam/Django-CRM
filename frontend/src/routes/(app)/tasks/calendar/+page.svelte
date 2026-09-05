@@ -14,10 +14,20 @@
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import { count } from '$lib/v2/format.js';
   import { TASK_PRIORITY_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
   import { ChevronLeft, ChevronRight, CalendarDays } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
   let { data } = $props();
+
+  // The month name and weekday headers are localised here rather than on the
+  // server: `data.month` (0-based) and `data.year` come from `load`, and the
+  // catalog holds the names under `tasks.calendar.months.*` / `.weekdays.*`.
+  let monthLabel = $derived(
+    $_('tasks.calendar.month_label', {
+      values: { month: $_(`tasks.calendar.months.${data.month}`), year: data.year }
+    })
+  );
 
   const TONE_VAR = {
     ink: 'var(--v2-ink)',
@@ -34,16 +44,17 @@
   const CAP = 4; // chips per cell before it collapses to "+N more"
 </script>
 
-<PageHeader title="Tasks">
+<PageHeader title={$_('tasks.calendar.title')}>
   {#snippet sub()}
-    {data.monthLabel} · <span class="v2-num">{count(data.datedCount)}</span> scheduled
+    {monthLabel} · <span class="v2-num">{count(data.datedCount)}</span>
+    {$_('tasks.calendar.sub_scheduled')}
   {/snippet}
   {#snippet actions()}
     <div class="v2-cal-nav">
       <a
         class="v2-btn v2-btn-icon"
         href={resolve(`/tasks/calendar?month=${data.prevMonth}`)}
-        aria-label="Previous month"
+        aria-label={$_('tasks.calendar.prev_month_aria')}
         data-sveltekit-noscroll
       >
         <ChevronLeft size={15} />
@@ -52,13 +63,13 @@
         <a
           class="v2-btn v2-btn-sm"
           href={resolve(`/tasks/calendar?month=${data.thisMonth}`)}
-          data-sveltekit-noscroll>Today</a
+          data-sveltekit-noscroll>{$_('tasks.calendar.today_button')}</a
         >
       {/if}
       <a
         class="v2-btn v2-btn-icon"
         href={resolve(`/tasks/calendar?month=${data.nextMonth}`)}
-        aria-label="Next month"
+        aria-label={$_('tasks.calendar.next_month_aria')}
         data-sveltekit-noscroll
       >
         <ChevronRight size={15} />
@@ -73,8 +84,8 @@
   <!-- Wide screens: the month grid. -->
   <div class="v2-cal-grid-wrap">
     <div class="v2-cal-head">
-      {#each data.weekdays as label (label)}
-        <span class="v2-label">{label}</span>
+      {#each data.weekdays as label, i (label)}
+        <span class="v2-label">{$_(`tasks.calendar.weekdays.${i}`)}</span>
       {/each}
     </div>
     <div class="v2-cal-grid">
@@ -106,7 +117,11 @@
                 </a>
               {/each}
               {#if cell.tasks.length > CAP}
-                <span class="v2-cal-more">+{cell.tasks.length - CAP} more</span>
+                <span class="v2-cal-more"
+                  >{$_('tasks.calendar.more_count', {
+                    values: { count: cell.tasks.length - CAP }
+                  })}</span
+                >
               {/if}
             </div>
           </div>
@@ -120,15 +135,17 @@
     {#if data.agenda.length === 0}
       <div class="v2-state" style="padding:34px 0">
         <div class="v2-state-icon"><CalendarDays size={22} /></div>
-        <h3>Nothing scheduled</h3>
-        <p>No tasks fall due in {data.monthLabel}.</p>
+        <h3>{$_('tasks.calendar.empty_title')}</h3>
+        <p>{$_('tasks.calendar.empty_body', { values: { month: monthLabel } })}</p>
       </div>
     {:else}
       {#each data.agenda as day (day.date)}
         <div class="v2-cal-agenda-day">
           <div class="v2-cal-agenda-date" class:v2-cal-agenda-today={day.isToday}>
             <span class="v2-num">{day.day}</span>
-            {#if day.isToday}<span class="v2-cal-agenda-todaytag">Today</span>{/if}
+            {#if day.isToday}<span class="v2-cal-agenda-todaytag"
+                >{$_('tasks.calendar.agenda_today')}</span
+              >{/if}
           </div>
           <div class="v2-cal-agenda-list">
             {#each day.tasks as t (t.id)}
@@ -139,7 +156,9 @@
               >
                 <i class="v2-cal-dot" style="background:{dot(t)}"></i>
                 <span class="v2-cal-chip-text">{t.title}</span>
-                {#if t.overdue}<span class="v2-cal-overdue">overdue</span>{/if}
+                {#if t.overdue}<span class="v2-cal-overdue"
+                    >{$_('tasks.calendar.chip_overdue')}</span
+                  >{/if}
               </a>
             {/each}
           </div>
@@ -149,10 +168,10 @@
   </div>
 
   <p class="v2-sub v2-pad v2-cal-foot">
-    Tasks without a due date don't appear here,
-    <a href={resolve('/tasks')} style="color:inherit">see the task list</a>.
+    {$_('tasks.calendar.foot_no_due_prefix')}
+    <a href={resolve('/tasks')} style="color:inherit">{$_('tasks.calendar.foot_see_list')}</a>.
     {#if data.truncated}
-      This month has more scheduled tasks than fit on the calendar; the list shows them all.
+      {$_('tasks.calendar.foot_truncated')}
     {/if}
   </p>
 </div>

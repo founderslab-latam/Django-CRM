@@ -16,13 +16,15 @@
    *    approver, which is how the oldest one here reached twenty hours.
    */
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
+  import { casePriorityKey, caseTypeKey, approvalStateKey } from '$lib/cases/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { count, shortAge, relativeDays } from '$lib/v2/format.js';
-  import { APPROVAL_STATE_LABEL, APPROVAL_STATE_TONE, PRIORITY_TONE } from '$lib/v2/enums.js';
+  import { APPROVAL_STATE_TONE, PRIORITY_TONE } from '$lib/v2/enums.js';
   import { ShieldCheck, TriangleAlert, ChevronRight } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -52,15 +54,21 @@
    */
   function blockedReason(a) {
     if (a.rule.approvers.length)
-      return `Only ${a.rule.approvers.join(' or ')} can clear this rule.`;
-    return `This rule is cleared by ${a.rule.approver_role.toLowerCase()}s, and you are not one.`;
+      return $_('cases.approvals.blocked_named', {
+        values: { approvers: a.rule.approvers.join(` ${$_('cases.approvals.or_connector')} `) }
+      });
+    return $_('cases.approvals.blocked_role', {
+      values: { role: a.rule.approver_role }
+    });
   }
 </script>
 
-<PageHeader title="Approvals">
+<PageHeader title={$_('cases.approvals.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.awaiting_you)}</span> waiting on you ·
-    <span class="v2-num">{count(totals.pending)}</span> pending across the org
+    <span class="v2-num">{count(totals.awaiting_you)}</span>
+    {$_('cases.approvals.sub_waiting_on_you')} ·
+    <span class="v2-num">{count(totals.pending)}</span>
+    {$_('cases.approvals.sub_pending_org')}
   {/snippet}
 </PageHeader>
 
@@ -75,33 +83,38 @@
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Waiting on you"
+      label={$_('cases.approvals.stat_waiting_on_you')}
       value={count(totals.awaiting_you)}
       tone="clay"
-      detail="Nobody else can clear these"
+      detail={$_('cases.approvals.stat_waiting_on_you_detail')}
     />
-    <StatCard label="Pending in the org" value={count(totals.pending)} tone="ink" />
     <StatCard
-      label="Oldest waiting"
+      label={$_('cases.approvals.stat_pending_org')}
+      value={count(totals.pending)}
+      tone="ink"
+    />
+    <StatCard
+      label={$_('cases.approvals.stat_oldest_waiting')}
       value={`${totals.oldest_pending_hours}h`}
       tone={totals.oldest_pending_hours > 8 ? 'rust' : 'slate'}
-      detail="A case cannot close until this clears"
+      detail={$_('cases.approvals.stat_oldest_waiting_detail')}
     />
-    <StatCard label="Decided this week" value={count(totals.decided_this_week)} tone="moss" />
+    <StatCard
+      label={$_('cases.approvals.stat_decided_week')}
+      value={count(totals.decided_this_week)}
+      tone="moss"
+    />
   </div>
 </div>
 
 <div class="v2-scroll">
   <div class="v2-pad" style="padding-bottom:30px">
     {#if pending.length === 0}
-      <EmptyState
-        title="Nothing waiting"
-        body="Approvals land here when someone tries to close a case that a rule gates. No pending requests means no case is being held up."
-      >
+      <EmptyState title={$_('cases.approvals.empty_title')} body={$_('cases.approvals.empty_body')}>
         {#snippet icon()}<ShieldCheck size={21} />{/snippet}
       </EmptyState>
     {:else}
-      <div class="v2-label" style="margin-bottom:10px">Pending</div>
+      <div class="v2-label" style="margin-bottom:10px">{$_('cases.approvals.pending_label')}</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:26px">
         {#each pending as a (a.id)}
           {@const blocked = !a.is_own_request && !a.can_act ? blockedReason(a) : null}
@@ -110,7 +123,9 @@
               <div style="flex:1;min-width:0">
                 <div class="v2-sub" style="font-size:11.5px;margin-bottom:3px">
                   {#if a.case.account}{a.case.account.name} ·
-                  {/if}requested by {a.requested_by} · waiting
+                  {/if}{$_('cases.approvals.row_requested_by', {
+                    values: { name: a.requested_by }
+                  })} · {$_('cases.approvals.row_waiting')}
                   <span class="v2-num">{shortAge(a.created_at)}</span>
                 </div>
                 <a
@@ -120,7 +135,9 @@
                   {a.case.name}
                 </a>
                 <div style="display:flex;gap:6px;align-items:center;margin-top:7px;flex-wrap:wrap">
-                  <Pill tone={PRIORITY_TONE[a.case.priority]}>{a.case.priority}</Pill>
+                  <Pill tone={PRIORITY_TONE[a.case.priority]}
+                    >{$_(casePriorityKey(a.case.priority))}</Pill
+                  >
                   <span class="v2-sub" style="font-size:11.5px">{a.rule.name}</span>
                 </div>
               </div>
@@ -134,7 +151,9 @@
                        only action you have on your own row. -->
                   <form method="POST" action="?/cancel" use:enhance>
                     <input type="hidden" name="id" value={a.id} />
-                    <button class="v2-btn" type="submit">Withdraw</button>
+                    <button class="v2-btn" type="submit"
+                      >{$_('cases.approvals.withdraw_button')}</button
+                    >
                   </form>
                 {:else if a.can_act}
                   {#if rejectingId === a.id}
@@ -143,18 +162,22 @@
                       <!-- svelte-ignore a11y_autofocus -->
                       <input
                         name="reason"
-                        placeholder="Reason (required)"
+                        placeholder={$_('cases.approvals.reject_reason_placeholder')}
                         required
                         autofocus
                         class="v2-reject-input"
                       />
-                      <button class="v2-btn" type="submit">Confirm</button>
+                      <button class="v2-btn" type="submit"
+                        >{$_('cases.approvals.reject_confirm_button')}</button
+                      >
                       <button class="v2-btn" type="button" onclick={() => (rejectingId = null)}>
-                        Cancel
+                        {$_('cases.approvals.reject_cancel_button')}
                       </button>
                     </form>
                   {:else}
-                    <button class="v2-btn" onclick={() => (rejectingId = a.id)}>Reject</button>
+                    <button class="v2-btn" onclick={() => (rejectingId = a.id)}
+                      >{$_('cases.approvals.reject_button')}</button
+                    >
                     <form method="POST" action="?/approve" use:enhance>
                       <input type="hidden" name="id" value={a.id} />
                       <button
@@ -162,7 +185,7 @@
                         class:v2-btn-primary={a.id === firstActionable}
                         type="submit"
                       >
-                        Approve
+                        {$_('cases.approvals.approve_button')}
                       </button>
                     </form>
                   {/if}
@@ -184,8 +207,7 @@
               >
                 <TriangleAlert size={15} style="color:var(--v2-clay);flex:none" />
                 <span class="v2-sub" style="font-size:12px">
-                  You raised this request, so you cannot decide it yourself. Another approver must.
-                  Withdraw it if it is no longer needed.
+                  {$_('cases.approvals.own_request_note')}
                 </span>
               </div>
             {/if}
@@ -195,7 +217,9 @@
     {/if}
 
     {#if decided.length}
-      <div class="v2-label" style="margin-bottom:10px">Recently decided</div>
+      <div class="v2-label" style="margin-bottom:10px">
+        {$_('cases.approvals.recently_decided_label')}
+      </div>
       <div class="v2-card" style="overflow:hidden;margin-bottom:26px">
         {#each decided as a (a.id)}
           <div
@@ -210,8 +234,16 @@
               </a>
               <div class="v2-sub" style="font-size:11.5px;margin-top:2px">
                 {a.state === 'cancelled'
-                  ? `Withdrawn by ${a.requested_by}`
-                  : `${APPROVAL_STATE_LABEL[a.state]} by ${a.approver} · ${relativeDays(a.decided_at)}`}
+                  ? $_('cases.approvals.decided_withdrawn_by', {
+                      values: { name: a.requested_by }
+                    })
+                  : $_('cases.approvals.decided_by', {
+                      values: {
+                        state: $_(approvalStateKey(a.state)),
+                        approver: a.approver,
+                        when: relativeDays(a.decided_at)
+                      }
+                    })}
               </div>
               <!-- A rejection always carries a reason: the endpoint returns
                    400 without one, so the column is never empty. -->
@@ -225,13 +257,13 @@
                 </div>
               {/if}
             </div>
-            <Pill tone={APPROVAL_STATE_TONE[a.state]}>{APPROVAL_STATE_LABEL[a.state]}</Pill>
+            <Pill tone={APPROVAL_STATE_TONE[a.state]}>{$_(approvalStateKey(a.state))}</Pill>
           </div>
         {/each}
       </div>
     {/if}
 
-    <div class="v2-label" style="margin-bottom:10px">Rules that gate a close</div>
+    <div class="v2-label" style="margin-bottom:10px">{$_('cases.approvals.rules_title')}</div>
     <div class="v2-card" style="overflow:hidden">
       {#each rules as r (r.id)}
         <div class="v2-setting">
@@ -242,21 +274,39 @@
                    A rule with no filters matches every close, which is worth
                    reading as a sentence rather than as three empty columns. -->
               {[
-                r.match_priority ? `${r.match_priority} priority` : null,
-                r.match_case_type ? r.match_case_type.toLowerCase() : null,
-                r.match_team ? `${r.match_team.name} team` : null
+                r.match_priority
+                  ? $_('cases.approvals.rule_match_priority', {
+                      values: { priority: $_(casePriorityKey(r.match_priority)) }
+                    })
+                  : null,
+                r.match_case_type ? $_(caseTypeKey(r.match_case_type)) : null,
+                r.match_team
+                  ? $_('cases.approvals.rule_match_team', { values: { team: r.match_team.name } })
+                  : null
               ]
                 .filter(Boolean)
-                .join(' · ') || 'Every case'}
-              → cleared by {r.approvers.length
-                ? r.approvers.join(' or ')
-                : `any ${r.approver_role.toLowerCase()}`}
+                .join(' · ') || $_('cases.approvals.rule_match_every')}
+              {$_('cases.approvals.rule_cleared_by', {
+                values: {
+                  who: r.approvers.length
+                    ? r.approvers.join(` ${$_('cases.approvals.or_connector')} `)
+                    : $_('cases.approvals.rule_any_role', { values: { role: r.approver_role } })
+                }
+              })}
             </span>
           </div>
           {#if r.pending_count}
-            <span class="v2-sub v2-num" style="font-size:12px">{r.pending_count} waiting</span>
+            <span class="v2-sub v2-num" style="font-size:12px"
+              >{$_('cases.approvals.rule_pending_count', {
+                values: { count: r.pending_count }
+              })}</span
+            >
           {/if}
-          <Pill tone={r.is_active ? 'moss' : 'slate'}>{r.is_active ? 'Active' : 'Off'}</Pill>
+          <Pill tone={r.is_active ? 'moss' : 'slate'}
+            >{r.is_active
+              ? $_('cases.approvals.rule_active')
+              : $_('cases.approvals.rule_off')}</Pill
+          >
           <ChevronRight size={15} style="color:var(--v2-slate);flex:none" />
         </div>
       {/each}
@@ -267,8 +317,7 @@
          here rather than left for someone to discover via a stuck queue. -->
     {#if rules.some((r) => r.is_active && r.approver_role === 'MANAGER' && !r.approvers.length)}
       <p class="v2-sub" style="font-size:12px;margin-top:12px">
-        One active rule is cleared by managers, but this org has only admins and members. Nobody can
-        clear it. Name approvers on the rule, or set it to admin.
+        {$_('cases.approvals.rules_manager_warning')}
       </p>
     {/if}
   </div>

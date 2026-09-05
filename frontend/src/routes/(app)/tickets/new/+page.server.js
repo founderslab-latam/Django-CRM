@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { createTicket, getTicketFormOptions } from '$lib/server/v2/tickets.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -24,7 +26,7 @@ export const actions = {
     if (contacts.length) values.contacts = contacts;
 
     if (!values.name) {
-      return fail(400, { values, error: 'A ticket needs a subject.' });
+      return fail(400, { values, error: get(_)('cases.new.error_name_required') });
     }
 
     /** @type {any} */
@@ -32,7 +34,7 @@ export const actions = {
     try {
       created = await createTicket({ cookies }, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { values, error: readableError(err, 'Could not raise this ticket.') });
+      return fail(400, { values, error: readableError(err, get(_)('cases.new.error_fallback')) });
     }
 
     // `CaseListView.post` returns the new id, so this lands on the ticket

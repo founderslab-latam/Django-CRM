@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getTicket,
   getTicketTree,
@@ -109,14 +111,18 @@ export const actions = {
       return fail(400, {
         body,
         internal,
-        error: 'Write something or attach a file before sending.'
+        error: get(_)('cases.detail.error_reply_empty')
       });
     }
 
     try {
       await replyToTicket({ cookies }, params.id, { body, internal, file });
     } catch (/** @type {any} */ err) {
-      return fail(400, { body, internal, error: readableError(err, 'Could not post this reply.') });
+      return fail(400, {
+        body,
+        internal,
+        error: readableError(err, get(_)('cases.detail.error_reply_failed'))
+      });
     }
 
     if (status) {
@@ -125,7 +131,7 @@ export const actions = {
       } catch (/** @type {any} */ err) {
         return fail(400, {
           sent: true,
-          error: readableError(err, `Reply posted, but the status stayed put.`)
+          error: readableError(err, get(_)('cases.detail.error_status_stayed'))
         });
       }
     }
@@ -144,7 +150,7 @@ export const actions = {
   setStatus: async ({ cookies, params, request }) => {
     const form = await request.formData();
     const status = form.get('status')?.toString().trim() ?? '';
-    if (!status) return fail(400, { error: 'No status was chosen.' });
+    if (!status) return fail(400, { error: get(_)('cases.detail.error_no_status') });
 
     /** @type {Record<string, any>} */
     const values = { status };
@@ -153,7 +159,7 @@ export const actions = {
     try {
       await updateTicket({ cookies }, params.id, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not change the status.') });
+      return fail(400, { error: readableError(err, get(_)('cases.detail.error_status_change')) });
     }
 
     return { moved: status };
@@ -192,12 +198,13 @@ export const actions = {
         resolution_comment: comment
       });
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not close this ticket.') });
+      return fail(400, { error: readableError(err, get(_)('cases.detail.error_close_failed')) });
     }
 
+    const cr = closeResultMessage({ cascade, cascaded: cascadedCount(result) });
     return {
       moved: 'Closed',
-      closed: closeResultMessage({ cascade, cascaded: cascadedCount(result) })
+      closed: get(_)(cr.key, cr.values ? { values: cr.values } : {})
     };
   },
 
@@ -222,7 +229,7 @@ export const actions = {
       await startTicketTimer({ cookies }, params.id);
     } catch (/** @type {any} */ err) {
       return fail(err?.status === 409 ? 409 : 400, {
-        timeError: readableError(err, 'Could not start the timer.'),
+        timeError: readableError(err, get(_)('cases.detail.error_timer_start')),
         runningTicketId: err?.body?.running_case_id ?? null
       });
     }
@@ -240,7 +247,7 @@ export const actions = {
     try {
       await stopTimer({ cookies }, entryId);
     } catch (/** @type {any} */ err) {
-      return fail(400, { timeError: readableError(err, 'Could not stop the timer.') });
+      return fail(400, { timeError: readableError(err, get(_)('cases.detail.error_timer_stop')) });
     }
 
     return { timeStopped: true };
@@ -269,7 +276,7 @@ export const actions = {
         currency: /** @type {any} */ (locals).org_settings?.default_currency ?? null
       });
     } catch (/** @type {any} */ err) {
-      return fail(400, { timeError: readableError(err, 'Could not log this time.') });
+      return fail(400, { timeError: readableError(err, get(_)('cases.detail.error_time_log')) });
     }
 
     return { timeLogged: true };
@@ -286,7 +293,7 @@ export const actions = {
     try {
       await setEntryBillable({ cookies }, entryId, billable);
     } catch (/** @type {any} */ err) {
-      return fail(400, { timeError: readableError(err, 'Could not change this entry.') });
+      return fail(400, { timeError: readableError(err, get(_)('cases.detail.error_time_change')) });
     }
 
     return { timeUpdated: true };
@@ -301,7 +308,7 @@ export const actions = {
     try {
       await deleteEntry({ cookies }, entryId);
     } catch (/** @type {any} */ err) {
-      return fail(400, { timeError: readableError(err, 'Could not delete this entry.') });
+      return fail(400, { timeError: readableError(err, get(_)('cases.detail.error_time_delete')) });
     }
 
     return { timeDeleted: true };

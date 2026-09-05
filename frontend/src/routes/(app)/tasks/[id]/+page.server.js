@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getTask, setTaskDone, updateTask, deleteTask, addTaskNote } from '$lib/server/v2/tasks.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -30,7 +32,7 @@ export const actions = {
     try {
       await setTaskDone({ cookies }, params.id, done);
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not change the status.') });
+      return fail(400, { error: readableError(err, get(_)('tasks.detail.error_toggle')) });
     }
     return { done };
   },
@@ -54,13 +56,15 @@ export const actions = {
       picked && typeof picked === 'object' && 'size' in picked && picked.size > 0 ? picked : null;
 
     if (!body && !file) {
-      return fail(400, { error: 'Write a comment or attach a file first.' });
+      return fail(400, { error: get(_)('tasks.detail.error_comment_empty') });
     }
 
     try {
       await addTaskNote({ cookies }, params.id, body, file);
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not post that comment.') });
+      return fail(400, {
+        error: readableError(err, get(_)('tasks.detail.error_comment_fallback'))
+      });
     }
     return { commented: true };
   },
@@ -82,7 +86,7 @@ export const actions = {
     try {
       await updateTask({ cookies }, params.id, { assigned_to: ids });
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not reassign this task.') });
+      return fail(400, { error: readableError(err, get(_)('tasks.detail.error_assign')) });
     }
     return { assigned: true };
   },
@@ -101,8 +105,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'Only an admin or whoever created this task can delete it.'
-            : readableError(err, 'Could not delete this task.')
+            ? get(_)('tasks.detail.error_delete_forbidden')
+            : readableError(err, get(_)('tasks.detail.error_delete_fallback'))
       });
     }
     redirect(303, '/tasks');

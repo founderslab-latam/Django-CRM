@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   createBoard,
   createCard,
@@ -30,12 +32,12 @@ export const actions = {
     const id = String(form.get('id') || '');
     const column = String(form.get('column') || '');
     const order = Number(form.get('order') || 0);
-    if (!id || !column) return fail(400, { error: 'Missing card or column.' });
+    if (!id || !column) return fail(400, { error: get(_)('tasks.board.error_move_missing') });
     try {
       await moveBoardTask({ cookies }, id, { column, order });
       return { success: true };
     } catch (err) {
-      return toFail(err, 'Could not move the card.');
+      return toFail(err, get(_)('tasks.board.error_move_fallback'));
     }
   },
 
@@ -49,12 +51,12 @@ export const actions = {
   create: async ({ request, cookies }) => {
     const form = await request.formData();
     const name = String(form.get('name') || '').trim();
-    if (!name) return fail(400, { error: 'A board needs a name.' });
+    if (!name) return fail(400, { error: get(_)('tasks.board.error_board_name') });
     try {
       await createBoard({ cookies }, { name });
       return { added: 'board' };
     } catch (err) {
-      return toFail(err, 'Could not create the board.');
+      return toFail(err, get(_)('tasks.board.error_create_board_fallback'));
     }
   },
 
@@ -65,13 +67,13 @@ export const actions = {
     const title = String(form.get('title') || '').trim();
     const description = String(form.get('description') || '').trim();
     const priority = String(form.get('priority') || 'medium');
-    if (!columnId) return fail(400, { error: 'Which column?' });
-    if (!title) return fail(400, { error: 'A card needs a title.' });
+    if (!columnId) return fail(400, { error: get(_)('tasks.board.error_which_column') });
+    if (!title) return fail(400, { error: get(_)('tasks.board.error_card_title') });
     try {
       await createCard({ cookies }, columnId, { title, description, priority });
       return { added: 'card' };
     } catch (err) {
-      return toFail(err, 'Could not add the card.');
+      return toFail(err, get(_)('tasks.board.error_add_card_fallback'));
     }
   },
 
@@ -84,8 +86,8 @@ export const actions = {
     const color = String(form.get('color') || '').trim();
     const rawOrder = form.get('order');
     const order = rawOrder != null && rawOrder !== '' ? Number(rawOrder) : undefined;
-    if (!boardId) return fail(400, { error: 'Which board?' });
-    if (!name) return fail(400, { error: 'A column needs a name.' });
+    if (!boardId) return fail(400, { error: get(_)('tasks.board.error_which_board') });
+    if (!name) return fail(400, { error: get(_)('tasks.board.error_column_name') });
     try {
       await createColumn({ cookies }, boardId, {
         name,
@@ -94,7 +96,7 @@ export const actions = {
       });
       return { added: 'column' };
     } catch (err) {
-      return toFail(err, 'Could not add the column.');
+      return toFail(err, get(_)('tasks.board.error_add_column_fallback'));
     }
   }
 };

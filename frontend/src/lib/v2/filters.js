@@ -45,6 +45,8 @@ import {
 import { get } from 'svelte/store';
 import { _ as $i18n } from '$lib/i18n/index.js';
 import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
+import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
+import { taskPriorityKey, taskStatusKey } from '$lib/tasks/labels.js';
 
 /**
  * `label` is a plain string, except Leads', which is `() => string` so it
@@ -57,19 +59,47 @@ import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js
 
 /** @type {Record<string, Descriptor>} */
 export const FILTERS = {
+  // Tickets' `label`s are functions resolved through the active locale at
+  // render time, same pattern (and same safety rationale) as the `leads` entry
+  // below — see the comment there. `labelFor` on the enum selects routes the
+  // raw value through `$lib/cases/labels.js` so the option list translates too.
   tickets: {
     presets: [
-      { key: 'open', label: 'Open, newest first', params: {} },
-      { key: 'mine', label: 'Mine', params: { assigned_to: '@me' } },
-      { key: 'breaching', label: 'Breaching SLA', params: { sla_breached: 'true' } },
-      { key: 'all', label: 'Everything', params: { all: '1' } }
+      { key: 'open', label: () => get($i18n)('cases.filters.preset_open'), params: {} },
+      {
+        key: 'mine',
+        label: () => get($i18n)('cases.filters.preset_mine'),
+        params: { assigned_to: '@me' }
+      },
+      {
+        key: 'breaching',
+        label: () => get($i18n)('cases.filters.preset_breaching'),
+        params: { sla_breached: 'true' }
+      },
+      { key: 'all', label: () => get($i18n)('cases.filters.preset_all'), params: { all: '1' } }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
-      { key: 'priority', label: 'Priority', type: 'select', options: CASE_PRIORITIES },
-      { key: 'case_type', label: 'Type', type: 'select', options: CASE_TYPES },
-      { key: 'sla_breached', label: 'Breaching SLA', type: 'boolean' },
-      { key: 'tags', label: 'Tag', type: 'tag' }
+      { key: 'assigned_to', label: () => get($i18n)('cases.filters.field_owner'), type: 'person' },
+      {
+        key: 'priority',
+        label: () => get($i18n)('cases.filters.field_priority'),
+        type: 'select',
+        options: CASE_PRIORITIES,
+        labelFor: (v) => get($i18n)(casePriorityKey(v))
+      },
+      {
+        key: 'case_type',
+        label: () => get($i18n)('cases.filters.field_type'),
+        type: 'select',
+        options: CASE_TYPES,
+        labelFor: (v) => get($i18n)(caseTypeKey(v))
+      },
+      {
+        key: 'sla_breached',
+        label: () => get($i18n)('cases.filters.field_breaching'),
+        type: 'boolean'
+      },
+      { key: 'tags', label: () => get($i18n)('cases.filters.field_tag'), type: 'tag' }
     ]
   },
 
@@ -156,19 +186,40 @@ export const FILTERS = {
     ]
   },
 
+  // Tasks' `label`s are functions resolved through the active locale at render
+  // time, same pattern (and same safety rationale) as the `leads` and `tickets`
+  // entries above — see the comment there. `labelFor` on the enum selects
+  // routes the raw value through `$lib/tasks/labels.js` so the option list
+  // translates too.
   tasks: {
     presets: [
-      { key: 'open', label: 'Open tasks', params: {} },
-      { key: 'mine', label: 'My tasks', params: { assigned_to: '@me' } },
-      { key: 'all', label: 'All tasks', params: { all: '1' } }
+      { key: 'open', label: () => get($i18n)('tasks.filters.preset_open'), params: {} },
+      {
+        key: 'mine',
+        label: () => get($i18n)('tasks.filters.preset_mine'),
+        params: { assigned_to: '@me' }
+      },
+      { key: 'all', label: () => get($i18n)('tasks.filters.preset_all'), params: { all: '1' } }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
-      { key: 'priority', label: 'Priority', type: 'select', options: TASK_PRIORITY },
-      { key: 'status', label: 'Status', type: 'select', options: TASK_STATUS },
+      { key: 'assigned_to', label: () => get($i18n)('tasks.filters.field_owner'), type: 'person' },
+      {
+        key: 'priority',
+        label: () => get($i18n)('tasks.filters.field_priority'),
+        type: 'select',
+        options: TASK_PRIORITY,
+        labelFor: (v) => get($i18n)(taskPriorityKey(v))
+      },
+      {
+        key: 'status',
+        label: () => get($i18n)('tasks.filters.field_status'),
+        type: 'select',
+        options: TASK_STATUS,
+        labelFor: (v) => get($i18n)(taskStatusKey(v))
+      },
       {
         key: 'due_date',
-        label: 'Due date',
+        label: () => get($i18n)('tasks.filters.field_due_date'),
         type: 'date-range',
         gteKey: 'due_date__gte',
         lteKey: 'due_date__lte'

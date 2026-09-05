@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listTasks, setTaskDone, FILTER_FIELDS } from '$lib/server/v2/tasks.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
 import { getOrgPeopleAndTeams, resolveMe } from '$lib/server/v2/org-people.js';
@@ -59,7 +61,7 @@ export const actions = {
     const form = await event.request.formData();
     const id = form.get('id')?.toString();
     const done = form.get('done')?.toString() === 'true';
-    if (!id) return fail(400, { error: 'Which task?' });
+    if (!id) return fail(400, { error: get(_)('tasks.list.error_which_task') });
 
     try {
       await setTaskDone(event, id, done);
@@ -69,8 +71,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'That task is not yours to change.'
-            : (err?.body?.errors ?? 'That did not save. Try again.')
+            ? get(_)('tasks.list.error_not_yours')
+            : (err?.body?.errors ?? get(_)('tasks.list.error_save_retry'))
       });
     }
     return { done };

@@ -31,6 +31,8 @@
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import { count, shortDate, daysSince } from '$lib/v2/format.js';
   import { BOARD_PRIORITY_LABEL, BOARD_PRIORITY_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { boardPriorityKey } from '$lib/tasks/labels.js';
   import { Plus, ChevronDown, TriangleAlert } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -138,22 +140,22 @@
       } else {
         moveError =
           (result.type === 'failure' && /** @type {any} */ (result.data)?.error) ||
-          'Could not move the card; reverted.';
+          $_('tasks.board.error_move');
         await invalidateAll();
       }
     } catch {
-      moveError = 'Could not move the card, reverted.';
+      moveError = $_('tasks.board.error_move_network');
       await invalidateAll();
     }
   }
 </script>
 
-<PageHeader title="Tasks">
+<PageHeader title={$_('tasks.board.title')}>
   {#snippet sub()}
     {#if data.board}
       {data.board.name}{data.board.description ? ` · ${data.board.description}` : ''}
     {:else}
-      Boards
+      {$_('tasks.board.sub_boards')}
     {/if}
   {/snippet}
   {#snippet actions()}
@@ -192,10 +194,9 @@
   <div class="v2-pad" style="padding-top:32px">
     <div class="v2-empty">
       <Plus size={22} style="opacity:0.4" />
-      <p class="v2-empty-title">No boards yet</p>
+      <p class="v2-empty-title">{$_('tasks.board.empty_title')}</p>
       <p class="v2-sub" style="max-width:34ch;text-align:center">
-        A board organises work into columns you drag cards between. It starts with To Do, In
-        Progress and Done, and you can rename them later.
+        {$_('tasks.board.empty_body')}
       </p>
       <form
         class="v2-lane-add-form"
@@ -211,9 +212,9 @@
               await invalidateAll();
             } else if (result.type === 'failure') {
               createBoardError =
-                /** @type {any} */ (result.data)?.error || 'Could not create the board.';
+                /** @type {any} */ (result.data)?.error || $_('tasks.board.error_create_board');
             } else if (result.type === 'error') {
-              createBoardError = 'Could not create the board.';
+              createBoardError = $_('tasks.board.error_create_board');
             }
           };
         }}
@@ -222,13 +223,15 @@
         <input
           class="v2-input"
           name="name"
-          placeholder="Board name"
+          placeholder={$_('tasks.board.board_name_placeholder')}
           maxlength="255"
           required
           autofocus
         />
         <button class="v2-btn v2-btn-primary" type="submit" disabled={createBoardBusy}>
-          {createBoardBusy ? 'Creating…' : 'Create board'}
+          {createBoardBusy
+            ? $_('tasks.board.creating_button')
+            : $_('tasks.board.create_board_button')}
         </button>
       </form>
       {#if createBoardError}
@@ -248,23 +251,23 @@
 
   <div class="v2-pad" style="padding-top:16px;flex:none">
     <div class="v2-stats">
-      <StatCard label="Open cards" value={count(totals.open)} tone="ink" />
+      <StatCard label={$_('tasks.board.stat_open')} value={count(totals.open)} tone="ink" />
       <StatCard
-        label="Overdue"
+        label={$_('tasks.board.stat_overdue')}
         value={count(totals.overdue)}
         tone={totals.overdue > 0 ? 'rust' : 'slate'}
-        detail="Past due and not marked done"
+        detail={$_('tasks.board.stat_overdue_detail')}
       />
       <StatCard
-        label="Unassigned"
+        label={$_('tasks.board.stat_unassigned')}
         value={count(totals.unassigned)}
         tone={totals.unassigned > 0 ? 'clay' : 'slate'}
       />
       <StatCard
-        label="Columns over limit"
+        label={$_('tasks.board.stat_over_limit')}
         value={count(totals.over_limit)}
         tone={totals.over_limit > 0 ? 'clay' : 'slate'}
-        detail="More cards than the column allows"
+        detail={$_('tasks.board.stat_over_limit_detail')}
       />
     </div>
   </div>
@@ -285,7 +288,11 @@
         {#if over}
           <div class="v2-lane-over">
             <TriangleAlert size={12} style="flex:none" />
-            <span>{lane.cards.length - lane.limit} over the limit of {lane.limit}</span>
+            <span
+              >{$_('tasks.board.lane_over_limit', {
+                values: { over: lane.cards.length - lane.limit, limit: lane.limit }
+              })}</span
+            >
           </div>
         {/if}
 
@@ -312,10 +319,14 @@
 
               <div style="margin-top:9px;display:flex;gap:5px;flex-wrap:wrap">
                 <Pill tone={BOARD_PRIORITY_TONE[t.priority]}
-                  >{BOARD_PRIORITY_LABEL[t.priority]}</Pill
+                  >{$_(boardPriorityKey(t.priority))}</Pill
                 >
                 {#if overdue}
-                  <Pill tone="rust">{daysSince(t.due_date)}d late</Pill>
+                  <Pill tone="rust"
+                    >{$_('tasks.board.days_late', {
+                      values: { days: daysSince(t.due_date) }
+                    })}</Pill
+                  >
                 {/if}
               </div>
 
@@ -326,11 +337,15 @@
                   {/each}
                 {:else}
                   <!-- Named, not an empty slot. A blank reads as a rendering gap. -->
-                  <span class="v2-sub" style="font-size:11.5px">Unassigned</span>
+                  <span class="v2-sub" style="font-size:11.5px"
+                    >{$_('tasks.board.card_unassigned')}</span
+                  >
                 {/if}
                 {#if t.due_date}
                   <span class="v2-sub" style="margin-left:auto;font-size:11.5px">
-                    {done ? 'done ' : ''}{shortDate(done ? t.completed_at : t.due_date)}
+                    {done ? $_('tasks.board.card_done_prefix') : ''}{shortDate(
+                      done ? t.completed_at : t.due_date
+                    )}
                   </span>
                 {/if}
               </div>
@@ -340,14 +355,14 @@
                      work by every count on this page, and by the API's. -->
                 <div class="v2-card-flag">
                   <TriangleAlert size={12} style="flex:none" />
-                  <span>In Done, never marked complete, still counted as open</span>
+                  <span>{$_('tasks.board.done_flag')}</span>
                 </div>
               {/if}
             </div>
           {/each}
         </div>
         {#if lane.cards.length === 0}
-          <p class="v2-sub v2-lane-empty">Drop a card here</p>
+          <p class="v2-sub v2-lane-empty">{$_('tasks.board.lane_empty')}</p>
         {/if}
 
         <!-- Add a card. Any board member can, so it sits on every lane. Kept
@@ -366,9 +381,9 @@
                   await invalidateAll();
                 } else if (result.type === 'failure') {
                   addCardError =
-                    /** @type {any} */ (result.data)?.error || 'Could not add the card.';
+                    /** @type {any} */ (result.data)?.error || $_('tasks.board.error_add_card');
                 } else if (result.type === 'error') {
-                  addCardError = 'Could not add the card.';
+                  addCardError = $_('tasks.board.error_add_card');
                 }
               };
             }}
@@ -378,7 +393,7 @@
             <input
               class="v2-input v2-lane-add-input"
               name="title"
-              placeholder="Card title"
+              placeholder={$_('tasks.board.card_title_placeholder')}
               required
               autofocus
               disabled={addCardBusy}
@@ -386,12 +401,12 @@
             <textarea
               class="v2-input v2-lane-add-input"
               name="description"
-              placeholder="Description (optional)"
+              placeholder={$_('tasks.board.card_description_placeholder')}
               rows="2"
               disabled={addCardBusy}></textarea>
             <select class="v2-input v2-lane-add-input" name="priority" disabled={addCardBusy}>
-              {#each Object.entries(BOARD_PRIORITY_LABEL) as [value, label] (value)}
-                <option {value} selected={value === 'medium'}>{label}</option>
+              {#each Object.keys(BOARD_PRIORITY_LABEL) as value (value)}
+                <option {value} selected={value === 'medium'}>{$_(boardPriorityKey(value))}</option>
               {/each}
             </select>
             {#if addCardError}
@@ -399,7 +414,7 @@
             {/if}
             <div class="v2-lane-add-actions">
               <button type="submit" class="v2-btn v2-btn-primary v2-btn-sm" disabled={addCardBusy}>
-                {addCardBusy ? 'Adding…' : 'Add card'}
+                {addCardBusy ? $_('tasks.board.adding_button') : $_('tasks.board.add_card_button')}
               </button>
               <button
                 type="button"
@@ -407,13 +422,14 @@
                 onclick={closeCardForm}
                 disabled={addCardBusy}
               >
-                Cancel
+                {$_('tasks.board.cancel_button')}
               </button>
             </div>
           </form>
         {:else}
           <button class="v2-lane-add" onclick={() => openCardForm(lane.id)}>
-            <Plus size={13} /> Add card
+            <Plus size={13} />
+            {$_('tasks.board.add_card_button')}
           </button>
         {/if}
       </section>
@@ -439,9 +455,9 @@
                   await invalidateAll();
                 } else if (result.type === 'failure') {
                   addColumnError =
-                    /** @type {any} */ (result.data)?.error || 'Could not add the column.';
+                    /** @type {any} */ (result.data)?.error || $_('tasks.board.error_add_column');
                 } else if (result.type === 'error') {
-                  addColumnError = 'Could not add the column.';
+                  addColumnError = $_('tasks.board.error_add_column');
                 }
               };
             }}
@@ -459,7 +475,7 @@
               <input
                 class="v2-input v2-lane-add-input"
                 name="name"
-                placeholder="Column name"
+                placeholder={$_('tasks.board.column_name_placeholder')}
                 required
                 autofocus
                 disabled={addColumnBusy}
@@ -469,7 +485,7 @@
                 type="color"
                 name="color"
                 value="#6b7280"
-                aria-label="Column colour"
+                aria-label={$_('tasks.board.column_color_aria')}
                 disabled={addColumnBusy}
               />
             </div>
@@ -482,7 +498,9 @@
                 class="v2-btn v2-btn-primary v2-btn-sm"
                 disabled={addColumnBusy}
               >
-                {addColumnBusy ? 'Adding…' : 'Add column'}
+                {addColumnBusy
+                  ? $_('tasks.board.adding_button')
+                  : $_('tasks.board.add_column_button')}
               </button>
               <button
                 type="button"
@@ -493,13 +511,14 @@
                 }}
                 disabled={addColumnBusy}
               >
-                Cancel
+                {$_('tasks.board.cancel_button')}
               </button>
             </div>
           </form>
         {:else}
           <button class="v2-lane-add v2-lane-add-lane" onclick={() => (showAddColumn = true)}>
-            <Plus size={14} /> Add column
+            <Plus size={14} />
+            {$_('tasks.board.add_column_button')}
           </button>
         {/if}
       </section>
@@ -511,9 +530,10 @@
      word "task" suggests that, and everyone assumes a card here is also a task
      there, so it is said once, in the open. -->
 <p class="v2-sub v2-pad" style="font-size:11.5px;padding-bottom:14px;flex:none;margin:0">
-  Cards on a board are separate records from the
-  <a href={resolve('/tasks')} style="color:inherit">task list</a>. A card here does not appear
-  there, and completing one does not complete the other.
+  {$_('tasks.board.separate_note_before')}
+  <a href={resolve('/tasks')} style="color:inherit">{$_('tasks.board.separate_note_link')}</a>{$_(
+    'tasks.board.separate_note_after'
+  )}
 </p>
 
 <style>

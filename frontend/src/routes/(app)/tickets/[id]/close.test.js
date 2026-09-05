@@ -122,39 +122,58 @@ describe('subtreeTruncated', () => {
 });
 
 describe('cascadeSummary', () => {
+  // These functions now return an i18n descriptor `{ key, values? }` instead of
+  // a finished English string; the copy itself lives in the `cases.detail.*`
+  // catalog and is rendered by the caller. The branching and the plural
+  // `count` argument are still this module's job, so that is what is asserted.
   it('says nothing else changes when nothing linked is open', () => {
-    expect(cascadeSummary({ count: 0 })).toContain('changes nothing else');
+    expect(cascadeSummary({ count: 0 })).toEqual({ key: 'cases.detail.cascade_summary_none' });
   });
 
-  it('counts and agrees with itself on number', () => {
-    expect(cascadeSummary({ count: 1 })).toContain('1 linked ticket is still open');
-    expect(cascadeSummary({ count: 3 })).toContain('3 linked tickets are still open');
+  it('counts and passes the number through for the plural to resolve', () => {
+    expect(cascadeSummary({ count: 1 })).toEqual({
+      key: 'cases.detail.cascade_summary_some',
+      values: { count: 1 }
+    });
+    expect(cascadeSummary({ count: 3 })).toEqual({
+      key: 'cases.detail.cascade_summary_some',
+      values: { count: 3 }
+    });
   });
 
   it('admits the list is a floor when the tree was cut short', () => {
     // The close has no depth cap even though the tree endpoint does, so more
     // can close than the confirm step is able to name.
-    expect(cascadeSummary({ count: 2, truncated: true })).toContain('may be more');
-    expect(cascadeSummary({ count: 2 })).not.toContain('may be more');
+    expect(cascadeSummary({ count: 2, truncated: true })).toEqual({
+      key: 'cases.detail.cascade_summary_some_truncated',
+      values: { count: 2 }
+    });
+    expect(cascadeSummary({ count: 2 }).key).toBe('cases.detail.cascade_summary_some');
   });
 });
 
 describe('closeResultMessage', () => {
   it('reports what the server closed, not what was asked for', () => {
-    expect(closeResultMessage({ cascade: true, cascaded: 2 })).toBe(
-      'Ticket closed, and 2 linked tickets with it.'
-    );
-    expect(closeResultMessage({ cascade: true, cascaded: 1 })).toBe(
-      'Ticket closed, and 1 linked ticket with it.'
-    );
+    expect(closeResultMessage({ cascade: true, cascaded: 2 })).toEqual({
+      key: 'cases.detail.close_result_cascaded',
+      values: { count: 2 }
+    });
+    expect(closeResultMessage({ cascade: true, cascaded: 1 })).toEqual({
+      key: 'cases.detail.close_result_cascaded',
+      values: { count: 1 }
+    });
   });
 
   it('says nothing else changed when the cascade closed nothing', () => {
-    expect(closeResultMessage({ cascade: true, cascaded: 0 })).toContain('Nothing linked was open');
+    expect(closeResultMessage({ cascade: true, cascaded: 0 })).toEqual({
+      key: 'cases.detail.close_result_none'
+    });
   });
 
   it('claims no cascade when the box was unticked', () => {
-    expect(closeResultMessage({ cascade: false, cascaded: 0 })).toBe('Ticket closed.');
+    expect(closeResultMessage({ cascade: false, cascaded: 0 })).toEqual({
+      key: 'cases.detail.close_result_simple'
+    });
   });
 });
 

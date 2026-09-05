@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { createTask, getTaskFormOptions } from '$lib/server/v2/tasks.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 import { listTickets } from '$lib/server/v2/tickets.js';
@@ -79,7 +81,7 @@ function readParent(form) {
   const id = form.get(`parent_${kind}`)?.toString() ?? '';
   if (!id) {
     return {
-      error: 'Pick which record this is attached to, or set "Attached to" back to Nothing.'
+      error: get(_)('tasks.new.error_pick_parent')
     };
   }
   return { parent: { [kind]: id } };
@@ -116,7 +118,7 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       return fail(400, {
         values: { ...values, parent_kind: kind },
-        error: readableError(err, 'Could not save this task.')
+        error: readableError(err, get(_)('tasks.new.error_fallback'))
       });
     }
 

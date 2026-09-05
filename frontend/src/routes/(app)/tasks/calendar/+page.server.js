@@ -15,21 +15,11 @@ import { listTasks } from '$lib/server/v2/tasks.js';
  * appear here at all. The page says so, and points at the list where they live.
  */
 
+// The page renders weekday headers by index (`$_('tasks.calendar.weekdays.N')`);
+// this array only supplies the 7 iterations and their `{#each}` key. The month
+// label is likewise built client-side from `month`/`year` + the catalog, so no
+// month-name list is needed here.
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-];
 
 /** Local-time `YYYY-MM-DD`. Built from date parts, never `toISOString()`, so a
  *  day never slips across midnight UTC into the wrong cell. */
@@ -128,7 +118,6 @@ export async function load(event) {
   return {
     year,
     month,
-    monthLabel: `${MONTHS[month]} ${year}`,
     weekdays: WEEKDAYS,
     weeks,
     agenda,

@@ -8,6 +8,7 @@
    * See the action for why that distinction matters here.
    */
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { enhance } from '$app/forms';
   import { untrack } from 'svelte';
   import { ChevronRight } from '@lucide/svelte';
@@ -16,11 +17,11 @@
   let { data, form } = $props();
 
   const KINDS = [
-    { key: '', label: 'Nothing' },
-    { key: 'account', label: 'An account' },
-    { key: 'opportunity', label: 'A deal' },
-    { key: 'case', label: 'A ticket' },
-    { key: 'lead', label: 'A lead' }
+    { key: '', label: 'tasks.edit.kind_nothing' },
+    { key: 'account', label: 'tasks.edit.kind_account' },
+    { key: 'opportunity', label: 'tasks.edit.kind_deal' },
+    { key: 'case', label: 'tasks.edit.kind_case' },
+    { key: 'lead', label: 'tasks.edit.kind_lead' }
   ];
 
   let values = $derived(form?.values ?? data.form);
@@ -29,13 +30,13 @@
   let currentId = $derived(form?.values?.parent_id ?? data.form.parent_id ?? '');
 </script>
 
-<PageHeader title="Edit task" record center width="62ch">
+<PageHeader title={$_('tasks.edit.title')} record center width="62ch">
   {#snippet crumb()}
-    <a href={resolve('/tasks')}>Tasks</a>
+    <a href={resolve('/tasks')}>{$_('tasks.edit.breadcrumb_tasks')}</a>
     <ChevronRight size={12} />
     <a href={resolve(`/tasks/${data.task.id}`)}>{data.task.title}</a>
     <ChevronRight size={12} />
-    <span>Edit</span>
+    <span>{$_('tasks.edit.breadcrumb_edit')}</span>
   {/snippet}
 </PageHeader>
 
@@ -55,47 +56,47 @@
     <input type="hidden" name="parent_id_original" value={data.form.parent_id} />
 
     <label class="v2-field">
-      <span class="v2-label">Task</span>
+      <span class="v2-label">{$_('tasks.edit.label_title')}</span>
       <input class="v2-input" name="title" required maxlength="200" value={values.title ?? ''} />
     </label>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <label class="v2-field" style="flex:1;min-width:150px">
-        <span class="v2-label">Priority</span>
+        <span class="v2-label">{$_('tasks.edit.label_priority')}</span>
         <select class="v2-input" name="priority" value={values.priority ?? 'Medium'}>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
+          <option value="Low">{$_('tasks.enums.priority.low')}</option>
+          <option value="Medium">{$_('tasks.enums.priority.medium')}</option>
+          <option value="High">{$_('tasks.enums.priority.high')}</option>
         </select>
       </label>
       <label class="v2-field" style="flex:1;min-width:150px">
-        <span class="v2-label">Status</span>
+        <span class="v2-label">{$_('tasks.edit.label_status')}</span>
         <select class="v2-input" name="status" value={values.status ?? 'New'}>
-          <option value="New">New</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
+          <option value="New">{$_('tasks.enums.status.new')}</option>
+          <option value="In Progress">{$_('tasks.enums.status.in_progress')}</option>
+          <option value="Completed">{$_('tasks.enums.status.completed')}</option>
         </select>
       </label>
       <label class="v2-field" style="flex:1;min-width:150px">
-        <span class="v2-label">Due</span>
+        <span class="v2-label">{$_('tasks.edit.label_due')}</span>
         <input class="v2-input" type="date" name="due_date" value={values.due_date ?? ''} />
       </label>
     </div>
 
     <label class="v2-field">
-      <span class="v2-label">Attached to</span>
+      <span class="v2-label">{$_('tasks.edit.label_attached')}</span>
       <select class="v2-input" name="parent_kind" bind:value={kind}>
         {#each KINDS as k (k.key)}
-          <option value={k.key}>{k.label}</option>
+          <option value={k.key}>{$_(k.label)}</option>
         {/each}
       </select>
     </label>
 
     {#if kind}
       <label class="v2-field">
-        <span class="v2-label">Which one</span>
+        <span class="v2-label">{$_('tasks.edit.label_which')}</span>
         <select class="v2-input" name="parent_{kind}" required>
-          <option value="">Choose…</option>
+          <option value="">{$_('tasks.edit.option_choose')}</option>
           {#each options as option (option.id)}
             <option value={option.id} selected={currentId === option.id}>{option.name}</option>
           {/each}
@@ -104,7 +105,7 @@
     {/if}
 
     <label class="v2-field">
-      <span class="v2-label">Assign to</span>
+      <span class="v2-label">{$_('tasks.edit.label_assign')}</span>
       <select
         class="v2-input"
         name="assigned_to"
@@ -118,18 +119,19 @@
         {/each}
       </select>
       <span class="v2-sub" style="font-size:11.5px">
-        Everyone selected here is on the task. Deselecting a name takes them off it.
+        {$_('tasks.edit.hint_assign')}
       </span>
     </label>
 
     <label class="v2-field">
-      <span class="v2-label">Note</span>
+      <span class="v2-label">{$_('tasks.edit.label_note')}</span>
       <textarea class="v2-input" name="description" rows="4">{values.description ?? ''}</textarea>
     </label>
 
     <div style="display:flex;gap:9px;margin-top:6px">
-      <button class="v2-btn v2-btn-primary" type="submit">Save</button>
-      <a class="v2-btn" href={resolve(`/tasks/${data.task.id}`)}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit">{$_('tasks.edit.save_button')}</button>
+      <a class="v2-btn" href={resolve(`/tasks/${data.task.id}`)}>{$_('tasks.edit.cancel_button')}</a
+      >
     </div>
   </form>
 </div>

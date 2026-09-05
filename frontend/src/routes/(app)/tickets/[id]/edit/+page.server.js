@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getTicketForEdit, updateTicket } from '$lib/server/v2/tickets.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -51,7 +53,10 @@ export const actions = {
     try {
       await updateTicket({ cookies }, params.id, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { values, error: readableError(err, 'Could not save this ticket.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('cases.edit.error_fallback'))
+      });
     }
 
     redirect(303, `/tickets/${params.id}`);

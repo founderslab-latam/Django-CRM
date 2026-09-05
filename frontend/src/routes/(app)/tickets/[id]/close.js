@@ -98,17 +98,26 @@ export function subtreeTruncated(root, id) {
 /**
  * The line above the checkbox: what happens if it stays ticked.
  *
+ * Returns an i18n descriptor `{ key, values? }` rather than a finished string,
+ * so the plural/branching logic stays here and tested while the actual copy
+ * lives in the `cases.detail.*` catalog. The caller renders it with svelte-i18n
+ * (`$_(key, { values })`). Keeping svelte-i18n out of this module is deliberate:
+ * `close.test.js` runs under the bare vitest config that resolves neither the
+ * i18n runtime nor its catalogs.
+ *
  * @param {{ count: number, truncated?: boolean }} args
+ * @returns {{ key: string, values?: { count: number } }}
  */
 export function cascadeSummary({ count, truncated = false }) {
   if (count === 0) {
-    return 'Nothing linked to this ticket is still open, so closing it changes nothing else.';
+    return { key: 'cases.detail.cascade_summary_none' };
   }
-  const noun = count === 1 ? 'ticket' : 'tickets';
-  const tail = truncated
-    ? ' There may be more further down than are listed here, and those close too.'
-    : '';
-  return `${count} linked ${noun} ${count === 1 ? 'is' : 'are'} still open and will be closed with it.${tail}`;
+  return {
+    key: truncated
+      ? 'cases.detail.cascade_summary_some_truncated'
+      : 'cases.detail.cascade_summary_some',
+    values: { count }
+  };
 }
 
 /**
@@ -118,15 +127,17 @@ export function cascadeSummary({ count, truncated = false }) {
  * message built from the count on screen would claim a cascade that a
  * concurrent close had already made a no-op.
  *
+ * Returns an i18n descriptor `{ key, values? }`; see `cascadeSummary` above.
+ *
  * @param {{ cascade: boolean, cascaded: number }} args
+ * @returns {{ key: string, values?: { count: number } }}
  */
 export function closeResultMessage({ cascade, cascaded }) {
-  if (!cascade) return 'Ticket closed.';
+  if (!cascade) return { key: 'cases.detail.close_result_simple' };
   if (cascaded === 0) {
-    return 'Ticket closed. Nothing linked was open, so nothing else changed.';
+    return { key: 'cases.detail.close_result_none' };
   }
-  const noun = cascaded === 1 ? 'ticket' : 'tickets';
-  return `Ticket closed, and ${cascaded} linked ${noun} with it.`;
+  return { key: 'cases.detail.close_result_cascaded', values: { count: cascaded } };
 }
 
 /**

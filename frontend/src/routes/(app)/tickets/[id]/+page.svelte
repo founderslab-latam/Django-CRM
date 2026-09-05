@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
+  import { casePriorityKey, caseStatusKey, caseTypeKey } from '$lib/cases/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -192,13 +194,13 @@
       return ticket.first_response_breached
         ? {
             tone: 'rust',
-            label: 'First reply overdue',
-            text: 'Past its first-reply target and still unanswered. A reply below is the first response. It stops the clock.'
+            label: $_('cases.detail.alert_first_reply_overdue_label'),
+            text: $_('cases.detail.alert_first_reply_overdue_text')
           }
         : {
             tone: 'ember',
-            label: 'Needs a first reply',
-            text: 'Nobody has replied yet. A reply below is the first response. It is what stops the first-reply clock.'
+            label: $_('cases.detail.alert_needs_first_reply_label'),
+            text: $_('cases.detail.alert_needs_first_reply_text')
           };
     }
     // Waiting on the customer is not something we can act on, so it is not a
@@ -207,8 +209,8 @@
     if (!ticket.assignee) {
       return {
         tone: 'ember',
-        label: 'No owner',
-        text: 'Answered, but nobody owns it. Assign someone so it does not stall between people.'
+        label: $_('cases.detail.alert_no_owner_label'),
+        text: $_('cases.detail.alert_no_owner_text')
       };
     }
     return null;
@@ -242,32 +244,40 @@
     {/if}
   {/snippet}
   {#snippet crumb()}
-    <a href={resolve('/tickets')}>Tickets</a>
+    <a href={resolve('/tickets')}>{$_('cases.detail.breadcrumb_tickets')}</a>
     {#if ticket.account}
       <ChevronRight size={12} />
       <a href={resolve(`/accounts/${ticket.account.id}`)}>{ticket.account.name}</a>
     {/if}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve(`/tickets/${ticket.id}/edit`)}><Pencil size={12} />Edit</a>
+    <a class="v2-btn" href={resolve(`/tickets/${ticket.id}/edit`)}
+      ><Pencil size={12} />{$_('cases.detail.edit_button')}</a
+    >
     {#if ticket.is_open}
       <form method="POST" action="?/setStatus" use:enhance style="display:contents">
         {#if ticket.status !== 'Pending'}
-          <button class="v2-btn" name="status" value="Pending">Set to pending</button>
+          <button class="v2-btn" name="status" value="Pending"
+            >{$_('cases.detail.set_pending_button')}</button
+          >
         {/if}
         {#if !data.close}
-          <button class="v2-btn v2-btn-primary" name="status" value="Closed">Close</button>
+          <button class="v2-btn v2-btn-primary" name="status" value="Closed"
+            >{$_('cases.detail.close_button')}</button
+          >
         {/if}
       </form>
       <!-- A parent ticket closes through a confirm step, since the same click
            can close tickets belonging to other people. Outside the form above
            so this button never submits it. -->
       {#if data.close && !closePanel}
-        <button class="v2-btn v2-btn-primary" type="button" onclick={openClosePanel}>Close</button>
+        <button class="v2-btn v2-btn-primary" type="button" onclick={openClosePanel}
+          >{$_('cases.detail.close_button')}</button
+        >
       {/if}
     {:else}
       <form method="POST" action="?/setStatus" use:enhance style="display:contents">
-        <button class="v2-btn" name="status" value="New">Reopen</button>
+        <button class="v2-btn" name="status" value="New">{$_('cases.detail.reopen_button')}</button>
       </form>
     {/if}
   {/snippet}
@@ -279,18 +289,24 @@
       class="v2-pad"
       style="padding-top:12px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;flex:none"
     >
-      <Pill tone={PRIORITY_TONE[ticket.priority]}>{ticket.priority}</Pill>
-      <Pill tone={CASE_STATUS_TONE[ticket.status]}>{ticket.status}</Pill>
-      {#if ticket.case_type}<Pill tone="slate">{ticket.case_type}</Pill>{/if}
+      <Pill tone={PRIORITY_TONE[ticket.priority]}>{$_(casePriorityKey(ticket.priority))}</Pill>
+      <Pill tone={CASE_STATUS_TONE[ticket.status]}>{$_(caseStatusKey(ticket.status))}</Pill>
+      {#if ticket.case_type}<Pill tone="slate">{$_(caseTypeKey(ticket.case_type))}</Pill>{/if}
       <span class="v2-sub">
         <!-- There is no ticket number. `Case` has a UUID and a subject, so the
              subject is the identifier and the age is the useful fact. -->
-        Opened {shortAge(ticket.opened_at)} ago
+        {$_('cases.detail.opened_ago', { values: { age: shortAge(ticket.opened_at) } })}
         {#if ticket.first_response_at}
-          · first reply {relativeTime(ticket.first_response_at)}
+          · {$_('cases.detail.first_reply_when', {
+            values: { when: relativeTime(ticket.first_response_at) }
+          })}
         {/if}
         {#if ticket.escalation_count > 0}
-          · <span style="color:var(--v2-rust)">escalated {ticket.escalation_count}×</span>
+          · <span style="color:var(--v2-rust)"
+            >{$_('cases.detail.escalated_count', {
+              values: { count: ticket.escalation_count }
+            })}</span
+          >
         {/if}
       </span>
     </div>
@@ -323,6 +339,10 @@
           feature showed.
         -->
         {#if closePanel && data.close}
+          {@const cs = cascadeSummary({
+            count: data.close.descendants.length,
+            truncated: data.close.truncated
+          })}
           <div class="v2-card v2-close-panel">
             <form
               method="POST"
@@ -333,12 +353,11 @@
                   closePanel = false;
                 }}
             >
-              <div style="font-weight:600;font-size:13.5px">Close {ticket.name}</div>
+              <div style="font-weight:600;font-size:13.5px">
+                {$_('cases.detail.close_panel_title', { values: { name: ticket.name } })}
+              </div>
               <p class="v2-sub" style="font-size:12.5px;margin:6px 0 0;line-height:1.5">
-                {cascadeSummary({
-                  count: data.close.descendants.length,
-                  truncated: data.close.truncated
-                })}
+                {$_(cs.key, cs.values ? { values: cs.values } : {})}
               </p>
 
               {#if hasOpenChildren}
@@ -346,7 +365,9 @@
                   {#each data.close.descendants as child (child.id)}
                     <li>
                       <span class="v2-close-name">{child.name}</span>
-                      <Pill tone={CASE_STATUS_TONE[child.status]}>{child.status}</Pill>
+                      <Pill tone={CASE_STATUS_TONE[child.status]}
+                        >{$_(caseStatusKey(child.status))}</Pill
+                      >
                     </li>
                   {/each}
                 </ul>
@@ -354,32 +375,33 @@
                 <label class="v2-close-check">
                   <input type="checkbox" name="cascade" bind:checked={cascade} />
                   <span>
-                    <span style="font-weight:600">Close these as well</span>
+                    <span style="font-weight:600">{$_('cases.detail.close_cascade_label')}</span>
                     <span class="v2-sub" style="display:block;font-size:11.5px;margin-top:2px">
-                      Each one gets a note saying it was closed with this ticket. Leave it unticked
-                      to close only this one.
+                      {$_('cases.detail.close_cascade_hint')}
                     </span>
                   </span>
                 </label>
 
                 <div class="v2-field" style="margin-top:12px">
-                  <label for="close-comment">Why (optional)</label>
+                  <label for="close-comment">{$_('cases.detail.close_reason_label')}</label>
                   <textarea
                     id="close-comment"
                     class="v2-input"
                     name="resolution_comment"
                     rows="2"
                     maxlength="1000"
-                    placeholder="Recorded against every ticket closed with this one"></textarea>
+                    placeholder={$_('cases.detail.close_reason_placeholder')}></textarea>
                 </div>
               {/if}
 
               <div style="display:flex;gap:8px;margin-top:14px">
                 <button class="v2-btn v2-btn-primary" type="submit">
-                  {cascade ? 'Close all of them' : 'Close this ticket'}
+                  {cascade
+                    ? $_('cases.detail.close_submit_cascade')
+                    : $_('cases.detail.close_submit_single')}
                 </button>
                 <button class="v2-btn" type="button" onclick={() => (closePanel = false)}>
-                  Cancel
+                  {$_('cases.detail.cancel_button')}
                 </button>
               </div>
             </form>
@@ -392,13 +414,15 @@
           </div>
         {:else if waiting}
           <p class="v2-sub" style="margin:0 0 18px;font-size:12.5px">
-            Waiting on the customer: the first-reply clock is paused while it sits in Pending.
+            {$_('cases.detail.waiting_on_customer')}
           </p>
         {/if}
 
         {#if ticket.description}
           <div class="v2-card" style="padding:13px 15px;margin-bottom:18px">
-            <div class="v2-label" style="margin-bottom:7px">What was reported</div>
+            <div class="v2-label" style="margin-bottom:7px">
+              {$_('cases.detail.reported_label')}
+            </div>
             <div style="font-size:13.5px;line-height:1.55;white-space:pre-wrap">
               {ticket.description}
             </div>
@@ -417,15 +441,18 @@
         <section class="v2-card time-panel">
           <div class="time-head">
             <div class="time-title">
-              <div class="v2-label">Time</div>
+              <div class="v2-label">{$_('cases.detail.time_label')}</div>
               <div class="v2-sub time-total">
                 {#if timeSummary?.total_minutes}
-                  <b class="v2-num">{hm(timeSummary.total_minutes)}</b> logged
+                  <b class="v2-num">{hm(timeSummary.total_minutes)}</b>
+                  {$_('cases.detail.time_logged_suffix')}
                   {#if timeSummary.billable_minutes}
-                    · {hm(timeSummary.billable_minutes)} billable
+                    · {$_('cases.detail.time_billable_suffix', {
+                      values: { amount: hm(timeSummary.billable_minutes) }
+                    })}
                   {/if}
                 {:else}
-                  Nothing logged yet
+                  {$_('cases.detail.time_nothing_logged')}
                 {/if}
               </div>
             </div>
@@ -438,22 +465,28 @@
               <form method="POST" action="?/stopTimer" use:enhance={timeSubmit} class="time-timer">
                 <input type="hidden" name="entry_id" value={myTimer.id} />
                 <button class="v2-btn v2-btn-primary" disabled={timeBusy}>
-                  <Square size={12} />Stop {hm(runningMinutes(myTimer))}
+                  <Square size={12} />{$_('cases.detail.timer_stop_button', {
+                    values: { elapsed: hm(runningMinutes(myTimer)) }
+                  })}
                 </button>
               </form>
             {:else}
               <form method="POST" action="?/startTimer" use:enhance={timeSubmit} class="time-timer">
-                <button class="v2-btn" disabled={timeBusy}><Play size={12} />Start timer</button>
+                <button class="v2-btn" disabled={timeBusy}
+                  ><Play size={12} />{$_('cases.detail.timer_start_button')}</button
+                >
               </form>
             {/if}
 
             <!-- Native disclosure, so the form opens without JavaScript. Open,
                  it takes a row of its own rather than the button's column. -->
             <details class="time-log">
-              <summary class="v2-btn"><Plus size={12} />Log time</summary>
+              <summary class="v2-btn"
+                ><Plus size={12} />{$_('cases.detail.log_time_button')}</summary
+              >
               <form method="POST" action="?/logTime" use:enhance={timeSubmit} class="time-log-form">
                 <div class="v2-field">
-                  <label for="time-minutes">Minutes</label>
+                  <label for="time-minutes">{$_('cases.detail.log_minutes_label')}</label>
                   <input
                     id="time-minutes"
                     class="v2-input"
@@ -468,7 +501,7 @@
                   />
                 </div>
                 <div class="v2-field">
-                  <label for="time-rate">Rate per hour</label>
+                  <label for="time-rate">{$_('cases.detail.log_rate_label')}</label>
                   <input
                     id="time-rate"
                     class="v2-input"
@@ -477,29 +510,30 @@
                     inputmode="decimal"
                     min="0"
                     step="0.01"
-                    placeholder="Optional"
+                    placeholder={$_('cases.detail.log_rate_placeholder')}
                   />
                 </div>
                 <div class="v2-field time-wide">
-                  <label for="time-what">What was done</label>
+                  <label for="time-what">{$_('cases.detail.log_description_label')}</label>
                   <input
                     id="time-what"
                     class="v2-input"
                     name="description"
-                    placeholder="Traced the failed import to the CSV encoding"
+                    placeholder={$_('cases.detail.log_description_placeholder')}
                     required
                   />
                 </div>
                 <div class="time-wide time-log-foot">
                   <label class="time-check">
                     <input type="checkbox" name="billable" />
-                    Billable
+                    {$_('cases.detail.log_billable_label')}
                   </label>
-                  <button class="v2-btn v2-btn-primary" disabled={timeBusy}>Log time</button>
+                  <button class="v2-btn v2-btn-primary" disabled={timeBusy}
+                    >{$_('cases.detail.log_time_submit')}</button
+                  >
                 </div>
                 <p class="v2-hint time-wide">
-                  Counted back from now. To record a session from an earlier day, start and stop the
-                  timer on it.
+                  {$_('cases.detail.log_time_hint')}
                 </p>
               </form>
             </details>
@@ -509,49 +543,57 @@
             <p class="v2-error time-error">
               <span>{form.timeError}</span>
               {#if form.runningTicketId}
-                <a href={resolve(`/tickets/${form.runningTicketId}`)}>Open that ticket</a>
+                <a href={resolve(`/tickets/${form.runningTicketId}`)}
+                  >{$_('cases.detail.time_open_that_ticket')}</a
+                >
               {/if}
             </p>
           {/if}
 
           {#if entries === null}
             <p class="v2-sub time-empty">
-              The time entries could not be loaded. Nothing else on this ticket is affected.
+              {$_('cases.detail.time_load_failed')}
             </p>
           {:else if entries.length === 0}
             <p class="v2-sub time-empty">
-              No time logged yet. Start the timer, or log a session you have already worked.
+              {$_('cases.detail.time_none_yet')}
             </p>
           {:else}
             <div class="v2-table-wrap">
               <table class="v2-table">
                 <thead>
                   <tr>
-                    <th>What was done</th>
-                    <th>Who</th>
-                    <th>When</th>
-                    <th class="v2-r">Logged</th>
-                    <th class="v2-r">Billing</th>
+                    <th>{$_('cases.detail.time_col_what')}</th>
+                    <th>{$_('cases.detail.time_col_who')}</th>
+                    <th>{$_('cases.detail.time_col_when')}</th>
+                    <th class="v2-r">{$_('cases.detail.time_col_logged')}</th>
+                    <th class="v2-r">{$_('cases.detail.time_col_billing')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {#each entries as e (e.id)}
                     <tr>
                       <td data-m="title">
-                        {e.description || 'No description'}
-                        {#if !e.ended_at}<span class="time-running">Running</span>{/if}
+                        {e.description || $_('cases.detail.time_no_description')}
+                        {#if !e.ended_at}<span class="time-running"
+                            >{$_('cases.detail.time_running')}</span
+                          >{/if}
                         {#if e.auto_stopped}
-                          <span class="v2-sub" title="Stopped automatically after running overnight"
-                            >auto-stopped</span
+                          <span class="v2-sub" title={$_('cases.detail.time_auto_stopped_title')}
+                            >{$_('cases.detail.time_auto_stopped')}</span
                           >
                         {/if}
                       </td>
                       <td data-m="meta">
                         {e.profile?.user_details?.name ||
                           e.profile?.user_details?.email ||
-                          'Someone'}
+                          $_('cases.detail.time_someone')}
                       </td>
-                      <td data-m="meta">{shortAge(e.started_at)} ago</td>
+                      <td data-m="meta"
+                        >{$_('cases.detail.time_ago', {
+                          values: { age: shortAge(e.started_at) }
+                        })}</td
+                      >
                       <td class="v2-num v2-r" data-m="tag">
                         {e.ended_at ? hm(e.duration_minutes) : hm(runningMinutes(e))}
                       </td>
@@ -560,7 +602,7 @@
                           <form method="POST" action="?/stopTimer" use:enhance={timeSubmit}>
                             <input type="hidden" name="entry_id" value={e.id} />
                             <button class="v2-btn v2-btn-sm" disabled={timeBusy}>
-                              <Square size={11} />Stop
+                              <Square size={11} />{$_('cases.detail.time_stop_short')}
                             </button>
                           </form>
                         {:else if e.invoice}
@@ -568,12 +610,14 @@
                                the API refuses to delete an invoiced entry, and
                                flipping one to non-billable after it has been
                                charged for would leave the invoice standing. -->
-                          <a class="v2-sub" href={resolve(`/invoices/${e.invoice}`)}>Invoiced</a>
+                          <a class="v2-sub" href={resolve(`/invoices/${e.invoice}`)}
+                            >{$_('cases.detail.time_invoiced')}</a
+                          >
                         {:else if confirmDelete === e.id}
                           <form method="POST" action="?/deleteTime" use:enhance={timeSubmit}>
                             <input type="hidden" name="entry_id" value={e.id} />
                             <button class="v2-btn v2-btn-sm time-danger" disabled={timeBusy}>
-                              Delete
+                              {$_('cases.detail.time_delete')}
                             </button>
                           </form>
                           <button
@@ -581,7 +625,7 @@
                             class="v2-btn v2-btn-sm"
                             onclick={() => (confirmDelete = '')}
                           >
-                            Keep
+                            {$_('cases.detail.time_keep')}
                           </button>
                         {:else}
                           <form method="POST" action="?/setBillable" use:enhance={timeSubmit}>
@@ -598,22 +642,26 @@
                               class="v2-btn v2-btn-sm"
                               class:time-billable={e.billable}
                               disabled={timeBusy}
-                              title={e.billable ? 'Mark as non-billable' : 'Mark as billable'}
+                              title={e.billable
+                                ? $_('cases.detail.time_mark_non_billable')
+                                : $_('cases.detail.time_mark_billable')}
                             >
                               {#if e.billable}
                                 {e.hourly_rate
-                                  ? money(e.hourly_rate, e.currency) + '/hr'
-                                  : 'Billable'}
+                                  ? $_('cases.detail.time_rate_per_hour', {
+                                      values: { rate: money(e.hourly_rate, e.currency) }
+                                    })
+                                  : $_('cases.detail.time_billable')}
                               {:else}
-                                Not billable
+                                {$_('cases.detail.time_not_billable')}
                               {/if}
                             </button>
                           </form>
                           <button
                             type="button"
                             class="v2-btn v2-btn-sm"
-                            aria-label="Delete this entry"
-                            title="Delete this entry"
+                            aria-label={$_('cases.detail.time_delete_entry_title')}
+                            title={$_('cases.detail.time_delete_entry_title')}
                             onclick={() => (confirmDelete = e.id)}
                           >
                             <Trash2 size={11} />
@@ -630,8 +678,7 @@
 
         {#if conversation.length === 0}
           <p class="v2-sub" style="margin:0 0 18px;font-size:12.5px">
-            Nothing has been said on this ticket yet. A reply below is the first response. It is
-            what stops the first-reply clock.
+            {$_('cases.detail.conversation_empty')}
           </p>
         {/if}
 
@@ -649,7 +696,9 @@
               >
                 <Lock size={11} />
                 <b style="color:var(--v2-ink);font-weight:600">{m.author}</b>
-                · internal note · {shortAge(m.at)} ago
+                · {$_('cases.detail.msg_internal_note')} · {$_('cases.detail.ago', {
+                  values: { age: shortAge(m.at) }
+                })}
               </div>
               <div style="font-size:13.5px;line-height:1.55;white-space:pre-wrap">{m.body}</div>
             </div>
@@ -668,8 +717,8 @@
               >
                 <div class="v2-sub" style="font-size:11.5px;margin-bottom:5px">
                   <b style="color:var(--v2-ink);font-weight:600">{m.author}</b>
-                  {#if m.kind === 'email'}· email{/if}
-                  · {shortAge(m.at)} ago
+                  {#if m.kind === 'email'}· {$_('cases.detail.msg_email')}{/if}
+                  · {$_('cases.detail.ago', { values: { age: shortAge(m.at) } })}
                 </div>
                 {#if m.subject}
                   <div style="font-size:12.5px;font-weight:600;margin-bottom:4px">{m.subject}</div>
@@ -687,7 +736,9 @@
                 name="body"
                 bind:value={body}
                 rows="3"
-                placeholder={internal ? 'Note for the team…' : 'Write a reply…'}
+                placeholder={internal
+                  ? $_('cases.detail.composer_placeholder_note')
+                  : $_('cases.detail.composer_placeholder_reply')}
                 style="width:100%;border:none;background:transparent;resize:vertical;font:inherit;font-size:13.5px;line-height:1.55;color:var(--v2-ink);outline:none"
               ></textarea>
               <div
@@ -698,13 +749,13 @@
                   style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"
                 >
                   <input type="checkbox" name="internal" bind:checked={internal} />
-                  Internal note
+                  {$_('cases.detail.composer_internal_note')}
                 </label>
                 <!-- The whole chip is the click target: a label wrapping a hidden
                      input. A file may ride with the reply or go on its own. -->
                 <label class="attach" class:has-file={fileName}>
                   <Paperclip size={13} />
-                  <span class="attach-label">{fileName || 'Attach'}</span>
+                  <span class="attach-label">{fileName || $_('cases.detail.composer_attach')}</span>
                   <input
                     bind:this={fileInput}
                     type="file"
@@ -714,43 +765,49 @@
                   />
                 </label>
                 {#if fileName}
-                  <button type="button" class="clear-file" onclick={clearFile} title="Remove file">
+                  <button
+                    type="button"
+                    class="clear-file"
+                    onclick={clearFile}
+                    title={$_('cases.detail.composer_remove_file')}
+                  >
                     <X size={12} />
                   </button>
                 {/if}
-                <span class="v2-sub" style="margin-left:auto;font-size:11.5px">Status on send</span>
+                <span class="v2-sub" style="margin-left:auto;font-size:11.5px"
+                  >{$_('cases.detail.composer_status_on_send')}</span
+                >
                 <!-- Answering and moving the ticket is one decision, so it is
                      one submit. Empty means "leave the status alone". -->
                 <select name="status" class="v2-input" style="width:auto;font-size:12px">
-                  <option value="">Unchanged</option>
-                  <option value="Assigned">Assigned</option>
-                  <option value="Pending">Pending</option>
+                  <option value="">{$_('cases.detail.composer_status_unchanged')}</option>
+                  <option value="Assigned">{$_(caseStatusKey('Assigned'))}</option>
+                  <option value="Pending">{$_(caseStatusKey('Pending'))}</option>
                 </select>
                 <button class="v2-btn v2-btn-primary" disabled={sending || !canSend}>
                   {sending
-                    ? 'Sending…'
+                    ? $_('cases.detail.composer_sending')
                     : body.trim()
                       ? internal
-                        ? 'Add note'
-                        : 'Send reply'
+                        ? $_('cases.detail.composer_add_note')
+                        : $_('cases.detail.composer_send_reply')
                       : fileName
-                        ? 'Attach file'
+                        ? $_('cases.detail.composer_attach_file')
                         : internal
-                          ? 'Add note'
-                          : 'Send reply'}
+                          ? $_('cases.detail.composer_add_note')
+                          : $_('cases.detail.composer_send_reply')}
                 </button>
               </div>
             </div>
             {#if internal}
               <p class="v2-sub" style="margin:8px 2px 0;font-size:11.5px">
-                A note stays inside the team and does not stop the first-reply clock.
+                {$_('cases.detail.composer_note_hint')}
               </p>
             {/if}
           </form>
         {:else}
           <p class="v2-sub" style="margin-top:18px;font-size:12.5px">
-            You can read this ticket but not reply to it. Ask an admin, or whoever it is assigned
-            to.
+            {$_('cases.detail.cannot_reply')}
           </p>
         {/if}
       </div>
@@ -758,40 +815,48 @@
   </div>
 
   <aside class="v2-rail">
-    <div class="v2-label v2-rail-head">Ticket</div>
+    <div class="v2-label v2-rail-head">{$_('cases.detail.rail_ticket_label')}</div>
     <dl class="v2-kv">
-      <dt>Priority</dt>
-      <dd><Pill tone={PRIORITY_TONE[ticket.priority]}>{ticket.priority}</Pill></dd>
-      <dt>Status</dt>
-      <dd><Pill tone={CASE_STATUS_TONE[ticket.status]}>{ticket.status}</Pill></dd>
-      <dt>Type</dt>
-      <dd>{ticket.case_type ?? 'Not set'}</dd>
-      <dt>Assignee</dt>
+      <dt>{$_('cases.detail.rail_priority')}</dt>
       <dd>
-        {ticket.assignee ?? 'Unassigned'}
+        <Pill tone={PRIORITY_TONE[ticket.priority]}>{$_(casePriorityKey(ticket.priority))}</Pill>
+      </dd>
+      <dt>{$_('cases.detail.rail_status')}</dt>
+      <dd>
+        <Pill tone={CASE_STATUS_TONE[ticket.status]}>{$_(caseStatusKey(ticket.status))}</Pill>
+      </dd>
+      <dt>{$_('cases.detail.rail_type')}</dt>
+      <dd>
+        {ticket.case_type ? $_(caseTypeKey(ticket.case_type)) : $_('cases.detail.rail_not_set')}
+      </dd>
+      <dt>{$_('cases.detail.rail_assignee')}</dt>
+      <dd>
+        {ticket.assignee ?? $_('cases.detail.rail_unassigned')}
         {#if ticket.assignee_count > 1}
           <span class="v2-sub">+{ticket.assignee_count - 1}</span>
         {/if}
       </dd>
-      <dt>Opened</dt>
+      <dt>{$_('cases.detail.rail_opened')}</dt>
       <dd>{longDate(ticket.opened_at)}</dd>
-      <dt>First reply</dt>
+      <dt>{$_('cases.detail.rail_first_reply')}</dt>
       <dd>
         {#if ticket.first_response_at}
           {relativeTime(ticket.first_response_at)}
         {:else if ticket.first_response_deadline}
           <span style={slaColor(ticket.first_response_breached, ticket.first_response_at_risk)}>
-            due {relativeTime(ticket.first_response_deadline)}
+            {$_('cases.detail.rail_due_when', {
+              values: { when: relativeTime(ticket.first_response_deadline) }
+            })}
           </span>
         {:else}
-          No target
+          {$_('cases.detail.rail_no_target')}
         {/if}
       </dd>
       {#if ticket.resolved_at}
-        <dt>Resolved</dt>
+        <dt>{$_('cases.detail.rail_resolved')}</dt>
         <dd>{longDate(ticket.resolved_at)}</dd>
       {:else if ticket.resolution_deadline}
-        <dt>Resolve by</dt>
+        <dt>{$_('cases.detail.rail_resolve_by')}</dt>
         <dd>
           <span style={slaColor(ticket.resolution_breached, ticket.resolution_at_risk)}>
             {relativeTime(ticket.resolution_deadline)}
@@ -799,13 +864,13 @@
         </dd>
       {/if}
       {#if ticket.paused_at}
-        <dt>SLA</dt>
-        <dd>Paused while pending</dd>
+        <dt>{$_('cases.detail.rail_sla')}</dt>
+        <dd>{$_('cases.detail.rail_sla_paused')}</dd>
       {/if}
     </dl>
 
     {#if ticket.account}
-      <div class="v2-label v2-rail-head">Account</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_account_label')}</div>
       <a
         class="v2-rail-row"
         href={resolve(`/accounts/${ticket.account.id}`)}
@@ -816,11 +881,11 @@
           <div style="font-size:12.5px;font-weight:550">{ticket.account.name}</div>
           <div class="v2-sub" style="font-size:11px">
             {#if contacts.length === 1}
-              Reported by {contacts[0].name}
+              {$_('cases.detail.rail_reported_by', { values: { name: contacts[0].name } })}
             {:else if contacts.length > 1}
-              {contacts.length} people on this ticket
+              {$_('cases.detail.rail_people_count', { values: { count: contacts.length } })}
             {:else}
-              Nobody named on this ticket
+              {$_('cases.detail.rail_nobody_named')}
             {/if}
           </div>
         </div>
@@ -828,7 +893,7 @@
     {/if}
 
     {#if contacts.length}
-      <div class="v2-label v2-rail-head">People</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_people_label')}</div>
       {#each contacts as c (c.id)}
         <a
           class="v2-rail-row"
@@ -844,7 +909,7 @@
     {#if articles.length}
       <!-- Articles filed against this ticket, not keyword guesses. The mock
            called these "suggested"; suggestions are a different endpoint. -->
-      <div class="v2-label v2-rail-head">Linked articles</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_articles_label')}</div>
       {#each articles as a (a.id)}
         <a
           class="v2-rail-row"
@@ -854,8 +919,11 @@
           <div>
             <div style="font-size:12.5px;font-weight:550;line-height:1.35">{a.title}</div>
             <div class="v2-sub" style="font-size:11px">
-              {a.is_published ? 'Published' : 'Not published'} · updated {relativeDays(
-                a.updated_at
+              {a.is_published
+                ? $_('cases.detail.rail_article_published')
+                : $_('cases.detail.rail_article_unpublished')} · {$_(
+                'cases.detail.rail_article_updated',
+                { values: { when: relativeDays(a.updated_at) } }
               )}
             </div>
           </div>
@@ -864,7 +932,7 @@
     {/if}
 
     {#if attachments.length}
-      <div class="v2-label v2-rail-head">Attachments</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_attachments_label')}</div>
       {#each attachments as f (f.id)}
         {#if f.url}
           <!-- A download now, not dead text: the path was always in the payload
@@ -889,7 +957,7 @@
     {/if}
 
     {#if alsoOpen.length}
-      <div class="v2-label v2-rail-head">Also open here</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_also_open_label')}</div>
       {#each alsoOpen as t (t.id)}
         <a
           class="v2-rail-row"
@@ -899,7 +967,9 @@
           <div>
             <div style="font-size:12.5px;font-weight:550;line-height:1.35">{t.name}</div>
             <div class="v2-sub" style="font-size:11px">
-              {t.priority} · {shortAge(t.opened_at)} old
+              {$_(casePriorityKey(t.priority))} · {$_('cases.detail.rail_age_old', {
+                values: { age: shortAge(t.opened_at) }
+              })}
             </div>
           </div>
         </a>
@@ -907,13 +977,15 @@
     {/if}
 
     {#if activity.length}
-      <div class="v2-label v2-rail-head">History</div>
+      <div class="v2-label v2-rail-head">{$_('cases.detail.rail_history_label')}</div>
       {#each activity.slice(0, 8) as a (a.id)}
         <div class="v2-rail-row">
           <div>
             <div style="font-size:12.5px;font-weight:550;line-height:1.35">{a.label}</div>
             <div class="v2-sub" style="font-size:11px">
-              {a.by ?? 'System'} · {shortAge(a.at)} ago
+              {a.by ?? $_('cases.detail.rail_system')} · {$_('cases.detail.ago', {
+                values: { age: shortAge(a.at) }
+              })}
             </div>
           </div>
         </div>

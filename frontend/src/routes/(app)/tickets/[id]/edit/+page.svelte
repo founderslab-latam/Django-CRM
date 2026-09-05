@@ -14,6 +14,7 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -38,14 +39,14 @@
     /** @type {Record<string, string>} */
     const e = {};
     const name = (form.name ?? '').trim();
-    if (!name) e.name = 'A ticket needs a subject.';
+    if (!name) e.name = $_('cases.edit.error_name_required');
     else if (name.length > 64)
-      e.name = `Subjects are capped at 64 characters (this is ${name.length}).`;
+      e.name = $_('cases.edit.error_name_too_long', { values: { length: name.length } });
 
     // Mirrors the serializer rule exactly, so the refusal happens at the field
     // rather than as an opaque whole-form rejection after the save.
     if (form.status === 'Closed' && !form.closed_on)
-      e.closed_on = 'Closing a ticket needs the date it was closed.';
+      e.closed_on = $_('cases.edit.error_closed_on_required');
 
     return e;
   });
@@ -66,9 +67,9 @@
   };
 </script>
 
-<PageHeader title="Edit ticket" center>
+<PageHeader title={$_('cases.edit.title')} center>
   {#snippet crumb()}
-    <a href={resolve('/tickets')}>Tickets</a>
+    <a href={resolve('/tickets')}>{$_('cases.edit.breadcrumb_tickets')}</a>
     <ChevronRight size={12} />
     <a href={resolve(`/tickets/${ticket.id}`)}>{ticket.name}</a>
   {/snippet}
@@ -84,14 +85,14 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this change</div>
+          <div style="font-weight:600">{$_('cases.edit.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-name">Subject</label>
+      <label for="f-name">{$_('cases.edit.label_subject')}</label>
       <input
         id="f-name"
         name="name"
@@ -105,7 +106,7 @@
 
     <div class="triple">
       <div class="v2-field">
-        <label for="f-status">Status</label>
+        <label for="f-status">{$_('cases.edit.label_status')}</label>
         <select id="f-status" name="status" class="v2-input" bind:value={form.status}>
           {#each data.statuses as s (s.value)}
             <option value={s.value}>{s.label}</option>
@@ -113,7 +114,7 @@
         </select>
       </div>
       <div class="v2-field">
-        <label for="f-priority">Priority</label>
+        <label for="f-priority">{$_('cases.edit.label_priority')}</label>
         <select id="f-priority" name="priority" class="v2-input" bind:value={form.priority}>
           {#each data.priorities as p (p.value)}
             <option value={p.value}>{p.label}</option>
@@ -121,9 +122,9 @@
         </select>
       </div>
       <div class="v2-field">
-        <label for="f-type">Type</label>
+        <label for="f-type">{$_('cases.edit.label_type')}</label>
         <select id="f-type" name="case_type" class="v2-input" bind:value={form.case_type}>
-          <option value="">Not set</option>
+          <option value="">{$_('cases.edit.option_type_not_set')}</option>
           {#each data.caseTypes as t (t.value)}
             <option value={t.value}>{t.label}</option>
           {/each}
@@ -133,7 +134,7 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-closed">Closed on</label>
+        <label for="f-closed">{$_('cases.edit.label_closed_on')}</label>
         <input
           id="f-closed"
           name="closed_on"
@@ -146,13 +147,13 @@
         {#if show('closed_on')}
           <p class="v2-error">{errors.closed_on}</p>
         {:else}
-          <p class="v2-hint">Required once the status is Closed.</p>
+          <p class="v2-hint">{$_('cases.edit.hint_closed_on')}</p>
         {/if}
       </div>
       <div class="v2-field">
-        <label for="f-owner">Assignee</label>
+        <label for="f-owner">{$_('cases.edit.label_assignee')}</label>
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('cases.edit.option_owner_nobody')}</option>
           {#each data.owners as o (o.id)}
             <option value={o.id}>{o.name}</option>
           {/each}
@@ -165,15 +166,16 @@
         <input type="hidden" name="assigned_to_original" value={data.form.assigned_to} />
         {#if data.server.assignee_count > 1}
           <p class="v2-hint">
-            <span class="v2-num">{data.server.assignee_count}</span> people are on this ticket. Changing
-            this replaces all of them.
+            {$_('cases.edit.hint_assignee_count', {
+              values: { count: data.server.assignee_count }
+            })}
           </p>
         {/if}
       </div>
     </div>
 
     <div class="v2-field">
-      <label for="f-contacts">People affected</label>
+      <label for="f-contacts">{$_('cases.edit.label_people_affected')}</label>
       <select
         id="f-contacts"
         name="contacts"
@@ -192,11 +194,11 @@
         what makes "remove the last person" expressible.
       -->
       <input type="hidden" name="contacts_present" value="1" />
-      <p class="v2-hint">Hold ctrl or cmd to pick more than one.</p>
+      <p class="v2-hint">{$_('cases.edit.hint_multi_select')}</p>
     </div>
 
     <div class="v2-field">
-      <label for="f-desc">What happened</label>
+      <label for="f-desc">{$_('cases.edit.label_description')}</label>
       <textarea
         id="f-desc"
         name="description"
@@ -207,25 +209,23 @@
 
     <p class="v2-sub" style="font-size:12px;margin:6px 0 0">
       {#if data.server.account}
-        Linked to <a href={resolve(`/accounts/${data.server.account.id}`)}
-          >{data.server.account.name}</a
-        >, which cannot be changed after the ticket is raised.
+        {$_('cases.edit.account_linked_prefix')}
+        <a href={resolve(`/accounts/${data.server.account.id}`)}>{data.server.account.name}</a>{$_(
+          'cases.edit.account_linked_suffix'
+        )}
       {:else}
-        Not linked to an account, and that cannot be changed after the ticket is raised.
+        {$_('cases.edit.account_not_linked')}
       {/if}
       {#if data.server.team_count || data.server.tag_count}
-        <span class="v2-num">{data.server.team_count}</span> team{data.server.team_count === 1
-          ? ''
-          : 's'} and <span class="v2-num">{data.server.tag_count}</span> tag{data.server
-          .tag_count === 1
-          ? ''
-          : 's'} are kept as they are.
+        {$_('cases.edit.relations_kept', {
+          values: { teams: data.server.team_count, tags: data.server.tag_count }
+        })}
       {/if}
     </p>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit">Save ticket</button>
-      <a class="v2-btn" href={resolve(`/tickets/${ticket.id}`)}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit">{$_('cases.edit.save_button')}</button>
+      <a class="v2-btn" href={resolve(`/tickets/${ticket.id}`)}>{$_('cases.edit.cancel_button')}</a>
     </div>
   </form>
 </div>

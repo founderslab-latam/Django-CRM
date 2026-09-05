@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   listTickets,
   OPEN_STATUSES,
@@ -69,13 +71,13 @@ export async function load({ cookies, url, locals }) {
 export const actions = {
   bulkUpdate: async ({ request, cookies }) => {
     const { ids, fields } = parseBulkForm(await request.formData());
-    if (ids.length === 0) return fail(400, { message: 'Select at least one ticket.' });
+    if (ids.length === 0) return fail(400, { message: get(_)('cases.list.error_select_one') });
     const res = await bulkUpdateTickets({ cookies }, ids, fields);
     return { ok: true, kind: 'update', summary: summarizeBulk(res.results) };
   },
   bulkDelete: async ({ request, cookies }) => {
     const ids = (await request.formData()).getAll('ids').map(String);
-    if (ids.length === 0) return fail(400, { message: 'Select at least one ticket.' });
+    if (ids.length === 0) return fail(400, { message: get(_)('cases.list.error_select_one') });
     const res = await bulkDeleteTickets({ cookies }, ids);
     return { ok: true, kind: 'delete', summary: summarizeBulk(res.results) };
   }

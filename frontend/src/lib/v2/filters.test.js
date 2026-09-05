@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
   FILTERS,
   fieldKeys,
@@ -7,6 +7,13 @@ import {
   activeChips,
   activePresetKey
 } from '$lib/v2/filters.js';
+import { setupI18n } from '$lib/i18n/index.js';
+
+// The `leads` and `tickets` descriptors carry `label`/`labelFor` functions that
+// resolve through svelte-i18n at call time (see the comments in filters.js).
+// `activeChips` invokes a field's `labelFor`, so the store has to be initialised
+// before those cases run or `get($i18n)(...)` throws "set the initial locale".
+beforeAll(() => setupI18n('en'));
 
 /**
  * Each page's module exports the allow-list its list function forwards. As
@@ -183,7 +190,12 @@ describe('activeChips', () => {
   it('renders a chip only for params that are actually set', () => {
     const chips = activeChips('tickets', new URL('http://x/tickets?priority=High'));
     expect(chips).toHaveLength(1);
-    expect(chips[0]).toMatchObject({ key: 'priority', label: 'Priority', value: 'High' });
+    // `label` is now a locale-resolving function (see filters.js); the chip's
+    // visible text is produced by FilterBar's `labelText()` helper at render.
+    expect(chips[0]).toMatchObject({ key: 'priority', value: 'High' });
+    expect(typeof chips[0].label === 'function' ? chips[0].label() : chips[0].label).toBe(
+      'Priority'
+    );
   });
 
   it('resolves a person id to a name and still removes by id', () => {

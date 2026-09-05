@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getTask, getTaskFormOptions, updateTask } from '$lib/server/v2/tasks.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 import { listTickets } from '$lib/server/v2/tickets.js';
@@ -107,7 +109,7 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       return fail(400, {
         values: { ...values, parent_kind: kind, parent_id: id },
-        error: readableError(err, 'Could not save this task.')
+        error: readableError(err, get(_)('tasks.edit.error_fallback'))
       });
     }
 

@@ -20,6 +20,8 @@
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { count, relativeDays, daysSince } from '$lib/v2/format.js';
   import { TASK_PRIORITY_TONE, TASK_STATUS_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { taskPriorityKey, taskStatusKey } from '$lib/tasks/labels.js';
   import { enhance } from '$app/forms';
   import { CircleCheck, Circle, Plus } from '@lucide/svelte';
 
@@ -40,19 +42,23 @@
   };
 </script>
 
-<PageHeader title="Tasks">
+<PageHeader title={$_('tasks.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.open)}</span> open ·
-    <span class="v2-num" style="color:var(--v2-rust)">{count(totals.overdue)}</span> overdue
+    <span class="v2-num">{count(totals.open)}</span>
+    {$_('tasks.list.sub_open')} ·
+    <span class="v2-num" style="color:var(--v2-rust)">{count(totals.overdue)}</span>
+    {$_('tasks.list.sub_overdue')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn v2-btn-primary" href={resolve('/tasks/new')}><Plus />New task</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/tasks/new')}
+      ><Plus />{$_('tasks.list.new_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
 {#if page.url.search}
   <p class="v2-sub" style="font-size:11.5px;margin:8px 0 0">
-    These numbers describe the filtered list.
+    {$_('tasks.list.filtered_notice')}
   </p>
 {/if}
 
@@ -61,13 +67,19 @@
 <div class="v2-pad" style="padding-top:14px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Overdue"
+      label={$_('tasks.list.stat_overdue')}
       value={count(totals.overdue)}
       tone={totals.overdue ? 'rust' : 'slate'}
-      detail={totals.overdue ? 'Do these before anything else' : 'Nothing late'}
+      detail={totals.overdue
+        ? $_('tasks.list.stat_overdue_detail')
+        : $_('tasks.list.stat_overdue_none')}
     />
-    <StatCard label="Due this week" value={count(totals.due_this_week)} tone="clay" />
-    <StatCard label="Open" value={count(totals.open)} tone="ink" />
+    <StatCard
+      label={$_('tasks.list.stat_due_this_week')}
+      value={count(totals.due_this_week)}
+      tone="clay"
+    />
+    <StatCard label={$_('tasks.list.stat_open')} value={count(totals.open)} tone="ink" />
     <!-- The mock's fourth card was "Done this week". `Task` has no
          `completed_at`, so nothing records when a task was finished and that
          number could only have been invented. This one is real, and it is the
@@ -75,15 +87,23 @@
          and never appears in "due this week", so nothing ever puts it in front
          of anyone. -->
     <StatCard
-      label="No due date"
+      label={$_('tasks.list.stat_no_due_date')}
       value={count(totals.no_due_date)}
       tone={totals.no_due_date ? 'clay' : 'slate'}
-      detail={totals.no_due_date ? 'These never come up on their own' : 'Everything is dated'}
+      detail={totals.no_due_date
+        ? $_('tasks.list.stat_no_due_date_detail')
+        : $_('tasks.list.stat_no_due_date_none')}
     />
   </div>
 </div>
 
-<FilterBar page="tasks" url={page.url} people={data.people} meId={data.meId} meta="Newest first" />
+<FilterBar
+  page="tasks"
+  url={page.url}
+  people={data.people}
+  meId={data.meId}
+  meta={$_('tasks.list.filter_meta')}
+/>
 
 {#if form?.error}
   <p class="v2-pad v2-form-error" role="alert">{form.error}</p>
@@ -92,16 +112,18 @@
 <div class="v2-scroll">
   {#if tasks.length === 0}
     <EmptyState
-      title={data.showAll ? 'No tasks yet' : 'Nothing on your list'}
-      body={data.showAll
-        ? 'Tasks show up here when you add one, or when a deal, ticket or lead needs a follow-up scheduled.'
-        : 'Everything on your list is done. Show completed to see what you finished.'}
+      title={data.showAll ? $_('tasks.list.empty_all_title') : $_('tasks.list.empty_open_title')}
+      body={data.showAll ? $_('tasks.list.empty_all_body') : $_('tasks.list.empty_open_body')}
     >
       {#snippet icon()}<CircleCheck size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/tasks/new')}>New task</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/tasks/new')}
+          >{$_('tasks.list.new_button')}</a
+        >
         {#if !data.showAll}
-          <a class="v2-btn" href={resolve('/tasks?all=1')}>Show completed</a>
+          <a class="v2-btn" href={resolve('/tasks?all=1')}
+            >{$_('tasks.list.show_completed_button')}</a
+          >
         {/if}
       {/snippet}
     </EmptyState>
@@ -110,13 +132,13 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th style="width:38px"><span class="v2-sr-only">Done</span></th>
-            <th>Task</th>
-            <th>Attached to</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Owner</th>
-            <th class="v2-r">Due</th>
+            <th style="width:38px"><span class="v2-sr-only">{$_('tasks.list.col_done')}</span></th>
+            <th>{$_('tasks.list.col_task')}</th>
+            <th>{$_('tasks.list.col_attached')}</th>
+            <th>{$_('tasks.list.col_priority')}</th>
+            <th>{$_('tasks.list.col_status')}</th>
+            <th>{$_('tasks.list.col_owner')}</th>
+            <th class="v2-r">{$_('tasks.list.col_due')}</th>
           </tr>
         </thead>
         <tbody>
@@ -144,7 +166,9 @@
                     type="submit"
                     class="v2-tick"
                     disabled={saving[t.id]}
-                    aria-label={t.is_done ? `Reopen ${t.title}` : `Mark ${t.title} done`}
+                    aria-label={t.is_done
+                      ? $_('tasks.list.reopen_aria', { values: { title: t.title } })
+                      : $_('tasks.list.mark_done_aria', { values: { title: t.title } })}
                   >
                     {#if t.is_done}
                       <CircleCheck size={17} style="color:var(--v2-moss)" />
@@ -172,9 +196,12 @@
                   <span class="v2-muted">—</span>
                 {/if}
               </td>
-              <td><Pill tone={TASK_PRIORITY_TONE[t.priority]}>{t.priority}</Pill></td>
+              <td
+                ><Pill tone={TASK_PRIORITY_TONE[t.priority]}>{$_(taskPriorityKey(t.priority))}</Pill
+                ></td
+              >
               <td data-m="tag">
-                <Pill tone={TASK_STATUS_TONE[t.status]}>{t.status}</Pill>
+                <Pill tone={TASK_STATUS_TONE[t.status]}>{$_(taskStatusKey(t.status))}</Pill>
               </td>
               <td data-m="hide">
                 {#if t.assigned_names.length}
@@ -184,7 +211,7 @@
                     {/each}
                   </span>
                 {:else}
-                  <span class="v2-muted">nobody</span>
+                  <span class="v2-muted">{$_('tasks.list.nobody')}</span>
                 {/if}
               </td>
               <td
@@ -193,9 +220,9 @@
                 style={late ? 'color:var(--v2-rust);font-weight:600' : ''}
               >
                 {#if !t.due_date}
-                  <span class="v2-muted">no due date</span>
+                  <span class="v2-muted">{$_('tasks.list.no_due_date')}</span>
                 {:else if late}
-                  {late}d late
+                  {$_('tasks.list.days_late', { values: { days: late } })}
                 {:else}
                   {relativeDays(t.due_date)}
                 {/if}
@@ -206,13 +233,17 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{tasks.length}</span> of
+      {$_('tasks.list.showing_prefix')}
+      <span class="v2-num">{tasks.length}</span>
+      {$_('tasks.list.of_connector')}
       <span class="v2-num">{count(data.showAll ? totals.count : totals.open)}</span>
-      {data.showAll ? 'tasks' : 'open'}
+      {data.showAll ? $_('tasks.list.count_noun_tasks') : $_('tasks.list.count_noun_open')}
       {#if !data.showAll}
-        · <a href={resolve('/tasks?all=1')} style="color:inherit">include completed</a>
+        · <a href={resolve('/tasks?all=1')} style="color:inherit"
+          >{$_('tasks.list.include_completed_link')}</a
+        >
       {:else}
-        · <a href={resolve('/tasks')} style="color:inherit">open only</a>
+        · <a href={resolve('/tasks')} style="color:inherit">{$_('tasks.list.open_only_link')}</a>
       {/if}
     </p>
   {/if}
