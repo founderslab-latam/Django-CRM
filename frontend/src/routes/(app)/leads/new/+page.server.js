@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { EDITABLE_FIELDS, createLead, getLeadFormOptions } from '$lib/server/v2/leads.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load(event) {
@@ -23,8 +25,16 @@ export const actions = {
     try {
       created = await createLead(event, values);
     } catch (/** @type {any} */ err) {
-      // Values go back so a rejected form is not a blank form.
-      return fail(400, { values, error: readableError(err, 'Could not create the lead.') });
+      // Values go back so a rejected form is not a blank form. The request's
+      // locale was already resolved into the shared, per-process `locale`
+      // store by `setupI18n()` in `hooks.server.js` before this action ran
+      // (same request, awaited before `resolve()`), so reading it here gets
+      // this request's language. See the SSR caveat documented on that store:
+      // not request-isolated, accepted for this pilot's scope.
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('leads.new.error_fallback'))
+      });
     }
 
     redirect(303, created?.id ? `/leads/${created.id}` : '/leads');

@@ -43,6 +43,7 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import {
@@ -81,8 +82,8 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!form.name.trim()) e.name = 'Give the deal a name you would recognise in a list.';
-    if (!form.account) e.account = 'A deal has to belong to an account.';
+    if (!form.name.trim()) e.name = $_('opportunity.edit.error_name_required');
+    if (!form.account) e.account = $_('opportunity.edit.error_account_required');
 
     /* Only validate what the form can actually send. When the amount is
        server-calculated the input is disabled, so a complaint about it would
@@ -90,18 +91,20 @@
     if (!amountIsCalculated) {
       const n = Number(form.amount);
       if (form.amount === '' || form.amount === null) {
-        if (isClosedWon) e.amount = 'A won deal has to record what it was worth.';
-      } else if (!Number.isFinite(n)) e.amount = 'Amount has to be a number.';
-      else if (n < 0) e.amount = 'Amount cannot be negative.';
-      else if (n === 0 && isClosedWon) e.amount = 'A won deal has to record what it was worth.';
+        if (isClosedWon) e.amount = $_('opportunity.edit.error_amount_required_won');
+      } else if (!Number.isFinite(n)) e.amount = $_('opportunity.edit.error_amount_not_number');
+      else if (n < 0) e.amount = $_('opportunity.edit.error_amount_negative');
+      else if (n === 0 && isClosedWon) e.amount = $_('opportunity.edit.error_amount_required_won');
     }
 
     if (isClosed && !form.closed_on)
-      e.closed_on = `${STAGE_LABEL[form.stage]} needs the date it closed.`;
+      e.closed_on = $_('opportunity.edit.error_closed_on_required', {
+        values: { stageLabel: STAGE_LABEL[form.stage] }
+      });
 
     const p = Number(form.probability);
     if (form.probability !== '' && (!Number.isFinite(p) || p < 0 || p > 100))
-      e.probability = 'Probability is a percentage between 0 and 100.';
+      e.probability = $_('opportunity.edit.error_probability_range');
 
     return e;
   });
@@ -139,15 +142,17 @@
   };
 </script>
 
-<PageHeader title="Edit {deal.name}" center>
+<PageHeader title={$_('opportunity.edit.title', { values: { name: deal.name } })} center>
   {#snippet crumb()}
-    <a href={resolve('/pipeline')}>Pipeline</a>
+    <a href={resolve('/pipeline')}>{$_('opportunity.edit.breadcrumb_pipeline')}</a>
     <ChevronRight size={12} />
     <a href={resolve(`/pipeline/${deal.id}`)}>{deal.name}</a>
   {/snippet}
   {#snippet sub()}
     {deal.account.name} · <span class="v2-num">{money(deal.amount, deal.currency)}</span> ·
-    {STAGE_LABEL[originalStage]} for <span class="v2-num">{server.days_in_current_stage}</span> days
+    {$_('opportunity.edit.stage_duration', {
+      values: { stageLabel: STAGE_LABEL[originalStage], days: server.days_in_current_stage }
+    })}
   {/snippet}
 </PageHeader>
 
@@ -156,12 +161,14 @@
     {#if saved}
       <div class="v2-next" style="margin-bottom:18px" role="status">
         <div class="v2-next-body">
-          <div class="v2-next-text">Saved.</div>
+          <div class="v2-next-text">{$_('opportunity.edit.saved_heading')}</div>
           <div class="v2-sub" style="margin-top:3px">
-            “{deal.name}” has been updated.
+            {$_('opportunity.edit.saved_detail', { values: { name: deal.name } })}
           </div>
         </div>
-        <a class="v2-btn" href={resolve(`/pipeline/${deal.id}`)}>Back to the deal</a>
+        <a class="v2-btn" href={resolve(`/pipeline/${deal.id}`)}
+          >{$_('opportunity.edit.back_to_deal_button')}</a
+        >
       </div>
     {/if}
 
@@ -173,7 +180,7 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this change</div>
+          <div style="font-weight:600">{$_('opportunity.edit.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
@@ -188,19 +195,19 @@
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
           <div style="font-weight:600">
-            {Object.keys(errors).length} field{Object.keys(errors).length === 1 ? '' : 's'} still need{Object.keys(
-              errors
-            ).length === 1
-              ? 's'
-              : ''} you
+            {$_('opportunity.edit.validation_heading', {
+              values: { count: Object.keys(errors).length }
+            })}
           </div>
-          <div class="v2-sub" style="margin-top:2px">Nothing has been saved.</div>
+          <div class="v2-sub" style="margin-top:2px">
+            {$_('opportunity.edit.validation_detail')}
+          </div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-name">Deal name</label>
+      <label for="f-name">{$_('opportunity.edit.label_name')}</label>
       <input
         id="f-name"
         name="name"
@@ -214,7 +221,7 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-account">Account</label>
+        <label for="f-account">{$_('opportunity.edit.label_account')}</label>
         <select
           id="f-account"
           name="account"
@@ -229,7 +236,7 @@
         {#if show('account')}<p class="v2-error">{errors.account}</p>{/if}
       </div>
       <div class="v2-field">
-        <label for="f-type">Type</label>
+        <label for="f-type">{$_('opportunity.edit.label_type')}</label>
         <select
           id="f-type"
           name="opportunity_type"
@@ -244,7 +251,7 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-stage">Stage</label>
+      <label for="f-stage">{$_('opportunity.edit.label_stage')}</label>
       <select
         id="f-stage"
         name="stage"
@@ -268,12 +275,16 @@
             {STAGE_LABEL[originalStage]} → {STAGE_LABEL[form.stage]}
           </div>
           <p>
-            The stage clock restarts. This deal currently reads
+            {$_('opportunity.edit.stage_change_intro')}
             <Pill tone={AGING_TONE[server.aging_status]} dot>
-              {AGING_LABEL[server.aging_status]} · {server.days_in_current_stage} days
+              {$_('opportunity.edit.stage_change_days', {
+                values: {
+                  agingLabel: AGING_LABEL[server.aging_status],
+                  days: server.days_in_current_stage
+                }
+              })}
             </Pill>
-            on the board; after saving it reads 0 days and On&nbsp;pace, because aging is measured from
-            the last stage change and not from the last time anyone did anything.
+            {$_('opportunity.edit.stage_change_outro')}
           </p>
         </div>
       {/if}
@@ -282,8 +293,10 @@
     <div class="pair">
       <div class="v2-field">
         <label for="f-amount">
-          Amount
-          {#if amountIsCalculated}<span class="locked"><Lock size={10} />From line items</span>{/if}
+          {$_('opportunity.edit.label_amount')}
+          {#if amountIsCalculated}<span class="locked"
+              ><Lock size={10} />{$_('opportunity.edit.label_amount_locked_badge')}</span
+            >{/if}
         </label>
         <input
           id="f-amount"
@@ -302,21 +315,27 @@
           <p class="v2-error">{errors.amount}</p>
         {:else if amountIsCalculated}
           <p class="v2-hint" id="h-amount">
-            <a href={resolve(`/pipeline/${deal.id}`)}>{server.line_item_count} line items</a> add up
-            to
-            <span class="v2-num">{money(server.line_item_total, deal.currency)}</span>. The server
-            refuses a different figure on a deal with line items, so this cannot be typed over. Edit
-            the line items instead.
+            <a href={resolve(`/pipeline/${deal.id}`)}
+              >{$_('opportunity.edit.hint_amount_locked_link', {
+                values: { count: server.line_item_count }
+              })}</a
+            >
+            {$_('opportunity.edit.hint_amount_locked_middle', {
+              values: { count: server.line_item_count }
+            })}
+            <span class="v2-num">{money(server.line_item_total, deal.currency)}</span>{$_(
+              'opportunity.edit.hint_amount_locked_tail'
+            )}
           </p>
         {:else}
           <p class="v2-hint">
-            Typed by hand. Adding line items to this deal would take the field over.
+            {$_('opportunity.edit.hint_amount_manual')}
           </p>
         {/if}
       </div>
 
       <div class="v2-field">
-        <label for="f-prob">Probability</label>
+        <label for="f-prob">{$_('opportunity.edit.label_probability')}</label>
         <input
           id="f-prob"
           name="probability"
@@ -334,8 +353,10 @@
     <div class="pair">
       <div class="v2-field">
         <label for="f-closed">
-          {isClosed ? 'Closed on' : 'Expected close'}
-          {#if isClosed}<span class="req">required</span>{/if}
+          {isClosed
+            ? $_('opportunity.edit.label_closed_on')
+            : $_('opportunity.edit.label_expected_close')}
+          {#if isClosed}<span class="req">{$_('opportunity.edit.label_required_badge')}</span>{/if}
         </label>
         <input
           id="f-closed"
@@ -349,18 +370,18 @@
         {#if show('closed_on')}
           <p class="v2-error">{errors.closed_on}</p>
         {:else if isClosed}
-          <p class="v2-hint">The date it actually closed, not the date you are recording it.</p>
+          <p class="v2-hint">{$_('opportunity.edit.hint_closed_on')}</p>
         {/if}
       </div>
       <div class="v2-field">
-        <label for="f-owner">Owner</label>
+        <label for="f-owner">{$_('opportunity.edit.label_owner')}</label>
         <!-- What the select was rendered with. The action compares against it
              so an untouched owner is not sent at all; `assigned_to` is a
              many-to-many and this select is single, so sending it always would
              cut a two-person deal down to one on every save. -->
         <input type="hidden" name="assigned_to_original" value={data.form.assigned_to} />
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('opportunity.edit.option_nobody')}</option>
           {#each data.owners as o (o.id)}
             <!-- The value is the Profile id. The mock used the display name,
                  which looks identical on screen and cannot be saved. -->
@@ -371,12 +392,12 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-source">Source</label>
+      <label for="f-source">{$_('opportunity.edit.label_lead_source')}</label>
       <input id="f-source" name="lead_source" class="v2-input" bind:value={form.lead_source} />
     </div>
 
     <div class="v2-field">
-      <label for="f-notes">Notes</label>
+      <label for="f-notes">{$_('opportunity.edit.label_notes')}</label>
       <textarea
         id="f-notes"
         name="description"
@@ -386,10 +407,15 @@
     </div>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit">Save changes</button>
-      <a class="v2-btn" href={resolve(`/pipeline/${deal.id}`)}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit"
+        >{$_('opportunity.edit.submit_button')}</button
+      >
+      <a class="v2-btn" href={resolve(`/pipeline/${deal.id}`)}
+        >{$_('opportunity.edit.cancel_button')}</a
+      >
       <span class="v2-sub" style="margin-left:auto;font-size:12px">
-        Last stage change {longDate(server.stage_changed_at)}
+        {$_('opportunity.edit.last_stage_change_prefix')}
+        {longDate(server.stage_changed_at)}
       </span>
     </div>
   </form>

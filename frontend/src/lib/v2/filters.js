@@ -31,7 +31,6 @@ import {
   INDUSTRIES,
   INVOICE_STATUSES,
   LEAD_LIST_STATUSES,
-  LEAD_STATUS_LABEL,
   LEAD_SOURCES,
   LEAD_SOURCE_LABEL,
   SOLUTION_STATUS,
@@ -43,9 +42,17 @@ import {
   industryLabel,
   invoiceStatusLabel
 } from './enums.js';
+import { get } from 'svelte/store';
+import { _ as $i18n } from '$lib/i18n/index.js';
+import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
 
-/** @typedef {{ key: string, label: string, params: Record<string, string> }} Preset */
-/** @typedef {{ key: string, label: string, type: string, options?: string[], labelFor?: (v: string) => string, gteKey?: string, lteKey?: string }} Field */
+/**
+ * `label` is a plain string, except Leads', which is `() => string` so it
+ * resolves through the active locale at render time — see the comment above
+ * the `leads` entry below and `FilterBar.svelte`'s `labelText()`.
+ */
+/** @typedef {{ key: string, label: string | (() => string), params: Record<string, string> }} Preset */
+/** @typedef {{ key: string, label: string | (() => string), type: string, options?: string[], labelFor?: (v: string) => string, gteKey?: string, lteKey?: string }} Field */
 /** @typedef {{ presets: Preset[], fields: Field[] }} Descriptor */
 
 /** @type {Record<string, Descriptor>} */
@@ -66,28 +73,39 @@ export const FILTERS = {
     ]
   },
 
+  // Leads' `label`s are functions, not strings, translated via `get($i18n)`
+  // at call time (FilterBar.svelte calls them at render time, never eagerly
+  // at import time, so this is safe against the module-level-store caveat
+  // documented in `$lib/i18n/index.js`). No other module's filters are
+  // translated yet, and FilterBar.svelte's `labelText()` helper treats a
+  // plain string and a function as equally valid, so this changes nothing
+  // for them. See PLAN.md's "shared component layer" stage for the rest.
   leads: {
     presets: [
-      { key: 'open', label: 'Open leads', params: {} },
-      { key: 'mine', label: 'Mine', params: { assigned_to: '@me' } }
+      { key: 'open', label: () => get($i18n)('leads.filters.preset_open'), params: {} },
+      {
+        key: 'mine',
+        label: () => get($i18n)('leads.filters.preset_mine'),
+        params: { assigned_to: '@me' }
+      }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
+      { key: 'assigned_to', label: () => get($i18n)('leads.filters.field_owner'), type: 'person' },
       {
         key: 'status',
-        label: 'Status',
+        label: () => get($i18n)('leads.filters.field_status'),
         type: 'select',
         options: LEAD_LIST_STATUSES,
-        labelFor: (v) => LEAD_STATUS_LABEL[v] ?? v
+        labelFor: (v) => get($i18n)(leadStatusKey(v))
       },
       {
         key: 'source',
-        label: 'Source',
+        label: () => get($i18n)('leads.filters.field_source'),
         type: 'select',
         options: LEAD_SOURCES,
-        labelFor: (v) => LEAD_SOURCE_LABEL[v] ?? v
+        labelFor: (v) => get($i18n)(leadSourceKey(v))
       },
-      { key: 'tags', label: 'Tag', type: 'tag' }
+      { key: 'tags', label: () => get($i18n)('leads.filters.field_tag'), type: 'tag' }
     ]
   },
 

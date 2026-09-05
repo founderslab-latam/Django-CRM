@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { asInternalPath } from '$lib/utils/paths.js';
   import { page } from '$app/state';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -52,7 +53,10 @@
     return lane.truncated ? lane.count : lane.rows.length;
   }
   function laneSum(/** @type {any} */ lane) {
-    return lane.rows.reduce((/** @type {number} */ total, /** @type {any} */ r) => total + r.amount, 0);
+    return lane.rows.reduce(
+      (/** @type {number} */ total, /** @type {any} */ r) => total + r.amount,
+      0
+    );
   }
 
   function onConsider(/** @type {any} */ lane, /** @type {any} */ e) {
@@ -100,9 +104,9 @@
       }
       moveError =
         (result.type === 'failure' && /** @type {any} */ (result.data)?.error) ||
-        'Could not move the deal; reverted.';
+        $_('opportunity.list.move_error_fallback_failure');
     } catch {
-      moveError = 'Could not move the deal, reverted.';
+      moveError = $_('opportunity.list.move_error_fallback_catch');
     }
     await invalidateAll();
   }
@@ -148,33 +152,46 @@
   });
 </script>
 
-<PageHeader title="Pipeline">
+<PageHeader title={$_('opportunity.list.title')}>
   {#snippet sub()}
     <!-- Totals come from the API aggregate, never from the rows on screen.
          Not "open deals": the default view is now the pipeline's own "All
          deals" preset (empty params), which includes closed stages, so a word
          that was only ever true under the old hardcoded ?open=true would lie
          here as soon as somebody switched presets. -->
-    <span class="v2-num">{count(totals.count)}</span> deals ·
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('opportunity.list.deals_suffix', { values: { count: totals.count } })} ·
     <span class="v2-num">{money(totals.amount_sum, data.org.currency)}</span> ·
-    <span class="v2-num">{money(totals.weighted_sum, data.org.currency)}</span> weighted ·
-    <span class="v2-num" style="color:var(--v2-rust)">{totals.stalled_count}</span> stalled
+    <span class="v2-num">{money(totals.weighted_sum, data.org.currency)}</span>
+    {$_('opportunity.list.weighted_suffix')} ·
+    <span class="v2-num" style="color:var(--v2-rust)">{totals.stalled_count}</span>
+    {$_('opportunity.list.stalled_suffix', { values: { count: totals.stalled_count } })}
   {/snippet}
   {#snippet actions()}
     {#if view === 'board'}
-      <a class="v2-btn v2-btn-quiet" href={resolve(asInternalPath(listHref))}><List />List</a>
-      <span class="v2-btn" aria-current="true"><Columns3 />Board</span>
+      <a class="v2-btn v2-btn-quiet" href={resolve(asInternalPath(listHref))}
+        ><List />{$_('opportunity.list.list_view_button')}</a
+      >
+      <span class="v2-btn" aria-current="true"
+        ><Columns3 />{$_('opportunity.list.board_view_button')}</span
+      >
     {:else}
-      <span class="v2-btn" aria-current="true"><List />List</span>
-      <a class="v2-btn v2-btn-quiet" href={resolve(asInternalPath(boardHref))}><Columns3 />Board</a>
+      <span class="v2-btn" aria-current="true"
+        ><List />{$_('opportunity.list.list_view_button')}</span
+      >
+      <a class="v2-btn v2-btn-quiet" href={resolve(asInternalPath(boardHref))}
+        ><Columns3 />{$_('opportunity.list.board_view_button')}</a
+      >
     {/if}
-    <a class="v2-btn v2-btn-primary" href={resolve('/pipeline/new')}><Plus />New deal</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/pipeline/new')}
+      ><Plus />{$_('opportunity.list.new_deal_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
 {#if isFiltered}
   <p class="v2-sub" style="font-size:11.5px;margin:8px 0 0">
-    These numbers describe the filtered pipeline.
+    {$_('opportunity.list.filtered_notice')}
   </p>
 {/if}
 
@@ -186,7 +203,7 @@
   meId={data.meId}
   onlyFields={data.onlyFields}
   onlyPresets={data.onlyPresets}
-  meta={view === 'board' ? 'Open stages only. Drag a card to change its stage' : 'Sorted by value'}
+  meta={view === 'board' ? $_('opportunity.list.board_meta') : $_('opportunity.list.list_meta')}
 />
 
 {#if moveError}
@@ -216,8 +233,10 @@
                silently stops. Outside the dndzone below, so it never becomes a
                drop target of its own. -->
           <p class="v2-sub" style="padding:0 2px 6px;font-size:11.5px">
-            Showing the first <span class="v2-num">{lane.rows.length}</span>. Filter to see the
-            rest.
+            {$_('opportunity.list.board_truncated_prefix')}
+            <span class="v2-num">{lane.rows.length}</span>. {$_(
+              'opportunity.list.board_truncated_suffix'
+            )}
           </p>
         {/if}
         <div
@@ -240,7 +259,9 @@
               <div style="margin-top:9px">
                 <Pill tone={AGING_TONE[d.aging_status]} dot>
                   {AGING_LABEL[d.aging_status] +
-                    (d.aging_status === 'green' ? '' : ` · ${d.days_in_current_stage}d`)}
+                    (d.aging_status === 'green'
+                      ? ''
+                      : ` · ${d.days_in_current_stage}${$_('opportunity.list.days_short_suffix')}`)}
                 </Pill>
               </div>
               <div class="v2-deal-card-foot">
@@ -252,7 +273,9 @@
               </div>
             </div>
           {:else}
-            <p class="v2-sub" style="padding:10px 2px;font-size:12px">Nothing in this stage.</p>
+            <p class="v2-sub" style="padding:10px 2px;font-size:12px">
+              {$_('opportunity.list.lane_empty')}
+            </p>
           {/each}
         </div>
       </section>
@@ -260,14 +283,13 @@
   </div>
 {:else if deals.length === 0}
   <div class="v2-scroll">
-    <EmptyState
-      title="No deals here"
-      body="Nothing matches this view. Start a deal from an account you are already talking to, convert a lead that is ready, or clear a filter to see more."
-    >
+    <EmptyState title={$_('opportunity.list.empty_title')} body={$_('opportunity.list.empty_body')}>
       {#snippet icon()}<Columns3 size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/pipeline/new')}>New deal</a>
-        <a class="v2-btn" href={resolve('/leads')}>Go to leads</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/pipeline/new')}
+          >{$_('opportunity.list.new_deal_button')}</a
+        >
+        <a class="v2-btn" href={resolve('/leads')}>{$_('opportunity.list.go_to_leads_button')}</a>
       {/snippet}
     </EmptyState>
   </div>
@@ -277,13 +299,13 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Deal</th>
-            <th>Stage</th>
-            <th>Health</th>
-            <th class="v2-r">Value</th>
-            <th>Closing</th>
-            <th class="v2-r">In stage</th>
-            <th>Owner</th>
+            <th>{$_('opportunity.list.col_deal')}</th>
+            <th>{$_('opportunity.list.col_stage')}</th>
+            <th>{$_('opportunity.list.col_health')}</th>
+            <th class="v2-r">{$_('opportunity.list.col_value')}</th>
+            <th>{$_('opportunity.list.col_closing')}</th>
+            <th class="v2-r">{$_('opportunity.list.col_in_stage')}</th>
+            <th>{$_('opportunity.list.col_owner')}</th>
           </tr>
         </thead>
         <tbody>
@@ -311,7 +333,7 @@
                   ? 'color:var(--v2-rust);font-weight:600'
                   : 'color:var(--v2-slate)'}
               >
-                {d.days_in_current_stage}d
+                {d.days_in_current_stage}{$_('opportunity.list.days_short_suffix')}
               </td>
               <td data-m="hide"><Avatar name={d.assigned_to} size={22} /></td>
             </tr>
@@ -320,7 +342,8 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{deals.length}</span> of
+      {$_('opportunity.list.showing_prefix')} <span class="v2-num">{deals.length}</span>
+      {$_('opportunity.list.of_connector')}
       <span class="v2-num">{count(totals.count)}</span>
     </p>
   </div>

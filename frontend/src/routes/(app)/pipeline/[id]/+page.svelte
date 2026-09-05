@@ -1,5 +1,6 @@
 <script>
   import { resolve } from '$app/paths';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Timeline from '$lib/v2/components/Timeline.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -34,7 +35,7 @@
 
 <PageHeader title={deal.name} record>
   {#snippet crumb()}
-    <a href={resolve('/pipeline')}>Pipeline</a>
+    <a href={resolve('/pipeline')}>{$_('opportunity.detail.breadcrumb_pipeline')}</a>
     <ChevronRight size={12} />
     <a href={resolve(`/accounts/${deal.account.id}`)}>{deal.account.name}</a>
   {/snippet}
@@ -42,7 +43,9 @@
     <!-- "Move stage" was a second button that did nothing. Stage is edited on
          the form below, where the page can show what moving it costs, the
          aging clock resets, instead of moving it in one anonymous click. -->
-    <a class="v2-btn" href={resolve(`/pipeline/${deal.id}/edit`)}>Edit</a>
+    <a class="v2-btn" href={resolve(`/pipeline/${deal.id}/edit`)}
+      >{$_('opportunity.detail.edit_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
@@ -67,7 +70,13 @@
       {/each}
       <span style="margin-left:auto">
         <Pill tone={AGING_TONE[deal.aging_status]} dot>
-          {`${AGING_LABEL[deal.aging_status]} · ${deal.days_in_current_stage} days in ${STAGE_LABEL[deal.stage]}`}
+          {$_('opportunity.detail.aging_pill', {
+            values: {
+              agingLabel: AGING_LABEL[deal.aging_status],
+              days: deal.days_in_current_stage,
+              stageLabel: STAGE_LABEL[deal.stage]
+            }
+          })}
         </Pill>
       </span>
     </div>
@@ -80,20 +89,24 @@
           nothing to render. A suggestion the system invented is worse than no
           suggestion, because people act on it.
         -->
-        <div class="v2-label" style="margin-bottom:12px">Activity</div>
+        <div class="v2-label" style="margin-bottom:12px">
+          {$_('opportunity.detail.activity_label')}
+        </div>
         <Timeline events={activity} />
 
         {#if lineItems.length}
-          <div class="v2-label" style="margin:22px 0 10px">Line items</div>
+          <div class="v2-label" style="margin:22px 0 10px">
+            {$_('opportunity.detail.line_items_label')}
+          </div>
           <div class="v2-card" style="overflow:hidden">
             <table class="v2-table">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th class="v2-r">Qty</th>
-                  <th class="v2-r">Unit price</th>
-                  <th class="v2-r">Discount</th>
-                  <th class="v2-r">Total</th>
+                  <th>{$_('opportunity.detail.col_product')}</th>
+                  <th class="v2-r">{$_('opportunity.detail.col_qty')}</th>
+                  <th class="v2-r">{$_('opportunity.detail.col_unit_price')}</th>
+                  <th class="v2-r">{$_('opportunity.detail.col_discount')}</th>
+                  <th class="v2-r">{$_('opportunity.detail.col_total')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,12 +129,12 @@
               style="display:flex;justify-content:flex-end;gap:24px;padding:11px 14px;border-top:1px solid var(--v2-line);font-size:13px"
             >
               {#if discount > 0}
-                <span class="v2-muted">Subtotal</span>
+                <span class="v2-muted">{$_('opportunity.detail.subtotal_label')}</span>
                 <span class="v2-num v2-muted">{money(subtotal, deal.currency)}</span>
-                <span class="v2-muted">Discounts</span>
+                <span class="v2-muted">{$_('opportunity.detail.discounts_label')}</span>
                 <span class="v2-num v2-muted">−{money(discount, deal.currency)}</span>
               {/if}
-              <span style="font-weight:650">Total</span>
+              <span style="font-weight:650">{$_('opportunity.detail.total_footer_label')}</span>
               <span class="v2-num" style="font-weight:650">{money(deal.amount, deal.currency)}</span
               >
             </div>
@@ -132,33 +145,33 @@
   </div>
 
   <aside class="v2-rail">
-    <div class="v2-label v2-rail-head">Deal</div>
+    <div class="v2-label v2-rail-head">{$_('opportunity.detail.rail_deal_label')}</div>
     <dl class="v2-kv">
-      <dt>Stage</dt>
+      <dt>{$_('opportunity.detail.dt_stage')}</dt>
       <dd>{STAGE_LABEL[deal.stage]}</dd>
-      <dt>Value</dt>
+      <dt>{$_('opportunity.detail.dt_value')}</dt>
       <dd class="v2-num">{money(deal.amount, deal.currency)}</dd>
-      <dt>Probability</dt>
+      <dt>{$_('opportunity.detail.dt_probability')}</dt>
       <dd class="v2-num">{deal.probability}%</dd>
-      <dt>Expected close</dt>
+      <dt>{$_('opportunity.detail.dt_expected_close')}</dt>
       <dd>{longDate(deal.closed_on)}</dd>
-      <dt>Type</dt>
+      <dt>{$_('opportunity.detail.dt_type')}</dt>
       <dd>{OPPORTUNITY_TYPE_LABEL[deal.opportunity_type]}</dd>
-      <dt>Source</dt>
+      <dt>{$_('opportunity.detail.dt_source')}</dt>
       <dd style="text-transform:lowercase">{deal.lead_source || '—'}</dd>
-      <dt>Owner</dt>
-      <dd>{deal.assigned_to || 'Unassigned'}</dd>
+      <dt>{$_('opportunity.detail.dt_owner')}</dt>
+      <dd>{deal.assigned_to || $_('opportunity.detail.owner_unassigned_fallback')}</dd>
       <!--
         "Last activity" used to be here, reading a `last_activity_at` the model
         does not have. Aging is measured from the last stage change, a
         narrower claim, and the one the board is actually coloured by, so that
         is what this row says now.
       -->
-      <dt>Stage since</dt>
+      <dt>{$_('opportunity.detail.dt_stage_since')}</dt>
       <dd>{longDate(deal.stage_changed_at)}</dd>
     </dl>
 
-    <div class="v2-label v2-rail-head">People</div>
+    <div class="v2-label v2-rail-head">{$_('opportunity.detail.rail_people_label')}</div>
     {#each contacts as c (c.id)}
       <!-- A link now that `/contacts/<uuid>` resolves. These names were
            plain text because the contacts module was still fixtures. -->
@@ -173,13 +186,14 @@
           <!-- `relationship` (Champion, Blocker) was a fixture field. Contact
                has `title` and `department`, so the line says those. -->
           <div class="v2-sub" style="font-size:11px">
-            {[c.title, c.department].filter(Boolean).join(' · ') || 'No title recorded'}
+            {[c.title, c.department].filter(Boolean).join(' · ') ||
+              $_('opportunity.detail.no_title_recorded')}
           </div>
         </div>
       </a>
     {:else}
       <p class="v2-sub" style="font-size:12px">
-        Nobody is linked to this deal yet. Add the person who signs it.
+        {$_('opportunity.detail.people_empty')}
       </p>
     {/each}
 

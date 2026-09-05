@@ -18,12 +18,14 @@
    * sentence, there is no banner. The duplicate warning is a real query (see
    * `findDuplicates`) and renders only when there is a match.
    */
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import { money, relativeDays, daysSince, shortDate } from '$lib/v2/format.js';
-  import { LEAD_STATUS_TONE, LEAD_STATUS_LABEL, industryLabel } from '$lib/v2/enums.js';
+  import { LEAD_STATUS_TONE, industryLabel } from '$lib/v2/enums.js';
+  import { leadStatusKey } from '$lib/leads/status-source-labels.js';
   import { t } from '$lib/terminology.js';
   import { enhance } from '$app/forms';
   import {
@@ -42,8 +44,10 @@
 
   let { lead, activity, duplicates, customFields } = $derived(data);
   let isConverted = $derived(lead.status === 'converted');
-  let firstName = $derived(lead.first_name || 'this lead');
-  let fullName = $derived(`${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || 'Lead');
+  let firstName = $derived(lead.first_name || $_('leads.detail.generic_lead_fallback'));
+  let fullName = $derived(
+    `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || $_('leads.detail.default_name')
+  );
 
   let note = $state('');
   let saving = $state(false);
@@ -86,7 +90,7 @@
    */
   function metaFor(e) {
     const parts = [];
-    if (e.type === 'file') parts.push('Attached');
+    if (e.type === 'file') parts.push($_('leads.detail.attached_label'));
     if (e.by) parts.push(e.by);
     parts.push(relativeDays(e.at));
     return parts.join(' · ');
@@ -95,8 +99,8 @@
   /** @param {string} iso */
   function dayGroup(iso) {
     const n = daysSince(iso);
-    if (n === 0) return 'Today';
-    if (n === 1) return 'Yesterday';
+    if (n === 0) return $_('leads.detail.today_label');
+    if (n === 1) return $_('leads.detail.yesterday_label');
     return shortDate(iso);
   }
 
@@ -130,26 +134,30 @@
     if (!lead.email && !lead.phone) {
       return {
         tone: 'rust',
-        label: 'Cannot reach',
-        text: `No email and no phone on this lead, so there is no way to contact ${firstName}. Add one before you can work it.`,
-        action: 'Add contact details'
+        label: $_('leads.detail.headline_cannot_reach_label'),
+        text: $_('leads.detail.headline_cannot_reach_text', { values: { name: firstName } }),
+        action: $_('leads.detail.headline_cannot_reach_action')
       };
     }
     if (!lead.assigned_to) {
       return {
         tone: 'ember',
-        label: 'Needs an owner',
+        label: $_('leads.detail.headline_needs_owner_label'),
         text: lead.opportunity_amount
-          ? `Worth ${money(lead.opportunity_amount, lead.currency)} and nobody owns it. Assign an owner before it goes cold.`
-          : 'Nobody owns this lead. Assign an owner so it does not sit unworked.',
-        action: 'Assign owner'
+          ? $_('leads.detail.headline_needs_owner_text_with_amount', {
+              values: { amount: money(lead.opportunity_amount, lead.currency) }
+            })
+          : $_('leads.detail.headline_needs_owner_text'),
+        action: $_('leads.detail.headline_needs_owner_action')
       };
     }
     if (!lead.last_contacted && (daysSince(lead.created_at) ?? 0) > 7) {
       return {
         tone: 'ember',
-        label: 'Never contacted',
-        text: `Created ${relativeDays(lead.created_at)} and still never contacted. Reach out, or recycle it.`,
+        label: $_('leads.detail.headline_never_contacted_label'),
+        text: $_('leads.detail.headline_never_contacted_text', {
+          values: { when: relativeDays(lead.created_at) }
+        }),
         action: null
       };
     }
@@ -177,24 +185,32 @@
     <Avatar name={fullName} size={42} />
   {/snippet}
   {#snippet crumb()}
-    <a href={resolve('/leads')}>{t(data.org?.terminology, 'lead.plural', 'Leads')}</a>
+    <a href={resolve('/leads')}
+      >{t(data.org?.terminology, 'lead.plural', $_('leads.detail.breadcrumb_leads'))}</a
+    >
     <ChevronRight size={12} />
-    <span>{lead.company_name || 'No company'}</span>
+    <span>{lead.company_name || $_('leads.detail.no_company_fallback')}</span>
   {/snippet}
   {#snippet sub()}
-    {lead.job_title || 'No title recorded'} ·
+    {lead.job_title || $_('leads.detail.no_title_fallback')} ·
     {lead.last_contacted
-      ? `last contacted ${relativeDays(lead.last_contacted)}`
-      : 'never contacted'}
+      ? $_('leads.detail.sub_last_contacted', {
+          values: { when: relativeDays(lead.last_contacted) }
+        })
+      : $_('leads.detail.sub_never_contacted')}
   {/snippet}
   {#snippet actions()}
     {#if lead.email}
-      <a class="v2-btn" href="mailto:{lead.email}"><Mail />Email</a>
+      <a class="v2-btn" href="mailto:{lead.email}"
+        ><Mail />{$_('leads.detail.action_email_button')}</a
+      >
     {/if}
     {#if lead.phone}
-      <a class="v2-btn" href="tel:{lead.phone}"><Phone />Call</a>
+      <a class="v2-btn" href="tel:{lead.phone}"><Phone />{$_('leads.detail.action_call_button')}</a>
     {/if}
-    <a class="v2-btn" href={resolve(`/leads/${lead.id}/edit`)}><Pencil />Edit</a>
+    <a class="v2-btn" href={resolve(`/leads/${lead.id}/edit`)}
+      ><Pencil />{$_('leads.detail.action_edit_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
@@ -220,33 +236,46 @@
         {#if duplicates.length > 0}
           <div class="dup" role="note">
             <div class="v2-label" style="color:var(--v2-clay);margin-bottom:4px">
-              Possible duplicate
+              {$_('leads.detail.duplicate_label')}
             </div>
             <div style="font-size:12.5px;line-height:1.55">
               {#each duplicates as d, i (d.id)}
-                {i > 0 ? ', ' : ''}<a href={resolve(`/leads/${d.id}`)}>{d.name}</a> shares {d.matched_on}
-              {/each}. Merge them, or link both to one account when you convert.
+                {i > 0 ? ', ' : ''}<a href={resolve(`/leads/${d.id}`)}>{d.name}</a>
+                {$_('leads.detail.duplicate_shares_word')}
+                {d.matched_on}
+              {/each}. {$_('leads.detail.duplicate_footer')}
             </div>
           </div>
         {/if}
 
         <div class="v2-card" style="padding:15px 16px">
           {#if isConverted}
-            <div class="v2-label" style="margin-bottom:8px">Already converted</div>
+            <div class="v2-label" style="margin-bottom:8px">
+              {$_('leads.detail.already_converted_label')}
+            </div>
             <p class="v2-sub" style="margin:0;font-size:12.5px;line-height:1.55">
-              The account, contact and deal this lead became carry the work now. Converting again
-              would build a second deal against the same account, and the API refuses it.
+              {$_('leads.detail.already_converted_body')}
             </p>
           {:else}
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
               <div style="flex:1;min-width:210px">
-                <div class="v2-label" style="margin-bottom:6px">Convert</div>
+                <div class="v2-label" style="margin-bottom:6px">
+                  {$_('leads.detail.convert_label')}
+                </div>
                 <p class="v2-sub" style="margin:0;font-size:12.5px;line-height:1.55">
-                  Creates an <b style="color:var(--v2-ink)">account</b>, a
-                  <b style="color:var(--v2-ink)">contact</b> and one
-                  <b style="color:var(--v2-ink)">deal</b>{lead.opportunity_amount
-                    ? ` worth ${money(lead.opportunity_amount, lead.currency)}`
-                    : ''}. The lead stays linked, and there is no endpoint that undoes it.
+                  {$_('leads.detail.convert_intro')}
+                  <b style="color:var(--v2-ink)">{$_('leads.detail.convert_word_account')}</b>{$_(
+                    'leads.detail.convert_mid1'
+                  )}
+                  <b style="color:var(--v2-ink)">{$_('leads.detail.convert_word_contact')}</b>
+                  {$_('leads.detail.convert_mid2')}
+                  <b style="color:var(--v2-ink)">{$_('leads.detail.convert_word_deal')}</b
+                  >{lead.opportunity_amount
+                    ? ' ' +
+                      $_('leads.detail.convert_worth', {
+                        values: { amount: money(lead.opportunity_amount, lead.currency) }
+                      })
+                    : ''}. {$_('leads.detail.convert_tail')}
                 </p>
               </div>
               <form method="POST" action="?/convert" use:enhance>
@@ -262,14 +291,14 @@
                   type="submit"
                   disabled={!lead.email}
                   title={lead.email
-                    ? 'Creates an account, a contact and an opportunity from this lead'
-                    : 'Add an email address to this lead first. The contact record is created from it.'}
+                    ? $_('leads.detail.convert_title_ready')
+                    : $_('leads.detail.convert_title_needs_email')}
                 >
-                  Convert lead
+                  {$_('leads.detail.convert_button')}
                 </button>
                 {#if !lead.email}
                   <p class="v2-sub" style="margin:4px 0 0;font-size:11.5px">
-                    Add an email address first. The contact record is created from it.
+                    {$_('leads.detail.convert_email_hint')}
                   </p>
                 {/if}
               </form>
@@ -279,17 +308,25 @@
 
         {#if form?.converted}
           <div class="v2-card" role="status" style="margin-top:12px;padding:15px 16px">
-            <div class="v2-label" style="margin-bottom:6px">Converted</div>
+            <div class="v2-label" style="margin-bottom:6px">
+              {$_('leads.detail.converted_label')}
+            </div>
             <p class="v2-sub" style="margin:0 0 8px;font-size:12.5px;line-height:1.55">
-              The account, contact and deal are ready.
+              {$_('leads.detail.converted_body')}
             </p>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a class="v2-btn" href={resolve(`/accounts/${form.account_id}`)}>View account</a>
+              <a class="v2-btn" href={resolve(`/accounts/${form.account_id}`)}
+                >{$_('leads.detail.view_account_button')}</a
+              >
               {#if form.contact_id}
-                <a class="v2-btn" href={resolve(`/contacts/${form.contact_id}`)}>View contact</a>
+                <a class="v2-btn" href={resolve(`/contacts/${form.contact_id}`)}
+                  >{$_('leads.detail.view_contact_button')}</a
+                >
               {/if}
               {#if form.opportunity_id}
-                <a class="v2-btn" href={resolve(`/pipeline/${form.opportunity_id}`)}>View deal</a>
+                <a class="v2-btn" href={resolve(`/pipeline/${form.opportunity_id}`)}
+                  >{$_('leads.detail.view_deal_button')}</a
+                >
               {/if}
             </div>
           </div>
@@ -298,7 +335,7 @@
         {/if}
 
         {#if lead.description}
-          <div class="v2-label" style="margin:22px 0 10px">About</div>
+          <div class="v2-label" style="margin:22px 0 10px">{$_('leads.detail.about_label')}</div>
           <div class="v2-card about">{lead.description}</div>
         {/if}
 
@@ -306,7 +343,7 @@
              not: on a real-estate org these ARE the record, and an unfilled
              "Possession by" is worth seeing rather than silently omitted. -->
         {#if customFields.length > 0}
-          <div class="v2-label" style="margin:22px 0 10px">Details</div>
+          <div class="v2-label" style="margin:22px 0 10px">{$_('leads.detail.details_label')}</div>
           <div class="v2-card cf">
             {#each customFields as f (f.key)}
               <div class="cf-row">
@@ -320,15 +357,19 @@
         {/if}
 
         <div class="act-head">
-          <div class="v2-label">Activity</div>
+          <div class="v2-label">{$_('leads.detail.activity_label')}</div>
           {#if hasFiles}
             <!-- Only real kinds. There is no calls/emails/meetings split because
                  there are no such records to split on. -->
-            <div class="seg" role="tablist" aria-label="Filter activity">
-              <button class:on={filter === 'all'} onclick={() => (filter = 'all')}>All</button>
-              <button class:on={filter === 'notes'} onclick={() => (filter = 'notes')}>Notes</button
+            <div class="seg" role="tablist" aria-label={$_('leads.detail.filter_activity_aria')}>
+              <button class:on={filter === 'all'} onclick={() => (filter = 'all')}
+                >{$_('leads.detail.filter_all')}</button
               >
-              <button class:on={filter === 'files'} onclick={() => (filter = 'files')}>Files</button
+              <button class:on={filter === 'notes'} onclick={() => (filter = 'notes')}
+                >{$_('leads.detail.filter_notes')}</button
+              >
+              <button class:on={filter === 'files'} onclick={() => (filter = 'files')}
+                >{$_('leads.detail.filter_files')}</button
               >
             </div>
           {/if}
@@ -360,14 +401,14 @@
             rows="2"
             bind:value={note}
             class="note-input"
-            placeholder="Log a call, a reply, what they said…"></textarea>
+            placeholder={$_('leads.detail.note_placeholder')}></textarea>
           <div class="note-actions">
             <button class="v2-btn v2-btn-primary" type="submit" disabled={saving || !note.trim()}>
-              {saving ? 'Saving…' : 'Add note'}
+              {saving ? $_('leads.detail.saving_label') : $_('leads.detail.add_note_button')}
             </button>
             <label class="v2-btn" class:has-file={fileName}>
               <Paperclip size={14} />
-              <span class="attach-label">{fileName || 'Attach file'}</span>
+              <span class="attach-label">{fileName || $_('leads.detail.attach_file_button')}</span>
               <input
                 bind:this={fileInput}
                 type="file"
@@ -381,7 +422,7 @@
                 type="button"
                 class="v2-btn-quiet clear-file"
                 onclick={clearFile}
-                title="Remove file"
+                title={$_('leads.detail.remove_file_title')}
               >
                 <X size={13} />
               </button>
@@ -430,19 +471,19 @@
   <aside class="v2-rail">
     <!-- An em dash where a field is empty. A blank list reads as a page that
          failed to load; "—" reads as a fact nobody has filled in. -->
-    <div class="v2-label v2-rail-head">Reach</div>
+    <div class="v2-label v2-rail-head">{$_('leads.detail.rail_reach_label')}</div>
     <dl class="v2-kv">
-      <dt>Email</dt>
+      <dt>{$_('leads.detail.rail_email_label')}</dt>
       <dd style="font-size:12px">
         {#if lead.email}<a href="mailto:{lead.email}" style="color:inherit">{lead.email}</a>{:else},
         {/if}
       </dd>
-      <dt>Phone</dt>
+      <dt>{$_('leads.detail.rail_phone_label')}</dt>
       <dd class="v2-num" style="font-size:12px">
         {#if lead.phone}<a href="tel:{lead.phone}" style="color:inherit">{lead.phone}</a>{:else},
         {/if}
       </dd>
-      <dt>Website</dt>
+      <dt>{$_('leads.detail.rail_website_label')}</dt>
       <dd style="font-size:12px">
         {#if lead.website && webHref(lead.website)}<a
             href={webHref(lead.website)}
@@ -453,27 +494,31 @@
       </dd>
     </dl>
 
-    <div class="v2-label v2-rail-head">Lead</div>
+    <div class="v2-label v2-rail-head">{$_('leads.detail.rail_lead_label')}</div>
     <dl class="v2-kv">
-      <dt>Status</dt>
-      <dd><Pill tone={LEAD_STATUS_TONE[lead.status]}>{LEAD_STATUS_LABEL[lead.status]}</Pill></dd>
-      <dt>Owner</dt>
-      <dd>{lead.assigned_to || 'Nobody'}</dd>
-      <dt>Source</dt>
+      <dt>{$_('leads.detail.rail_status_label')}</dt>
+      <dd><Pill tone={LEAD_STATUS_TONE[lead.status]}>{$_(leadStatusKey(lead.status))}</Pill></dd>
+      <dt>{$_('leads.detail.rail_owner_label')}</dt>
+      <dd>{lead.assigned_to || $_('leads.detail.nobody_fallback')}</dd>
+      <dt>{$_('leads.detail.rail_source_label')}</dt>
       <dd>{lead.source || '—'}</dd>
-      <dt>Industry</dt>
+      <dt>{$_('leads.detail.rail_industry_label')}</dt>
       <dd>{industryLabel(lead.industry) || '—'}</dd>
-      <dt>Est. value</dt>
+      <dt>{$_('leads.detail.rail_est_value_label')}</dt>
       <dd class="v2-num">
         {lead.opportunity_amount ? money(lead.opportunity_amount, lead.currency) : '—'}
       </dd>
     </dl>
 
-    <div class="v2-label v2-rail-head">Timeline</div>
+    <div class="v2-label v2-rail-head">{$_('leads.detail.rail_timeline_label')}</div>
     <dl class="v2-kv">
-      <dt>Last contacted</dt>
-      <dd>{lead.last_contacted ? relativeDays(lead.last_contacted) : 'Never'}</dd>
-      <dt>Created</dt>
+      <dt>{$_('leads.detail.rail_last_contacted_label')}</dt>
+      <dd>
+        {lead.last_contacted
+          ? relativeDays(lead.last_contacted)
+          : $_('leads.detail.never_fallback')}
+      </dd>
+      <dt>{$_('leads.detail.rail_created_label')}</dt>
       <dd>{relativeDays(lead.created_at)}</dd>
     </dl>
   </aside>

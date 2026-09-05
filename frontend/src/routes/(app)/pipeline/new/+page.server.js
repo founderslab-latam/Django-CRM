@@ -1,5 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { EDITABLE_FIELDS, createDeal, getDealFormOptions } from '$lib/server/v2/deals.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load(event) {
@@ -29,7 +31,14 @@ export const actions = {
       // `values` goes back so a rejected form is not a blank form. Retyping
       // eight fields because the ninth collided is how people learn to
       // distrust a create page.
-      return fail(400, { values, error: String(err?.message ?? 'Could not create the deal.') });
+      //
+      // See the equivalent comment in `[id]/edit/+page.server.js`: the
+      // request's locale is already resolved on the shared `locale` store by
+      // `hooks.server.js` before this action runs.
+      return fail(400, {
+        values,
+        error: String(err?.message ?? get(_)('opportunity.new.error_fallback'))
+      });
     }
 
     // Straight to the deal, not back to the list: the next thing anyone does

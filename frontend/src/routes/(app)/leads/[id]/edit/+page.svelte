@@ -50,18 +50,18 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import {
     LEAD_STATUSES,
-    LEAD_STATUS_LABEL,
     LEAD_STATUS_TONE,
     LEAD_SOURCES,
-    LEAD_SOURCE_LABEL,
     LEAD_IRREVERSIBLE_STATUSES,
     INDUSTRIES,
     industryLabel
   } from '$lib/v2/enums.js';
+  import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
   import { money, longDate } from '$lib/v2/format.js';
   import { ChevronRight, TriangleAlert, Lock } from '@lucide/svelte';
 
@@ -91,7 +91,8 @@
   /** The API's own refusal, when it disagrees with the checks below. */
   let serverMessage = $derived(result?.message ?? '');
 
-  const displayName = `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || 'Lead';
+  const displayName =
+    `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim() || $_('leads.edit.default_name');
 
   /* Mirrors `LeadCreateSerializer.validate_status`: converted is the one
      status you can neither re-enter nor leave. Everything else can change. */
@@ -107,15 +108,14 @@
     /** @type {Record<string, string>} */
     const e = {};
     if (!form.first_name.trim() && !form.last_name.trim())
-      e.last_name = 'A lead needs a name to be findable. First or last will do.';
+      e.last_name = $_('leads.edit.error_last_name');
 
     const email = form.email.trim().toLowerCase();
-    if (emailRequired && !email)
-      e.email = 'Converting creates a Contact, and a contact without an email cannot be reached.';
+    if (emailRequired && !email) e.email = $_('leads.edit.error_email_required_convert');
     else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      e.email = 'That does not look like an email address.';
+      e.email = $_('leads.edit.error_email_invalid');
     else if (email && server.taken_emails.includes(email))
-      e.email = 'Another lead in this org already uses that address.';
+      e.email = $_('leads.edit.error_email_taken');
 
     /* Mirrors `flexible_phone_validator` in common/validators.py exactly.
        The check here used to be a length test, which passes plenty of values
@@ -125,15 +125,15 @@
     if (form.phone && !/^[\d\s\-()+.]{7,25}$/.test(form.phone)) {
       e.phone =
         form.phone.length > 25
-          ? `Phone is stored in 25 characters; this is ${form.phone.length}.`
-          : 'Digits and separators only. The API rejects letters, so "x123" extensions have to go in the notes.';
+          ? $_('leads.edit.error_phone_too_long', { values: { length: form.phone.length } })
+          : $_('leads.edit.error_phone_invalid');
     }
 
     const amount = form.opportunity_amount;
     if (amount !== '' && amount !== null) {
       const n = Number(amount);
-      if (!Number.isFinite(n)) e.opportunity_amount = 'Estimated value has to be a number.';
-      else if (n < 0) e.opportunity_amount = 'Estimated value cannot be negative.';
+      if (!Number.isFinite(n)) e.opportunity_amount = $_('leads.edit.error_amount_not_number');
+      else if (n < 0) e.opportunity_amount = $_('leads.edit.error_amount_negative');
     }
 
     /* Mirrors the required-field loop at the end of
@@ -145,7 +145,8 @@
        exempt: false is a value, so a required one can never be unsatisfied. */
     for (const f of customFields) {
       if (!f.is_required || f.field_type === 'checkbox') continue;
-      if (String(f.value ?? '').trim() === '') e[`cf_${f.key}`] = `${f.label} is required.`;
+      if (String(f.value ?? '').trim() === '')
+        e[`cf_${f.key}`] = $_('leads.edit.error_cf_required', { values: { label: f.label } });
     }
 
     return e;
@@ -180,17 +181,17 @@
   };
 </script>
 
-<PageHeader title="Edit {displayName}" center>
+<PageHeader title={$_('leads.edit.title', { values: { name: displayName } })} center>
   {#snippet crumb()}
-    <a href={resolve('/leads')}>Leads</a>
+    <a href={resolve('/leads')}>{$_('leads.edit.breadcrumb_leads')}</a>
     <ChevronRight size={12} />
     <a href={resolve(`/leads/${lead.id}`)}>{displayName}</a>
   {/snippet}
   {#snippet sub()}
-    Currently <Pill tone={LEAD_STATUS_TONE[originalStatus]}
-      >{LEAD_STATUS_LABEL[originalStatus]}</Pill
-    >
-    · created {longDate(lead.created_at)}
+    {$_('leads.edit.currently_prefix')}
+    <Pill tone={LEAD_STATUS_TONE[originalStatus]}>{$_(leadStatusKey(originalStatus))}</Pill>
+    ·
+    {$_('leads.edit.created_prefix', { values: { date: longDate(lead.created_at) } })}
   {/snippet}
 </PageHeader>
 
@@ -200,31 +201,37 @@
       <div class="v2-next" style="margin-bottom:18px" role="status">
         <div class="v2-next-body">
           {#if result?.account_id}
-            <div class="v2-next-text">Converted.</div>
+            <div class="v2-next-text">{$_('leads.edit.saved_converted_heading')}</div>
             <div class="v2-sub" style="margin-top:3px">
-              The account, contact and deal are ready. Converting is handled on its own, so only
-              custom fields from this save were applied; every other edit on this form was not.
-              Reopen the lead and redo them.
+              {$_('leads.edit.saved_converted_detail')}
             </div>
           {:else}
-            <div class="v2-next-text">Saved.</div>
+            <div class="v2-next-text">{$_('leads.edit.saved_heading')}</div>
             <div class="v2-sub" style="margin-top:3px">
-              Changes to “{displayName}” are on the record.
+              {$_('leads.edit.saved_detail', { values: { name: displayName } })}
             </div>
           {/if}
           {#if result?.account_id}
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-              <a class="v2-btn" href={resolve(`/accounts/${result.account_id}`)}>View account</a>
+              <a class="v2-btn" href={resolve(`/accounts/${result.account_id}`)}
+                >{$_('leads.edit.view_account_button')}</a
+              >
               {#if result.contact_id}
-                <a class="v2-btn" href={resolve(`/contacts/${result.contact_id}`)}>View contact</a>
+                <a class="v2-btn" href={resolve(`/contacts/${result.contact_id}`)}
+                  >{$_('leads.edit.view_contact_button')}</a
+                >
               {/if}
               {#if result.opportunity_id}
-                <a class="v2-btn" href={resolve(`/pipeline/${result.opportunity_id}`)}>View deal</a>
+                <a class="v2-btn" href={resolve(`/pipeline/${result.opportunity_id}`)}
+                  >{$_('leads.edit.view_deal_button')}</a
+                >
               {/if}
             </div>
           {/if}
         </div>
-        <a class="v2-btn" href={resolve(`/leads/${lead.id}`)}>Back to the lead</a>
+        <a class="v2-btn" href={resolve(`/leads/${lead.id}`)}
+          >{$_('leads.edit.back_to_lead_button')}</a
+        >
       </div>
     {/if}
 
@@ -236,7 +243,7 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this change</div>
+          <div style="font-weight:600">{$_('leads.edit.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{serverMessage}</div>
         </div>
       </div>
@@ -251,26 +258,24 @@
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
           <div style="font-weight:600">
-            {Object.keys(errors).length} field{Object.keys(errors).length === 1 ? '' : 's'} still need{Object.keys(
-              errors
-            ).length === 1
-              ? 's'
-              : ''} you
+            {$_('leads.edit.validation_heading', {
+              values: { count: Object.keys(errors).length }
+            })}
           </div>
-          <div class="v2-sub" style="margin-top:2px">Nothing has been saved.</div>
+          <div class="v2-sub" style="margin-top:2px">{$_('leads.edit.validation_detail')}</div>
         </div>
       </div>
     {/if}
 
-    <div class="v2-section-label v2-label">Person</div>
+    <div class="v2-section-label v2-label">{$_('leads.edit.section_person_label')}</div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-first">First name</label>
+        <label for="f-first">{$_('leads.edit.label_first_name')}</label>
         <input id="f-first" name="first_name" class="v2-input" bind:value={form.first_name} />
       </div>
       <div class="v2-field">
-        <label for="f-last">Last name</label>
+        <label for="f-last">{$_('leads.edit.label_last_name')}</label>
         <input
           id="f-last"
           name="last_name"
@@ -285,8 +290,8 @@
 
     <div class="v2-field">
       <label for="f-email">
-        Email
-        {#if emailRequired}<span class="req">required to convert</span>{/if}
+        {$_('leads.edit.label_email')}
+        {#if emailRequired}<span class="req">{$_('leads.edit.email_required_badge')}</span>{/if}
       </label>
       <input
         id="f-email"
@@ -302,15 +307,14 @@
         <p class="v2-error" id="e-email">{errors.email}</p>
       {:else}
         <p class="v2-hint" id="h-email">
-          One lead per address per org, ignoring case. The database enforces it, so a duplicate
-          comes back as a rejected save rather than a second record.
+          {$_('leads.edit.hint_email_unique')}
         </p>
       {/if}
     </div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-phone">Phone</label>
+        <label for="f-phone">{$_('leads.edit.label_phone')}</label>
         <input
           id="f-phone"
           name="phone"
@@ -322,22 +326,22 @@
         {#if show('phone')}<p class="v2-error">{errors.phone}</p>{/if}
       </div>
       <div class="v2-field">
-        <label for="f-jobtitle">Job title</label>
+        <label for="f-jobtitle">{$_('leads.edit.label_job_title')}</label>
         <input id="f-jobtitle" name="job_title" class="v2-input" bind:value={form.job_title} />
       </div>
     </div>
 
-    <div class="v2-section-label v2-label">Company</div>
+    <div class="v2-section-label v2-label">{$_('leads.edit.section_company_label')}</div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-company">Company</label>
+        <label for="f-company">{$_('leads.edit.label_company')}</label>
         <input id="f-company" name="company_name" class="v2-input" bind:value={form.company_name} />
       </div>
       <div class="v2-field">
-        <label for="f-industry">Industry</label>
+        <label for="f-industry">{$_('leads.edit.label_industry')}</label>
         <select id="f-industry" name="industry" class="v2-input" bind:value={form.industry}>
-          <option value="">Not specified</option>
+          <option value="">{$_('leads.edit.option_not_specified')}</option>
           {#each INDUSTRIES as ind (ind)}
             <option value={ind}>{industryLabel(ind)}</option>
           {/each}
@@ -346,17 +350,19 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-website">Website</label>
+      <label for="f-website">{$_('leads.edit.label_website')}</label>
       <input id="f-website" name="website" class="v2-input" bind:value={form.website} />
     </div>
 
-    <div class="v2-section-label v2-label">Pipeline</div>
+    <div class="v2-section-label v2-label">{$_('leads.edit.section_pipeline_label')}</div>
 
     <div class="pair">
       <div class="v2-field">
         <label for="f-status">
-          Status
-          {#if isConverted}<span class="locked"><Lock size={10} />Settled</span>{/if}
+          {$_('leads.edit.label_status')}
+          {#if isConverted}<span class="locked"
+              ><Lock size={10} />{$_('leads.edit.status_settled_badge')}</span
+            >{/if}
         </label>
         <!--
           Disabled rather than absent once the lead is converted. Removing the
@@ -373,7 +379,7 @@
           aria-describedby={isConverted ? 'status-locked' : undefined}
         >
           {#each LEAD_STATUSES as s (s)}
-            <option value={s}>{LEAD_STATUS_LABEL[s]}</option>
+            <option value={s}>{$_(leadStatusKey(s))}</option>
           {/each}
         </select>
         <!--
@@ -390,11 +396,11 @@
         -->
       </div>
       <div class="v2-field">
-        <label for="f-source">Source</label>
+        <label for="f-source">{$_('leads.edit.label_source')}</label>
         <select id="f-source" name="source" class="v2-input" bind:value={form.source}>
-          <option value="">Not specified</option>
+          <option value="">{$_('leads.edit.option_not_specified')}</option>
           {#each LEAD_SOURCES as s (s)}
-            <option value={s}>{LEAD_SOURCE_LABEL[s]}</option>
+            <option value={s}>{$_(leadSourceKey(s))}</option>
           {/each}
         </select>
       </div>
@@ -406,42 +412,36 @@
     -->
     {#if isConverted}
       <div class="consequence" style="--edge:var(--v2-moss)" id="status-locked">
-        <div style="font-weight:600">This lead has already been converted</div>
+        <div style="font-weight:600">{$_('leads.edit.already_converted_title')}</div>
         <p>
-          Its account, contact and opportunity exist and carry the work now. The status stays where
-          it is: reopening the lead would not remove any of them, and converting it again would
-          build a second opportunity against the same account. The API refuses both.
+          {$_('leads.edit.already_converted_body1')}
         </p>
         <p style="margin-top:6px">
-          Everything else on this form is still editable. A converted lead is a record, not a
-          read-only one.
+          {$_('leads.edit.already_converted_body2')}
         </p>
       </div>
     {:else if enteringConverted}
       <div class="consequence" style="--edge:var(--v2-clay)">
-        <div style="font-weight:600">Converting creates three records</div>
+        <div style="font-weight:600">{$_('leads.edit.entering_converted_title')}</div>
         <p>
-          An Account, a Contact and an Opportunity, with this lead's comments and attachments moved
-          across. The lead stays as a converted record, and this is the last time you can change its
-          status. There is no endpoint that undoes any of it.
+          {$_('leads.edit.entering_converted_body1')}
         </p>
         <p style="margin-top:6px">
-          Any other change on this form, aside from custom fields, is dropped when it saves
-          alongside a conversion. Reopen the lead afterwards to redo it.
+          {$_('leads.edit.entering_converted_body2')}
         </p>
       </div>
     {:else if statusChanged}
       <p class="v2-hint" style="margin:-6px 0 4px">
-        {LEAD_STATUS_LABEL[originalStatus]} → {LEAD_STATUS_LABEL[form.status]}
+        {$_(leadStatusKey(originalStatus))} → {$_(leadStatusKey(form.status))}
         {#if form.status === 'closed'}
-          · reversible, nothing is created
+          · {$_('leads.edit.status_changed_reversible')}
         {/if}
       </p>
     {/if}
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-amount">Estimated value</label>
+        <label for="f-amount">{$_('leads.edit.label_amount')}</label>
         <input
           id="f-amount"
           name="opportunity_amount"
@@ -458,12 +458,12 @@
           <p class="v2-hint">
             {Number(form.opportunity_amount) > 0
               ? money(Number(form.opportunity_amount), lead.currency)
-              : 'What the deal would be worth if it lands.'}
+              : $_('leads.edit.hint_amount_placeholder')}
           </p>
         {/if}
       </div>
       <div class="v2-field">
-        <label for="f-owner">Owner</label>
+        <label for="f-owner">{$_('leads.edit.label_owner')}</label>
         <!-- Bound to the Profile id. The mock bound this to a display name,
              which reads identically on screen and cannot be saved. -->
         <!-- What the select was rendered with. The action compares against it
@@ -472,7 +472,7 @@
              cut a two-person lead down to one on every save. -->
         <input type="hidden" name="assigned_to_original" value={data.form.assigned_to} />
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('leads.edit.option_nobody')}</option>
           {#each data.owners as o (o.id)}
             <option value={o.id}>{o.name}</option>
           {/each}
@@ -481,7 +481,7 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-notes">Notes</label>
+      <label for="f-notes">{$_('leads.edit.label_notes')}</label>
       <textarea
         id="f-notes"
         name="description"
@@ -494,7 +494,7 @@
          type follows field_type; every one submits a string (or nothing, for
          an unchecked box) and `_coerce_value` converts on the way in. -->
     {#if customFields.length > 0}
-      <div class="v2-label v2-section-label">Details</div>
+      <div class="v2-label v2-section-label">{$_('leads.edit.section_details_label')}</div>
       {#each customFields as f (f.key)}
         <div class="v2-field">
           {#if f.field_type === 'checkbox'}
@@ -505,7 +505,7 @@
           {:else}
             <label for="f-cf-{f.key}">
               {f.label}
-              {#if f.is_required}<span class="req">required</span>{/if}
+              {#if f.is_required}<span class="req">{$_('leads.edit.cf_required_badge')}</span>{/if}
             </label>
             {#if f.field_type === 'dropdown'}
               <select
@@ -556,9 +556,9 @@
 
     <div class="actions">
       <button class="v2-btn v2-btn-primary" type="submit" disabled={saving}>
-        {saving ? 'Saving…' : 'Save changes'}
+        {saving ? $_('leads.edit.saving_label') : $_('leads.edit.save_button')}
       </button>
-      <a class="v2-btn" href={resolve(`/leads/${lead.id}`)}>Cancel</a>
+      <a class="v2-btn" href={resolve(`/leads/${lead.id}`)}>{$_('leads.edit.cancel_button')}</a>
     </div>
   </form>
 </div>

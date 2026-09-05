@@ -1,6 +1,8 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { EDITABLE_FIELDS, getLeadForEdit, updateLead } from '$lib/server/v2/leads.js';
 import { collectFromForm, leadFieldDefinitions } from '$lib/server/v2/lead-custom-fields.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, params }) {
@@ -63,9 +65,14 @@ export const actions = {
     }
 
     if (!values.first_name && !values.last_name) {
+      // The request's locale was already resolved into the shared, per-process
+      // `locale` store by `setupI18n()` in `hooks.server.js` before this
+      // action ran (same request, awaited before `resolve()`), so reading it
+      // here gets this request's language. See the SSR caveat documented on
+      // that store: not request-isolated, accepted for this pilot's scope.
       return fail(400, {
         values,
-        errors: { last_name: 'A lead needs a name to be findable. First or last will do.' }
+        errors: { last_name: get(_)('leads.edit.error_last_name') }
       });
     }
 
@@ -77,7 +84,10 @@ export const actions = {
       // `api-helpers` flattens DRF's field errors into one string. Surface it
       // rather than a generic failure: "email: lead with this email already
       // exists" tells somebody what to change; "Could not save" does not.
-      return fail(400, { values, message: String(err?.message ?? 'Could not save this lead.') });
+      return fail(400, {
+        values,
+        message: String(err?.message ?? get(_)('leads.edit.error_fallback'))
+      });
     }
 
     // A save that also converted the lead (status -> "converted") carries the

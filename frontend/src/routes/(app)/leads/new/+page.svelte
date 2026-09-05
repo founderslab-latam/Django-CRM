@@ -16,15 +16,10 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
-  import {
-    LEAD_STATUSES,
-    LEAD_STATUS_LABEL,
-    LEAD_SOURCES,
-    LEAD_SOURCE_LABEL,
-    INDUSTRIES,
-    industryLabel
-  } from '$lib/v2/enums.js';
+  import { LEAD_STATUSES, LEAD_SOURCES, INDUSTRIES, industryLabel } from '$lib/v2/enums.js';
+  import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
   import { money } from '$lib/v2/format.js';
   import { TriangleAlert } from '@lucide/svelte';
 
@@ -72,24 +67,24 @@
     // floor, not the boundary; an empty lead would otherwise save silently
     // and be unfindable in the list a moment later.
     if (!form.first_name.trim() && !form.last_name.trim())
-      e.last_name = 'A lead needs a name to be findable. First or last will do.';
+      e.last_name = $_('leads.new.error_last_name');
 
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = 'That does not look like an email address.';
+      e.email = $_('leads.new.error_email_invalid');
 
     // The exact regex from `flexible_phone_validator`. Extensions like "x123"
     // are rejected by the model, so they are caught here rather than as an
     // opaque whole-form refusal after the save.
     if (form.phone && !/^[\d\s\-()+.]{7,25}$/.test(form.phone))
-      e.phone = '7 to 25 characters: digits, spaces, brackets, dots, dashes. No extensions.';
+      e.phone = $_('leads.new.error_phone_invalid');
 
     // `createLead` runs `Number(amount)` and the body is JSON-encoded, and
     // `JSON.stringify` turns `NaN` into `null`. Without this check, typing
     // "abc" would not error, it would silently save as no value at all.
     if (form.opportunity_amount !== '') {
       const n = Number(form.opportunity_amount);
-      if (!Number.isFinite(n)) e.opportunity_amount = 'Estimated value has to be a number.';
-      else if (n < 0) e.opportunity_amount = 'Estimated value cannot be negative.';
+      if (!Number.isFinite(n)) e.opportunity_amount = $_('leads.new.error_amount_not_number');
+      else if (n < 0) e.opportunity_amount = $_('leads.new.error_amount_negative');
     }
 
     return e;
@@ -126,12 +121,12 @@
   };
 </script>
 
-<PageHeader title="New lead" center>
+<PageHeader title={$_('leads.new.title')} center>
   {#snippet crumb()}
-    <a href={resolve('/leads')}>Leads</a> ›
+    <a href={resolve('/leads')}>{$_('leads.new.breadcrumb_leads')}</a> ›
   {/snippet}
   {#snippet sub()}
-    A name and a company is enough to start. The rest can wait.
+    {$_('leads.new.subheading')}
   {/snippet}
 </PageHeader>
 
@@ -145,7 +140,7 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this lead</div>
+          <div style="font-weight:600">{$_('leads.new.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
@@ -160,19 +155,17 @@
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
           <div style="font-weight:600">
-            {Object.keys(errors).length} field{Object.keys(errors).length === 1 ? '' : 's'} still need{Object.keys(
-              errors
-            ).length === 1
-              ? 's'
-              : ''} you
+            {$_('leads.new.validation_heading', {
+              values: { count: Object.keys(errors).length }
+            })}
           </div>
-          <div class="v2-sub" style="margin-top:2px">Nothing has been saved.</div>
+          <div class="v2-sub" style="margin-top:2px">{$_('leads.new.validation_detail')}</div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-first">First name</label>
+      <label for="f-first">{$_('leads.new.label_first_name')}</label>
       <input
         id="f-first"
         name="first_name"
@@ -182,7 +175,7 @@
       />
     </div>
     <div class="v2-field">
-      <label for="f-last">Last name</label>
+      <label for="f-last">{$_('leads.new.label_last_name')}</label>
       <input
         id="f-last"
         name="last_name"
@@ -195,11 +188,11 @@
       {#if show('last_name')}<p class="v2-error" id="e-last">{errors.last_name}</p>{/if}
     </div>
     <div class="v2-field">
-      <label for="f-company">Company</label>
+      <label for="f-company">{$_('leads.new.label_company')}</label>
       <input id="f-company" name="company_name" class="v2-input" bind:value={form.company_name} />
     </div>
     <div class="v2-field">
-      <label for="f-email">Email</label>
+      <label for="f-email">{$_('leads.new.label_email')}</label>
       <input
         id="f-email"
         name="email"
@@ -213,20 +206,20 @@
       {#if show('email')}<p class="v2-error" id="e-email">{errors.email}</p>{/if}
     </div>
     <div class="v2-field">
-      <label for="f-owner">Owner</label>
+      <label for="f-owner">{$_('leads.new.label_owner')}</label>
       <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-        <option value="">Unassigned</option>
+        <option value="">{$_('leads.new.option_unassigned')}</option>
         {#each data.owners as o (o.id)}
           <option value={o.id}>{o.name}</option>
         {/each}
       </select>
     </div>
     <div class="v2-field">
-      <label for="f-jobtitle">Job title</label>
+      <label for="f-jobtitle">{$_('leads.new.label_job_title')}</label>
       <input id="f-jobtitle" name="job_title" class="v2-input" bind:value={form.job_title} />
     </div>
     <div class="v2-field">
-      <label for="f-phone">Phone</label>
+      <label for="f-phone">{$_('leads.new.label_phone')}</label>
       <input
         id="f-phone"
         name="phone"
@@ -239,43 +232,40 @@
       {#if show('phone')}<p class="v2-error" id="e-phone">{errors.phone}</p>{/if}
     </div>
     <div class="v2-field">
-      <label for="f-website">Website</label>
+      <label for="f-website">{$_('leads.new.label_website')}</label>
       <input id="f-website" name="website" class="v2-input" bind:value={form.website} />
     </div>
     <div class="v2-field">
-      <label for="f-status">Status</label>
+      <label for="f-status">{$_('leads.new.label_status')}</label>
       <select id="f-status" name="status" class="v2-input" bind:value={form.status}>
         {#each LEAD_STATUSES.filter((s) => s !== 'converted') as s (s)}
-          <option value={s}>{LEAD_STATUS_LABEL[s]}</option>
+          <option value={s}>{$_(leadStatusKey(s))}</option>
         {/each}
       </select>
       <p class="v2-hint">
-        Converting is a significant, largely irreversible step: it creates an Account, a Contact and
-        an Opportunity that nothing undoes if the status changes back, and it requires an email
-        address that nothing else here does. Set the status here to something else, and convert once
-        the lead is real.
+        {$_('leads.new.hint_status_convert')}
       </p>
     </div>
     <div class="v2-field">
-      <label for="f-source">Source</label>
+      <label for="f-source">{$_('leads.new.label_source')}</label>
       <select id="f-source" name="source" class="v2-input" bind:value={form.source}>
-        <option value="">Not specified</option>
+        <option value="">{$_('leads.new.option_not_specified')}</option>
         {#each LEAD_SOURCES as s (s)}
-          <option value={s}>{LEAD_SOURCE_LABEL[s]}</option>
+          <option value={s}>{$_(leadSourceKey(s))}</option>
         {/each}
       </select>
     </div>
     <div class="v2-field">
-      <label for="f-industry">Industry</label>
+      <label for="f-industry">{$_('leads.new.label_industry')}</label>
       <select id="f-industry" name="industry" class="v2-input" bind:value={form.industry}>
-        <option value="">Not specified</option>
+        <option value="">{$_('leads.new.option_not_specified')}</option>
         {#each INDUSTRIES as ind (ind)}
           <option value={ind}>{industryLabel(ind)}</option>
         {/each}
       </select>
     </div>
     <div class="v2-field">
-      <label for="f-amount">Estimated value</label>
+      <label for="f-amount">{$_('leads.new.label_amount')}</label>
       <input
         id="f-amount"
         name="opportunity_amount"
@@ -293,12 +283,12 @@
         <p class="v2-hint" id="h-amount">
           {Number(form.opportunity_amount) > 0
             ? money(Number(form.opportunity_amount), data.org.currency)
-            : 'What the deal would be worth if it lands.'}
+            : $_('leads.new.hint_amount_placeholder')}
         </p>
       {/if}
     </div>
     <div class="v2-field">
-      <label for="f-notes">Notes</label>
+      <label for="f-notes">{$_('leads.new.label_notes')}</label>
       <textarea
         id="f-notes"
         name="description"
@@ -308,8 +298,10 @@
     </div>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}>Create lead</button>
-      <a class="v2-btn" href={resolve('/leads')}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}
+        >{$_('leads.new.create_button')}</button
+      >
+      <a class="v2-btn" href={resolve('/leads')}>{$_('leads.new.cancel_button')}</a>
     </div>
   </form>
 </div>

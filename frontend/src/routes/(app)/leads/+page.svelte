@@ -1,6 +1,7 @@
 <script>
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -23,8 +24,8 @@
      to the literal, so an org with no terminology sees exactly what it saw
      before. The values are tenant text and render as plain text. */
   let terms = $derived(data.org?.terminology);
-  let plural = $derived(t(terms, 'lead.plural', 'Leads'));
-  let singular = $derived(t(terms, 'lead.singular', 'lead'));
+  let plural = $derived(t(terms, 'lead.plural', $_('leads.list.title')));
+  let singular = $derived(t(terms, 'lead.singular', $_('leads.list.singular')));
 
   /**
    * The same rule the API counts with, so the highlighted rows and the
@@ -38,15 +39,19 @@
 
 <PageHeader title={plural}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.count)}</span> open ·
-    <span class="v2-num">{totals.unworked_over_a_week}</span> unworked for more than a week
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('leads.list.open_suffix', { values: { count: totals.count } })} ·
+    <span class="v2-num">{totals.unworked_over_a_week}</span>
+    {$_('leads.list.unworked_suffix')}
   {/snippet}
   {#snippet actions()}
     <!-- Import stays unwired: /api/leads/import/ does not exist yet. Contacts
          and cases both have import/preview/ and import/commit/; leads does not.
          Tracked in the phase 2 plan. -->
-    <button class="v2-btn"><Upload />Import</button>
-    <a class="v2-btn v2-btn-primary" href={resolve('/leads/new')}><Plus />New {singular}</a>
+    <button class="v2-btn"><Upload />{$_('leads.list.import_button')}</button>
+    <a class="v2-btn v2-btn-primary" href={resolve('/leads/new')}
+      ><Plus />{$_('leads.list.new_button', { values: { singular } })}</a
+    >
   {/snippet}
 </PageHeader>
 
@@ -56,19 +61,21 @@
   people={data.people}
   tags={data.tags}
   meId={data.meId}
-  meta="Least recently touched first"
+  meta={$_('leads.list.meta_sort')}
 />
 
 <div class="v2-scroll">
   {#if leads.length === 0}
     <EmptyState
-      title="No {plural.toLowerCase()} yet"
-      body="A lead is somebody who might buy, before you know enough to call it a deal. Import a list, or add the last person who emailed you."
+      title={$_('leads.list.empty_title', { values: { plural: plural.toLowerCase() } })}
+      body={$_('leads.list.empty_body')}
     >
       {#snippet icon()}<Target size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/leads/new')}>New {singular}</a>
-        <button class="v2-btn">Import</button>
+        <a class="v2-btn v2-btn-primary" href={resolve('/leads/new')}
+          >{$_('leads.list.new_button', { values: { singular } })}</a
+        >
+        <button class="v2-btn">{$_('leads.list.import_button')}</button>
       {/snippet}
     </EmptyState>
   {:else}
@@ -76,13 +83,13 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Lead</th>
-            <th>Company</th>
-            <th>Status</th>
-            <th>Source</th>
-            <th class="v2-r">Est. value</th>
-            <th>Last touch</th>
-            <th>Owner</th>
+            <th>{$_('leads.list.col_lead')}</th>
+            <th>{$_('leads.list.col_company')}</th>
+            <th>{$_('leads.list.col_status')}</th>
+            <th>{$_('leads.list.col_source')}</th>
+            <th class="v2-r">{$_('leads.list.col_est_value')}</th>
+            <th>{$_('leads.list.col_last_touch')}</th>
+            <th>{$_('leads.list.col_owner')}</th>
           </tr>
         </thead>
         <tbody>
@@ -115,11 +122,12 @@
                 {#if l.last_contacted}
                   {relativeDays(l.last_contacted)}
                 {:else}
-                  <div>Not contacted</div>
+                  <div>{$_('leads.list.not_contacted')}</div>
                   <!-- Stacked, matching the Company cell. Inline, these two ran
                        together into "Not contactedadded 64 days ago". -->
                   <div class="v2-table-secondary" data-m="hide">
-                    added {relativeDays(l.created_at)}
+                    {$_('leads.list.added_prefix')}
+                    {relativeDays(l.created_at)}
                   </div>
                 {/if}
               </td>
@@ -130,7 +138,8 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{leads.length}</span> of
+      {$_('leads.list.showing_prefix')} <span class="v2-num">{leads.length}</span>
+      {$_('leads.list.of_connector')}
       <span class="v2-num">{count(totals.count)}</span>
     </p>
   {/if}

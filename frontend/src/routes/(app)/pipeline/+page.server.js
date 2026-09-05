@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import {
   listBoard,
   listDeals,
@@ -11,6 +12,7 @@ import { readableError } from '$lib/server/v2/form-errors.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
 import { getOrgPeopleAndTeams, resolveMe } from '$lib/server/v2/org-people.js';
 import { getTags } from '$lib/server/v2/tags.js';
+import { _ } from '$lib/i18n/index.js';
 
 /**
  * The list and the board are two different queries, not two renderings of one
@@ -126,13 +128,21 @@ export const actions = {
     const columnId = String(form.get('column_id') || '');
     const aboveId = String(form.get('above_id') || '');
     const belowId = String(form.get('below_id') || '');
-    if (!id || !columnId) return fail(400, { error: 'Missing card or column.' });
+    if (!id || !columnId)
+      return fail(400, { error: get(_)('opportunity.list.move_missing_fields_error') });
     try {
       await moveDeal({ cookies }, id, { columnId, aboveId, belowId });
       return { success: true };
     } catch (err) {
       const status = /** @type {any} */ (err)?.status === 403 ? 403 : 400;
-      return fail(status, { error: readableError(err, 'Could not move the deal.') });
+      // The request's locale was already resolved into the shared, per-process
+      // `locale` store by `setupI18n()` in `hooks.server.js` before this
+      // action ran (same request, awaited before `resolve()`), so reading it
+      // here gets this request's language. See the SSR caveat documented on
+      // that store: not request-isolated, accepted for this pilot's scope.
+      return fail(status, {
+        error: readableError(err, get(_)('opportunity.list.move_error_fallback'))
+      });
     }
   }
 };

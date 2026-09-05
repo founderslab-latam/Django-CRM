@@ -1,6 +1,8 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { addLeadNote, convertLead, getLead } from '$lib/server/v2/leads.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, params }) {
@@ -29,17 +31,24 @@ export const actions = {
     // attachment posted without a comment (see `addLeadNote`), so refusing it
     // here turns a silent no-op into a message somebody can act on.
     if (!comment) {
+      // The request's locale was already resolved into the shared, per-process
+      // `locale` store by `setupI18n()` in `hooks.server.js` before this
+      // action ran (same request, awaited before `resolve()`), so reading it
+      // here gets this request's language. See the SSR caveat documented on
+      // that store: not request-isolated, accepted for this pilot's scope.
       return fail(400, {
         message: file
-          ? 'Add a note to save alongside the file.'
-          : 'Write something before you save the note.'
+          ? get(_)('leads.detail.error_note_with_file')
+          : get(_)('leads.detail.error_note_empty')
       });
     }
 
     try {
       await addLeadNote({ cookies }, params.id, comment, file);
     } catch (/** @type {any} */ err) {
-      return fail(400, { message: String(err?.message ?? 'Could not save that note.') });
+      return fail(400, {
+        message: String(err?.message ?? get(_)('leads.detail.error_note_fallback'))
+      });
     }
 
     return { noted: true };
@@ -61,7 +70,7 @@ export const actions = {
       };
     } catch (/** @type {any} */ err) {
       return fail(err?.status === 403 ? 403 : 400, {
-        error: readableError(err, 'Could not convert this lead.')
+        error: readableError(err, get(_)('leads.detail.error_convert_fallback'))
       });
     }
   }

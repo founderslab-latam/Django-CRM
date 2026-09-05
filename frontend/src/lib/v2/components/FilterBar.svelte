@@ -49,6 +49,16 @@
   let descriptor = $derived(FILTERS[page] ?? { presets: [], fields: [] });
 
   /**
+   * A `label` (on a field, a preset, or a chip copied from one) is a plain
+   * string for every module except Leads, whose labels are `() => string`
+   * so they can resolve through the current locale at render time (see
+   * `$lib/v2/filters.js`). This treats both the same either way, so a
+   * module that hasn't been translated yet renders exactly as before.
+   */
+  const labelText = (/** @type {string | (() => string)} */ label) =>
+    typeof label === 'function' ? label() : label;
+
+  /**
    * Some pages run a second query engine alongside the main one, with a
    * narrower filter vocabulary than the page's own descriptor. Pipeline's
    * board is the first: it renders from `/opportunities/kanban/`, which reads
@@ -75,7 +85,8 @@
   // it, filtering by a colleague would light up "Mine".
   let activeKey = $derived(activePresetKey(page, url, meId));
   let activeLabel = $derived(
-    descriptor.presets.find((/** @type {any} */ p) => p.key === activeKey)?.label ?? 'All'
+    labelText(descriptor.presets.find((/** @type {any} */ p) => p.key === activeKey)?.label) ??
+      'All'
   );
 
   /**
@@ -132,7 +143,7 @@
           class:v2-menu-item-on={preset.key === activeKey}
           href={resolve(asInternalPath(presetHref(preset)))}
         >
-          {preset.label}
+          {labelText(preset.label)}
         </a>
       {/each}
     </div>
@@ -140,9 +151,11 @@
 
   {#each chips as chip (chip.key)}
     <span class="v2-chip">
-      <b>{chip.label}</b>
+      <b>{labelText(chip.label)}</b>
       {chip.value}
-      <a href={resolve(asInternalPath(chip.href))} aria-label="Remove the {chip.label} filter"
+      <a
+        href={resolve(asInternalPath(chip.href))}
+        aria-label="Remove the {labelText(chip.label)} filter"
         ><X size={12} /></a
       >
     </span>
@@ -173,7 +186,7 @@
 
         {#each visibleFields as field (field.key)}
           <label class="v2-filter-row">
-            <span class="v2-label">{field.label}</span>
+            <span class="v2-label">{labelText(field.label)}</span>
             {#if field.type === 'date-range'}
               <span class="v2-filter-dates">
                 <input
