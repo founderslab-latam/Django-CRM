@@ -17,8 +17,10 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count } from '$lib/v2/format.js';
   import { REOPEN_TO_STATUSES } from '$lib/v2/enums.js';
+  import { caseStatusKey } from '$lib/cases/labels.js';
   import { RotateCcw, MailX } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -29,16 +31,18 @@
   let p = $derived(data.policy);
 </script>
 
-<PageHeader title="Reopen policy">
+<PageHeader title={$_('settings.reopen.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
     {p.is_enabled
-      ? `Replies within ${p.reopen_window_days} days bring a closed ticket back`
-      : 'Closed tickets stay closed'}
+      ? $_('settings.reopen.sub_on', { values: { days: p.reopen_window_days } })
+      : $_('settings.reopen.sub_off')}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit && !editing}
-      <button class="v2-btn v2-btn-primary" onclick={() => (editing = true)}>Edit policy</button>
+      <button class="v2-btn v2-btn-primary" onclick={() => (editing = true)}>
+        {$_('settings.reopen.edit_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
@@ -46,10 +50,10 @@
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Reopened, 30 days"
+      label={$_('settings.reopen.stat_reopened')}
       value={count(p.reopened_last_30d)}
       tone="ink"
-      detail="Closed, then a reply landed in time"
+      detail={$_('settings.reopen.stat_reopened_detail')}
     />
     <!-- "n/a" rather than 0 while the policy is off. `_evaluate_reopen` returns
          `None` on `if not policy["is_enabled"]` BEFORE it compares the window,
@@ -59,16 +63,18 @@
          reply to a closed ticket reopens nothing. A plain 0 there is
          reassurance about the one thing certainly happening. -->
     <StatCard
-      label="Missed the window"
-      value={p.is_enabled ? count(p.replies_after_window_30d) : 'n/a'}
+      label={$_('settings.reopen.stat_missed')}
+      value={p.is_enabled ? count(p.replies_after_window_30d) : $_('settings.reopen.na')}
       tone={p.is_enabled && p.replies_after_window_30d > 0 ? 'clay' : 'slate'}
-      detail={p.is_enabled ? 'Replies that reopened nothing' : 'Not counted while reopening is off'}
+      detail={p.is_enabled
+        ? $_('settings.reopen.stat_missed_detail_on')
+        : $_('settings.reopen.stat_missed_detail_off')}
     />
     <StatCard
-      label="Median reply"
-      value={`${p.median_days_to_reply}d`}
+      label={$_('settings.reopen.stat_median')}
+      value={$_('settings.reopen.days_short', { values: { days: p.median_days_to_reply } })}
       tone="slate"
-      detail="After the ticket was closed"
+      detail={$_('settings.reopen.stat_median_detail')}
     />
   </div>
 </div>
@@ -77,16 +83,16 @@
   <div class="v2-pad" style="padding-bottom:32px">
     {#if editing}
       <SettingsFormPanel
-        title="Reopen policy"
+        title={$_('settings.reopen.title')}
         action="?/update"
         error={form?.update?.error}
-        submitLabel="Save policy"
+        submitLabel={$_('settings.reopen.save_button')}
         oncancel={() => (editing = false)}
         ondone={() => (editing = false)}
       >
         {#snippet fields()}
           <div class="v2-field v2-sfp-wide">
-            <label for="f-enabled">Reopen on customer reply</label>
+            <label for="f-enabled">{$_('settings.reopen.field_enabled')}</label>
             <label style="display:flex;gap:8px;align-items:center;font-weight:400">
               <input
                 id="f-enabled"
@@ -95,12 +101,12 @@
                 value="true"
                 checked={p.is_enabled}
               />
-              Off means a reply is filed on the closed ticket and nothing else happens.
+              {$_('settings.reopen.enabled_help')}
             </label>
           </div>
 
           <div class="v2-field">
-            <label for="f-window">Window, in days</label>
+            <label for="f-window">{$_('settings.reopen.field_window')}</label>
             <input
               id="f-window"
               class="v2-input"
@@ -111,23 +117,23 @@
               required
               value={p.reopen_window_days}
             />
-            <p class="v2-hint">Counted from when the ticket was closed, in calendar days.</p>
+            <p class="v2-hint">{$_('settings.reopen.window_hint')}</p>
           </div>
 
           <div class="v2-field">
-            <label for="f-status">Comes back as</label>
+            <label for="f-status">{$_('settings.reopen.field_status')}</label>
             <select id="f-status" class="v2-input" name="reopen_to_status">
               {#each REOPEN_TO_STATUSES as status (status)}
-                <option value={status} selected={status === p.reopen_to_status}>{status}</option>
+                <option value={status} selected={status === p.reopen_to_status}>
+                  {$_(caseStatusKey(status))}
+                </option>
               {/each}
             </select>
-            <p class="v2-hint">
-              Only these three. A ticket reopened into a closed status would close again on arrival.
-            </p>
+            <p class="v2-hint">{$_('settings.reopen.status_hint_form')}</p>
           </div>
 
           <div class="v2-field v2-sfp-wide">
-            <label for="f-notify">Tell the assignee</label>
+            <label for="f-notify">{$_('settings.reopen.field_notify')}</label>
             <label style="display:flex;gap:8px;align-items:center;font-weight:400">
               <input
                 id="f-notify"
@@ -136,7 +142,7 @@
                 value="true"
                 checked={p.notify_assigned}
               />
-              The person the ticket was assigned to when it closed.
+              {$_('settings.reopen.notify_help')}
             </label>
           </div>
         {/snippet}
@@ -144,69 +150,75 @@
     {/if}
     <div class="v2-split">
       <div>
-        <div class="v2-label" style="margin-bottom:10px">The rule</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('settings.reopen.section_rule')}</div>
         <div class="v2-card" style="overflow:hidden">
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Reopen on customer reply</b>
+              <b>{$_('settings.reopen.field_enabled')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                Off means a reply is filed on the closed ticket and nothing else happens.
+                {$_('settings.reopen.enabled_help')}
               </span>
             </div>
-            <Pill tone={p.is_enabled ? 'moss' : 'slate'}>{p.is_enabled ? 'On' : 'Off'}</Pill>
+            <Pill tone={p.is_enabled ? 'moss' : 'slate'}>
+              {p.is_enabled ? $_('settings.reopen.on') : $_('settings.reopen.off')}
+            </Pill>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Window</b>
+              <b>{$_('settings.reopen.card_window')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                Counted from when the ticket was closed, in calendar days.
+                {$_('settings.reopen.window_hint')}
               </span>
             </div>
-            <span class="v2-num" style="font-size:13px">{p.reopen_window_days} days</span>
+            <span class="v2-num" style="font-size:13px">
+              {$_('settings.reopen.window_days_value', { values: { days: p.reopen_window_days } })}
+            </span>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Comes back as</b>
+              <b>{$_('settings.reopen.field_status')}</b>
               <!-- Must be a non-terminal status: reopening a ticket into a
                    closed status would close it again on arrival. -->
               <span class="v2-sub" style="font-size:11.5px">
-                Has to be a status that counts as open.
+                {$_('settings.reopen.status_hint_card')}
               </span>
             </div>
-            <Pill tone="ink">{p.reopen_to_status}</Pill>
+            <Pill tone="ink">{$_(caseStatusKey(p.reopen_to_status))}</Pill>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Tell the assignee</b>
+              <b>{$_('settings.reopen.field_notify')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                The person the ticket was assigned to when it closed.
+                {$_('settings.reopen.notify_help')}
               </span>
             </div>
             <Pill tone={p.notify_assigned ? 'moss' : 'slate'}>
-              {p.notify_assigned ? 'Yes' : 'No'}
+              {p.notify_assigned ? $_('settings.reopen.yes') : $_('settings.reopen.no')}
             </Pill>
           </div>
         </div>
       </div>
 
       <div>
-        <div class="v2-label" style="margin-bottom:10px">What this changes</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.reopen.section_effect')}
+        </div>
         <div class="v2-card" style="padding:15px 16px">
           <div style="display:flex;gap:10px;align-items:flex-start">
             <RotateCcw size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
             <p class="v2-sub" style="font-size:12.5px;margin:0;line-height:1.5">
               {#if p.is_enabled}
-                A reply inside the window puts the ticket back in the queue as
-                <b style="font-weight:600;color:var(--v2-ink)">{p.reopen_to_status}</b>, keeping its
-                history and its original number. It is the same ticket, not a new one, so first
-                response and resolution are still measured against the original open.
+                {$_('settings.reopen.effect_on_before')}<b
+                  style="font-weight:600;color:var(--v2-ink)"
+                  >{$_(caseStatusKey(p.reopen_to_status))}</b
+                >{$_('settings.reopen.effect_on_after')}
               {:else}
                 <!-- Present tense, and the policy is off, so this cannot be
                      written as though a reply still reopened anything. -->
-                Nothing. A reply is filed on the closed ticket, the ticket stays closed and nobody is
-                told. Turned on, a reply inside the window would put it back in the queue as
-                <b style="font-weight:600;color:var(--v2-ink)">{p.reopen_to_status}</b>, keeping its
-                history and its number.
+                {$_('settings.reopen.effect_off_before')}<b
+                  style="font-weight:600;color:var(--v2-ink)"
+                  >{$_(caseStatusKey(p.reopen_to_status))}</b
+                >{$_('settings.reopen.effect_off_after')}
               {/if}
             </p>
           </div>
@@ -217,11 +229,11 @@
             <div style="display:flex;gap:10px;align-items:flex-start">
               <MailX size={16} style="color:var(--v2-clay);flex:none;margin-top:2px" />
               <div>
-                <div style="font-weight:600;font-size:13px">Nothing is counting the misses</div>
+                <div style="font-weight:600;font-size:13px">
+                  {$_('settings.reopen.misses_heading')}
+                </div>
                 <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-                  With reopening off, a reply to a closed ticket is filed and nothing else happens,
-                  and nothing records it as having missed anything. The figure above is a zero
-                  because nothing is measured, not because nothing is being lost.
+                  {$_('settings.reopen.misses_body')}
                 </p>
               </div>
             </div>
@@ -232,13 +244,15 @@
               <MailX size={16} style="color:var(--v2-clay);flex:none;margin-top:2px" />
               <div>
                 <div style="font-weight:600;font-size:13px">
-                  <span class="v2-num">{count(p.replies_after_window_30d)}</span> replies arrived too
-                  late
+                  <span class="v2-num">{count(p.replies_after_window_30d)}</span>
+                  {$_('settings.reopen.late_heading', {
+                    values: { count: p.replies_after_window_30d }
+                  })}
                 </div>
                 <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-                  They landed on tickets closed more than
-                  <span class="v2-num">{p.reopen_window_days}</span> days earlier, so no ticket came back
-                  and nobody was told. Those customers are still waiting.
+                  {$_('settings.reopen.late_body_before')}
+                  <span class="v2-num">{p.reopen_window_days}</span>
+                  {$_('settings.reopen.late_body_after')}
                 </p>
               </div>
             </div>
@@ -246,8 +260,10 @@
         {/if}
 
         <p class="v2-sub" style="font-size:11.5px;margin-top:14px">
-          Which addresses accept replies at all is set in
-          <a href={resolve('/settings/inbound-email')} style="color:inherit">inbound email</a>.
+          {$_('settings.reopen.footer_before')}
+          <a href={resolve('/settings/inbound-email')} style="color:inherit"
+            >{$_('settings.reopen.footer_link')}</a
+          >{$_('settings.reopen.footer_after')}
         </p>
       </div>
     </div>

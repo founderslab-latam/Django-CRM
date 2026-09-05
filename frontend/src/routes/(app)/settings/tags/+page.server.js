@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getTags, createTag, archiveTag, restoreTag, mergeTags } from '$lib/server/v2/tags.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -23,10 +25,12 @@ export const actions = {
       await createTag(event, { name });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { create: { name, error: 'Only an admin can create tags.' } });
+        return fail(403, {
+          create: { name, error: get(_)('settings.tags.error_create_forbidden') }
+        });
       }
       return fail(400, {
-        create: { name, error: readableError(err, 'Could not create the tag.') }
+        create: { name, error: readableError(err, get(_)('settings.tags.error_create_fallback')) }
       });
     }
 
@@ -44,16 +48,16 @@ export const actions = {
   async archive(event) {
     const form = await event.request.formData();
     const id = form.get('id')?.toString() ?? '';
-    if (!id) return fail(400, { archive: { error: 'That tag could not be identified.' } });
+    if (!id) return fail(400, { archive: { error: get(_)('settings.tags.error_no_id') } });
 
     try {
       await archiveTag(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { archive: { error: 'Only an admin can turn a tag off.' } });
+        return fail(403, { archive: { error: get(_)('settings.tags.error_archive_forbidden') } });
       }
       return fail(400, {
-        archive: { error: readableError(err, 'Could not turn that tag off.') }
+        archive: { error: readableError(err, get(_)('settings.tags.error_archive_fallback')) }
       });
     }
     return { archived: true };
@@ -63,16 +67,16 @@ export const actions = {
   async restore(event) {
     const form = await event.request.formData();
     const id = form.get('id')?.toString() ?? '';
-    if (!id) return fail(400, { restore: { error: 'That tag could not be identified.' } });
+    if (!id) return fail(400, { restore: { error: get(_)('settings.tags.error_no_id') } });
 
     try {
       await restoreTag(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { restore: { error: 'Only an admin can turn a tag back on.' } });
+        return fail(403, { restore: { error: get(_)('settings.tags.error_restore_forbidden') } });
       }
       return fail(400, {
-        restore: { error: readableError(err, 'Could not turn that tag back on.') }
+        restore: { error: readableError(err, get(_)('settings.tags.error_restore_fallback')) }
       });
     }
     return { restored: true };
@@ -90,7 +94,7 @@ export const actions = {
     const id = form.get('id')?.toString() ?? '';
     const into = form.get('into')?.toString() ?? '';
     if (!id || !into) {
-      return fail(400, { merge: { error: 'Those tags could not be identified.' } });
+      return fail(400, { merge: { error: get(_)('settings.tags.error_merge_no_id') } });
     }
 
     let result;
@@ -98,10 +102,10 @@ export const actions = {
       result = await mergeTags(event, id, into);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { merge: { error: 'Only an admin can merge tags.' } });
+        return fail(403, { merge: { error: get(_)('settings.tags.error_merge_forbidden') } });
       }
       return fail(400, {
-        merge: { error: readableError(err, 'Could not merge those tags.') }
+        merge: { error: readableError(err, get(_)('settings.tags.error_merge_fallback')) }
       });
     }
 

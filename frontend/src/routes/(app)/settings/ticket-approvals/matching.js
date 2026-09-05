@@ -46,16 +46,20 @@ function namedApprovers(rule) {
 }
 
 /**
- * Everyone who can clear this rule, as the sentence a person would say.
+ * Everyone who can clear this rule, as a structured descriptor the page turns
+ * into a sentence with `$_`. Kept free of display strings so it stays testable
+ * without the i18n store, matching `tickets/[id]/close.js`.
  *
  * @param {any} rule
+ * @returns {{ kind: 'admin' } | { kind: 'admin_and_named', named: string[] }
+ *   | { kind: 'named', named: string[] } | { kind: 'nobody' }}
  */
 export function approverSentence(rule) {
   const named = namedApprovers(rule);
   if (roleClears(rule)) {
-    return named.length ? `any admin, or ${named.join(' or ')}` : 'any admin';
+    return named.length ? { kind: 'admin_and_named', named } : { kind: 'admin' };
   }
-  return named.length ? named.join(' or ') : 'nobody';
+  return named.length ? { kind: 'named', named } : { kind: 'nobody' };
 }
 
 /**
@@ -71,17 +75,20 @@ export function clearableByNobody(rule) {
 }
 
 /**
- * What the rule matches, as the sentence a person would say.
+ * What the rule matches, as a structured descriptor the page turns into a
+ * sentence with `$_`. The raw enum values are passed straight through so the
+ * page can translate them via `$lib/cases/labels.js`.
  *
  * @param {any} rule
+ * @returns {{ kind: 'every' }
+ *   | { kind: 'parts', priority: string | null, caseType: string | null, team: string | null }}
  */
 export function ruleMatchSentence(rule) {
-  const parts = [
-    rule?.match_priority ? `${rule.match_priority} priority` : null,
-    rule?.match_case_type ? rule.match_case_type.toLowerCase() : null,
-    rule?.match_team ? `${rule.match_team.name} team` : null
-  ].filter(Boolean);
-  return parts.length ? parts.join(' · ') : 'Every ticket';
+  const priority = rule?.match_priority || null;
+  const caseType = rule?.match_case_type || null;
+  const team = rule?.match_team?.name || null;
+  if (!priority && !caseType && !team) return { kind: 'every' };
+  return { kind: 'parts', priority, caseType, team };
 }
 
 /**

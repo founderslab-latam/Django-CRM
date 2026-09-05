@@ -36,6 +36,7 @@
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, shortDate } from '$lib/v2/format.js';
   import { enhance } from '$app/forms';
   import { Plus, ShieldAlert } from '@lucide/svelte';
@@ -72,16 +73,17 @@
   );
 </script>
 
-<PageHeader title="Web forms">
+<PageHeader title={$_('settings.web_forms.list.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(totals.published)}</span> published of
+    <span class="v2-num">{count(totals.published)}</span>
+    {$_('settings.web_forms.list.sub_published_of')}
     <span class="v2-num">{count(totals.count)}</span>
   {/snippet}
   {#snippet actions()}
     {#if data.canManage}
       <button class="v2-btn v2-btn-primary" onclick={() => (creating = !creating)}>
-        <Plus />New form
+        <Plus />{$_('settings.web_forms.list.new_button')}
       </button>
     {/if}
   {/snippet}
@@ -89,19 +91,31 @@
 
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
-    <StatCard label="Published" value={count(totals.published)} tone="ink" />
     <StatCard
-      label="Drafts"
+      label={$_('settings.web_forms.list.stat_published')}
+      value={count(totals.published)}
+      tone="ink"
+    />
+    <StatCard
+      label={$_('settings.web_forms.list.stat_drafts')}
       value={count(drafts)}
       tone="slate"
-      detail={drafts ? 'Collecting nothing yet' : 'None'}
+      detail={drafts
+        ? $_('settings.web_forms.list.stat_drafts_detail')
+        : $_('settings.web_forms.list.detail_none')}
     />
-    <StatCard label="Leads, 30 days" value={count(totals.submissions_30d)} tone="ink" />
     <StatCard
-      label="Spam blocked, 30 days"
+      label={$_('settings.web_forms.list.stat_leads_30d')}
+      value={count(totals.submissions_30d)}
+      tone="ink"
+    />
+    <StatCard
+      label={$_('settings.web_forms.list.stat_spam_30d')}
       value={count(totals.spam_30d)}
       tone="slate"
-      detail={totals.spam_30d ? 'Never reached a lead' : 'None'}
+      detail={totals.spam_30d
+        ? $_('settings.web_forms.list.stat_spam_detail')
+        : $_('settings.web_forms.list.detail_none')}
     />
   </div>
 </div>
@@ -110,7 +124,11 @@
   <div class="v2-pad" style="padding-bottom:32px">
     {#if actionError}
       <div style="margin-bottom:16px">
-        <NextAction label="That did not work" text={actionError} tone="rust" />
+        <NextAction
+          label={$_('settings.web_forms.list.error_label')}
+          text={actionError}
+          tone="rust"
+        />
       </div>
     {/if}
 
@@ -128,7 +146,7 @@
       >
         <div style="flex:1;min-width:220px">
           <label class="v2-label" for="form-name" style="display:block;margin-bottom:4px">
-            What is this form for?
+            {$_('settings.web_forms.list.create_name_label')}
           </label>
           <input
             id="form-name"
@@ -137,27 +155,29 @@
             maxlength="255"
             class="v2-input"
             style="width:100%"
-            placeholder="e.g. Contact us"
+            placeholder={$_('settings.web_forms.list.create_name_placeholder')}
           />
         </div>
-        <button class="v2-btn v2-btn-primary" disabled={busy}>Create and add fields</button>
+        <button class="v2-btn v2-btn-primary" disabled={busy}>
+          {$_('settings.web_forms.list.create_submit')}
+        </button>
         <button type="button" class="v2-btn" disabled={busy} onclick={() => (creating = false)}>
-          Cancel
+          {$_('settings.web_forms.list.create_cancel')}
         </button>
       </form>
     {/if}
 
     {#if !data.forms.length}
       <EmptyState
-        title="No web forms yet"
+        title={$_('settings.web_forms.list.empty_title')}
         body={data.canManage
-          ? 'A web form is a page you embed on your own site. What people fill in becomes a lead here, with no login and no copy-pasting.'
-          : 'Nobody has built a web form for this organisation yet. An admin can create one.'}
+          ? $_('settings.web_forms.list.empty_body_admin')
+          : $_('settings.web_forms.list.empty_body_member')}
       >
         {#snippet actions()}
           {#if data.canManage}
             <button class="v2-btn v2-btn-primary" onclick={() => (creating = true)}>
-              <Plus />New form
+              <Plus />{$_('settings.web_forms.list.new_button')}
             </button>
           {/if}
         {/snippet}
@@ -167,11 +187,12 @@
         <table class="v2-table">
           <thead>
             <tr>
-              <th>Form</th>
-              <th>State</th>
-              <th class="v2-r">Submissions</th>
-              <th data-m="hide">Created</th>
-              {#if data.canManage}<th class="v2-r">Actions</th>{/if}
+              <th>{$_('settings.web_forms.list.col_form')}</th>
+              <th>{$_('settings.web_forms.list.col_state')}</th>
+              <th class="v2-r">{$_('settings.web_forms.list.col_submissions')}</th>
+              <th data-m="hide">{$_('settings.web_forms.list.col_created')}</th>
+              {#if data.canManage}<th class="v2-r">{$_('settings.web_forms.list.col_actions')}</th
+                >{/if}
             </tr>
           </thead>
           <tbody>
@@ -192,11 +213,12 @@
                          count cell is `.v2-num`, and mono is numerals only;
                          prose inheriting that face reads as a typo. -->
                     <div class="v2-table-secondary">
-                      {f.field_count}
-                      {f.field_count === 1 ? 'field' : 'fields'}
+                      {$_('settings.web_forms.list.field_count', {
+                        values: { count: f.field_count }
+                      })}
                       {#if quiet}
                         <span style="color:var(--v2-clay);font-weight:600">
-                          · live but silent
+                          {$_('settings.web_forms.list.live_but_silent')}
                         </span>
                       {/if}
                     </div>
@@ -204,7 +226,9 @@
                 </td>
                 <td data-m="tag">
                   <Pill tone={f.is_published ? 'moss' : 'slate'}>
-                    {f.is_published ? 'Published' : 'Draft'}
+                    {f.is_published
+                      ? $_('settings.web_forms.list.state_published')
+                      : $_('settings.web_forms.list.state_draft')}
                   </Pill>
                 </td>
                 <td class="v2-r v2-num" data-m="meta" data-l="submissions">
@@ -220,22 +244,24 @@
                              submission from then on is refused. -->
                         <ConfirmAction
                           action="?/unpublish"
-                          label="Unpublish"
-                          confirmLabel="Unpublish it"
-                          explain="Stops accepting submissions. The embed stays on the site and starts refusing people."
+                          label={$_('settings.web_forms.list.unpublish_label')}
+                          confirmLabel={$_('settings.web_forms.list.unpublish_confirm')}
+                          explain={$_('settings.web_forms.list.unpublish_explain')}
                           hidden={{ id: f.id }}
                         />
                       {:else}
                         <form method="POST" action="?/publish" use:enhance={working}>
                           <input type="hidden" name="id" value={f.id} />
-                          <button class="v2-btn v2-btn-sm" disabled={busy}>Publish</button>
+                          <button class="v2-btn v2-btn-sm" disabled={busy}>
+                            {$_('settings.web_forms.list.publish_button')}
+                          </button>
                         </form>
                       {/if}
                       <ConfirmAction
                         action="?/delete"
-                        label="Delete"
-                        confirmLabel="Delete permanently"
-                        explain="Removes the form and its submission history. Leads already created stay."
+                        label={$_('settings.web_forms.list.delete_label')}
+                        confirmLabel={$_('settings.web_forms.list.delete_confirm')}
+                        explain={$_('settings.web_forms.list.delete_explain')}
                         hidden={{ id: f.id }}
                       />
                     </span>
@@ -249,8 +275,11 @@
 
       {#if data.truncated}
         <p class="v2-sub" style="font-size:12px;margin:12px 0 0">
-          Showing the {data.forms.length} most recent of
-          <span class="v2-num">{count(totals.count)}</span>. The rest are reachable through the API.
+          {$_('settings.web_forms.list.truncated_before', {
+            values: { shown: data.forms.length }
+          })}<span class="v2-num">{count(totals.count)}</span>{$_(
+            'settings.web_forms.list.truncated_after'
+          )}
         </p>
       {/if}
     {/if}
@@ -260,13 +289,11 @@
     >
       <ShieldAlert size={16} style="color:var(--v2-clay);flex:none;margin-top:1px" />
       <div>
-        <div style="font-weight:600;font-size:13px">A published form accepts posts from anyone</div>
+        <div style="font-weight:600;font-size:13px">
+          {$_('settings.web_forms.list.footer_heading')}
+        </div>
         <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
-          It has to: the whole point is that a stranger can fill it in without an account. A
-          honeypot field, per-form and per-address rate limits, and disposable-address rejection are
-          always on, and each form can add a Cloudflare Turnstile challenge of its own. Publish only
-          the forms you are embedding, and unpublish one the moment you take its snippet off your
-          site.
+          {$_('settings.web_forms.list.footer_body')}
         </p>
       </div>
     </div>

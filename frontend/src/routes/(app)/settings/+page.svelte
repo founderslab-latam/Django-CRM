@@ -25,6 +25,7 @@
    * does not exist.
    */
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, shortDate } from '$lib/v2/format.js';
   import { ChevronRight, ShieldAlert } from '@lucide/svelte';
 
@@ -41,12 +42,14 @@
    */
   let hoursSummary = $derived.by(() => {
     const open = data.calendar.days.filter((d) => d.open);
-    if (!open.length) return 'No open hours set';
+    if (!open.length) return $_('settings.home.hours_none');
     const first = open[0];
     const uniform = open.every((d) => d.open === first.open && d.close === first.close);
     return uniform
-      ? `${open.length} days, ${first.open}-${first.close}`
-      : `${open.length} days, hours vary`;
+      ? $_('settings.home.hours_uniform', {
+          values: { count: open.length, open: first.open, close: first.close }
+        })
+      : $_('settings.home.hours_vary', { values: { count: open.length } });
   });
 
   /** An approval rule set to MANAGER with no named approvers matches nobody. */
@@ -58,25 +61,32 @@
 
   let groups = $derived([
     {
-      label: 'People and access',
+      label: $_('settings.home.group_people'),
       items: [
         {
           href: '/team',
-          title: 'Team and access',
-          body: 'Who can sign in, and what their role lets them do.',
+          title: $_('settings.home.item_team_title'),
+          body: $_('settings.home.item_team_body'),
           // People counts are admin-only oversight; a member's fan-out gets no
           // totals (the endpoint 403s), so the row lists the destination with
           // no value rather than a misleading zero.
           value: data.peopleTotals
-            ? `${data.peopleTotals.count} people · ${data.peopleTotals.admins} admins`
+            ? $_('settings.home.value_people', {
+                values: {
+                  count: data.peopleTotals.count,
+                  admins: data.peopleTotals.admins
+                }
+              })
             : null,
           warn: data.peopleTotals ? data.peopleTotals.tokens_on_deactivated > 0 : false
         },
         {
           href: '/settings/api-tokens',
-          title: 'API tokens',
-          body: 'Personal access tokens for scripts, integrations and AI agents.',
-          value: data.tokenTotals ? `${data.tokenTotals.live} live` : null,
+          title: $_('settings.home.item_api_tokens_title'),
+          body: $_('settings.home.item_api_tokens_body'),
+          value: data.tokenTotals
+            ? $_('settings.home.value_live', { values: { count: data.tokenTotals.live } })
+            : null,
           warn: data.tokenTotals
             ? data.tokenTotals.orphaned > 0 || data.tokenTotals.unused_90d > 0
             : false
@@ -88,9 +98,11 @@
           // org, which is an access question; that it happens to arrive as a
           // lead is the smaller half.
           href: '/settings/web-forms',
-          title: 'Web forms',
-          body: 'Forms you embed on your own site. What people fill in becomes a lead.',
-          value: `${data.webFormTotals.published} published`,
+          title: $_('settings.home.item_web_forms_title'),
+          body: $_('settings.home.item_web_forms_body'),
+          value: $_('settings.home.value_published', {
+            values: { count: data.webFormTotals.published }
+          }),
           // Forms are live and nothing has arrived in a month. Usually the
           // snippet was taken off the site it was pasted onto, which nothing
           // else would ever tell you. The destination names the individual
@@ -99,56 +111,67 @@
         },
         {
           href: '/settings/organization',
-          title: 'Organization',
-          body: 'The company details printed on every invoice and estimate.',
+          title: $_('settings.home.item_organization_title'),
+          body: $_('settings.home.item_organization_body'),
           value: org.company_name,
           warn: false
         }
       ]
     },
     {
-      label: 'How tickets are handled',
+      label: $_('settings.home.group_tickets'),
       items: [
         {
           href: '/settings/routing',
-          title: 'Ticket routing',
-          body: 'Who a new ticket lands on, in the order the rules are tried.',
-          value: `${data.routingTotals.active} rules`,
+          title: $_('settings.home.item_routing_title'),
+          body: $_('settings.home.item_routing_body'),
+          value: $_('settings.home.value_rules', {
+            values: { count: data.routingTotals.active }
+          }),
           warn: data.routingTotals.unrouted_last_30d > 0
         },
         {
           href: '/settings/escalation',
-          title: 'Escalation',
-          body: 'What happens when a ticket misses its response target.',
-          value: `${data.escalationTotals.active} of ${data.escalationTotals.count} priorities`,
+          title: $_('settings.home.item_escalation_title'),
+          body: $_('settings.home.item_escalation_body'),
+          value: $_('settings.home.value_priorities', {
+            values: {
+              active: data.escalationTotals.active,
+              count: data.escalationTotals.count
+            }
+          }),
           warn: data.escalationTotals.breaches_unhandled_30d > 0
         },
         {
           href: '/settings/business-hours',
-          title: 'Business hours',
-          body: 'The clock every response target is measured against.',
+          title: $_('settings.home.item_business_hours_title'),
+          body: $_('settings.home.item_business_hours_body'),
           value: `${data.calendar.name} · ${hoursSummary}`,
           warn: false
         },
         {
           href: '/settings/ticket-approvals',
-          title: 'Approval rules',
-          body: 'What gates a ticket close, and who can clear it.',
-          value: `${data.approvalTotals.active} active`,
+          title: $_('settings.home.item_approvals_title'),
+          body: $_('settings.home.item_approvals_body'),
+          value: $_('settings.home.value_active', {
+            values: { count: data.approvalTotals.active }
+          }),
           warn: stuckApprovalRules > 0
         },
         {
           href: '/settings/reopen',
-          title: 'Reopen policy',
-          body: 'Whether a customer reply brings a closed ticket back.',
+          title: $_('settings.home.item_reopen_title'),
+          body: $_('settings.home.item_reopen_body'),
           // Admin-only, like people and tokens above: a member's fan-out gets
           // null (the endpoint 403s), so the row lists the destination without
           // a value rather than guessing at the policy.
           value: !data.reopen
             ? null
             : data.reopen.is_enabled
-              ? `Within ${data.reopen.reopen_window_days} days`
-              : 'Off. Closed stays closed',
+              ? $_('settings.home.value_reopen_within', {
+                  values: { days: data.reopen.reopen_window_days }
+                })
+              : $_('settings.home.value_reopen_off'),
           // Replies arriving outside the window are normal for any window, so
           // that number belongs on the page, not on a warning here. Off is the
           // state worth flagging: it makes every reply to a closed ticket
@@ -157,9 +180,14 @@
         },
         {
           href: '/settings/inbound-email',
-          title: 'Inbound email',
-          body: 'The addresses that turn email into tickets.',
-          value: `${data.mailboxTotals.active} of ${data.mailboxTotals.count} active`,
+          title: $_('settings.home.item_inbound_title'),
+          body: $_('settings.home.item_inbound_body'),
+          value: $_('settings.home.value_mailboxes', {
+            values: {
+              active: data.mailboxTotals.active,
+              count: data.mailboxTotals.count
+            }
+          }),
           // Off AND still receiving, not merely off. An address switched off
           // and left alone is a decision; one still getting mail and creating
           // nothing is a customer being ignored.
@@ -168,36 +196,45 @@
       ]
     },
     {
-      label: 'Shared words and fields',
+      label: $_('settings.home.group_shared'),
       items: [
         {
           href: '/settings/macros',
-          title: 'Macros',
-          body: 'Canned replies, and the placeholders they substitute.',
-          value: `${data.macroTotals.org} shared`,
+          title: $_('settings.home.item_macros_title'),
+          body: $_('settings.home.item_macros_body'),
+          value: $_('settings.home.value_shared', {
+            values: { count: data.macroTotals.org }
+          }),
           warn: data.macroTotals.with_unknown_placeholders > 0
         },
         {
           href: '/settings/tags',
-          title: 'Tags',
-          body: 'Labels shared across accounts, leads, deals and tickets.',
-          value: `${data.tagTotals.active} in use`,
+          title: $_('settings.home.item_tags_title'),
+          body: $_('settings.home.item_tags_body'),
+          value: $_('settings.home.value_in_use', {
+            values: { count: data.tagTotals.active }
+          }),
           // Unused tags are housekeeping, not a fault, the tags page lists
           // them without needing the hub to raise an alarm about tidiness.
           warn: false
         },
         {
           href: '/settings/custom-fields',
-          title: 'Custom fields',
-          body: 'Fields this organisation added to records.',
-          value: `${data.fieldTotals.active} across ${data.fieldTotals.models_extended} record types`,
+          title: $_('settings.home.item_custom_fields_title'),
+          body: $_('settings.home.item_custom_fields_body'),
+          value: $_('settings.home.value_fields_across', {
+            values: {
+              count: data.fieldTotals.active,
+              models: data.fieldTotals.models_extended
+            }
+          }),
           warn: data.fieldTotals.required_with_gaps > 0
         },
         {
           href: '/invoices/templates',
-          title: 'Invoice templates',
-          body: 'How an invoice looks when a customer receives it.',
-          value: 'Under Invoices',
+          title: $_('settings.home.item_templates_title'),
+          body: $_('settings.home.item_templates_body'),
+          value: $_('settings.home.value_under_invoices'),
           warn: false
         }
       ]
@@ -207,12 +244,14 @@
   let warnings = $derived(groups.flatMap((g) => g.items).filter((i) => i.warn).length);
 </script>
 
-<PageHeader title="Settings">
+<PageHeader title={$_('settings.home.title')}>
   {#snippet sub()}
-    {org.name} · <span class="v2-num">{count(org.member_count)}</span> members · since
-    {shortDate(org.created_at)}
+    {org.name} · <span class="v2-num">{count(org.member_count)}</span>
+    {$_('settings.home.sub_members', { values: { count: org.member_count } })} ·
+    {$_('settings.home.sub_since', { values: { date: shortDate(org.created_at) } })}
     {#if warnings}
-      · <span class="v2-num">{count(warnings)}</span> need a look
+      · <span class="v2-num">{count(warnings)}</span>
+      {$_('settings.home.sub_needs_look', { values: { count: warnings } })}
     {/if}
   {/snippet}
 </PageHeader>
@@ -248,10 +287,10 @@
       index anyone with the URL can load.
     -->
     <p class="v2-sub" style="font-size:11.5px;margin-top:18px;max-width:64ch">
-      The organisation API key is not shown here. Credentials are never rendered on a page you can
-      arrive at by browsing. See
-      <a href={resolve('/settings/api-tokens')} style="color:inherit">API tokens</a> for how token values
-      are handled.
+      {$_('settings.home.apikey_note_before')}<a
+        href={resolve('/settings/api-tokens')}
+        style="color:inherit">{$_('settings.home.apikey_note_link')}</a
+      >{$_('settings.home.apikey_note_after')}
     </p>
   </div>
 </div>

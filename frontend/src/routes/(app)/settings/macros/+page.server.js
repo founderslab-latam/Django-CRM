@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getMacros,
   createMacro,
@@ -44,10 +46,12 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
         return fail(403, {
-          create: { error: 'Only an admin can create a macro shared with everyone.' }
+          create: { error: get(_)('settings.macros.error_create_forbidden') }
         });
       }
-      return fail(400, { create: { error: readableError(err, 'Could not add the macro.') } });
+      return fail(400, {
+        create: { error: readableError(err, get(_)('settings.macros.error_create_fallback')) }
+      });
     }
     return { created: true };
   },
@@ -61,15 +65,17 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
         return fail(403, {
-          update: { error: 'Only an admin can change a macro shared with everyone.' }
+          update: { error: get(_)('settings.macros.error_update_forbidden') }
         });
       }
       if (err?.status === 404) {
         // A personal macro belonging to someone else answers 404 on purpose:
         // a 403 would confirm the row exists. Say the same thing back.
-        return fail(404, { update: { error: 'That macro is not yours to change.' } });
+        return fail(404, { update: { error: get(_)('settings.macros.error_update_not_yours') } });
       }
-      return fail(400, { update: { error: readableError(err, 'Could not save the macro.') } });
+      return fail(400, {
+        update: { error: readableError(err, get(_)('settings.macros.error_update_fallback')) }
+      });
     }
     return { updated: true };
   },
@@ -82,15 +88,17 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
         return fail(403, {
-          delete: { error: 'Only an admin can remove a macro shared with everyone.' }
+          delete: { error: get(_)('settings.macros.error_delete_forbidden') }
         });
       }
       if (err?.status === 404) {
         // Same reasoning as `update`: the row not being yours reads the same
         // as the row not existing, on purpose.
-        return fail(404, { delete: { error: 'That macro is not yours to remove.' } });
+        return fail(404, { delete: { error: get(_)('settings.macros.error_delete_not_yours') } });
       }
-      return fail(400, { delete: { error: readableError(err, 'Could not remove the macro.') } });
+      return fail(400, {
+        delete: { error: readableError(err, get(_)('settings.macros.error_delete_fallback')) }
+      });
     }
     return { deleted: true };
   },
@@ -111,15 +119,19 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
         return fail(403, {
-          activate: { error: 'Only an admin can turn on a macro shared with everyone.' }
+          activate: { error: get(_)('settings.macros.error_activate_forbidden') }
         });
       }
       if (err?.status === 404) {
         // Same reasoning as `update`/`delete`: the row not being yours reads
         // the same as the row not existing, on purpose.
-        return fail(404, { activate: { error: 'That macro is not yours to turn on.' } });
+        return fail(404, {
+          activate: { error: get(_)('settings.macros.error_activate_not_yours') }
+        });
       }
-      return fail(400, { activate: { error: readableError(err, 'Could not turn the macro on.') } });
+      return fail(400, {
+        activate: { error: readableError(err, get(_)('settings.macros.error_activate_fallback')) }
+      });
     }
     return { activated: true };
   }

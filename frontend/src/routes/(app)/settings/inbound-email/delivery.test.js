@@ -64,37 +64,43 @@ describe('deliveryState', () => {
   });
 });
 
+// `deliveryLabel` and `deliveryExplanation` return i18n descriptors now (a
+// catalog key, plus values where interpolated) rather than English; the page
+// resolves them with `$_`. Same move as `tickets/[id]/close.js`.
 describe('deliveryLabel and deliveryTone', () => {
   it('never says creating tickets about an address that creates none', () => {
     for (const state of ['off', 'unsupported', 'unconfirmed']) {
-      expect(deliveryLabel(state)).not.toBe('Creating tickets');
+      expect(deliveryLabel(state)).not.toBe('settings.inbound_email.delivery_label.live');
       expect(deliveryTone(state)).not.toBe('moss');
     }
-    expect(deliveryLabel('live')).toBe('Creating tickets');
+    expect(deliveryLabel('live')).toBe('settings.inbound_email.delivery_label.live');
     expect(deliveryTone('live')).toBe('moss');
   });
 
   it('falls back to the off wording for an unknown state', () => {
-    expect(deliveryLabel('nonsense')).toBe('Creating nothing');
+    expect(deliveryLabel('nonsense')).toBe('settings.inbound_email.delivery_label.off');
     expect(deliveryTone('nonsense')).toBe('clay');
   });
 });
 
 describe('deliveryExplanation', () => {
-  it('says silence, not failure, for an address turned off', () => {
-    const text = deliveryExplanation('off', 'AWS SES');
-    expect(text).toContain('silence');
-    expect(text).toContain('no ticket is opened');
+  it('points at silence, not failure, for an address turned off', () => {
+    expect(deliveryExplanation('off', 'AWS SES')).toEqual({
+      key: 'settings.inbound_email.delivery_why.off'
+    });
   });
 
-  it('names the provider and says only SES is wired up', () => {
-    const text = deliveryExplanation('unsupported', 'Mailgun');
-    expect(text).toContain('Mailgun');
-    expect(text).toContain('SES');
+  it('carries the provider name through for an unsupported one', () => {
+    expect(deliveryExplanation('unsupported', 'Mailgun')).toEqual({
+      key: 'settings.inbound_email.delivery_why.unsupported',
+      values: { provider: 'Mailgun' }
+    });
   });
 
-  it('says an unconfirmed address is not receiving yet', () => {
-    expect(deliveryExplanation('unconfirmed', 'AWS SES')).toContain('not receiving yet');
+  it('has its own key for an unconfirmed address', () => {
+    expect(deliveryExplanation('unconfirmed', 'AWS SES')).toEqual({
+      key: 'settings.inbound_email.delivery_why.unconfirmed'
+    });
   });
 
   it('has nothing to explain about a live address', () => {
@@ -138,12 +144,18 @@ describe('silentMailboxes', () => {
 });
 
 describe('providerChoiceLabel', () => {
-  it('leaves the one implemented provider alone', () => {
-    expect(providerChoiceLabel('ses', 'AWS SES')).toBe('AWS SES');
+  it('leaves the one implemented provider unmarked', () => {
+    expect(providerChoiceLabel('ses', 'AWS SES')).toEqual({
+      key: 'settings.inbound_email.provider_choice_plain',
+      values: { label: 'AWS SES' }
+    });
   });
 
   it('marks the three that are not', () => {
-    expect(providerChoiceLabel('mailgun', 'Mailgun')).toBe('Mailgun (not wired up yet)');
+    expect(providerChoiceLabel('mailgun', 'Mailgun')).toEqual({
+      key: 'settings.inbound_email.provider_choice_not_wired',
+      values: { label: 'Mailgun' }
+    });
   });
 
   it('keeps every model choice selectable, marked rather than hidden', () => {
@@ -151,7 +163,7 @@ describe('providerChoiceLabel', () => {
     const values = ['ses', 'mailgun', 'postmark', 'imap'];
     expect(values.filter((v) => SUPPORTED_PROVIDERS.includes(v))).toEqual(['ses']);
     for (const value of values) {
-      expect(providerChoiceLabel(value, value)).toContain(value);
+      expect(providerChoiceLabel(value, value).values.label).toBe(value);
     }
   });
 });

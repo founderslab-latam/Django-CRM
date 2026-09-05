@@ -36,6 +36,7 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count } from '$lib/v2/format.js';
   import {
     DEFAULT_SLA_HOURS,
@@ -43,10 +44,13 @@
     ESCALATION_PRIORITIES,
     PRIORITY_TONE
   } from '$lib/v2/enums.js';
+  import { escalationActionKey } from '$lib/settings/labels.js';
+  import { casePriorityKey } from '$lib/cases/labels.js';
   import {
     actionNotifies,
     escalationOutcome,
     teamIgnoredNote,
+    teamSaysSo,
     deadPolicyCount,
     breachesGoingNowhere,
     unconfiguredPriorities,
@@ -54,6 +58,45 @@
   } from './outcome.js';
   import { missingOption, inactiveOptionLabel } from '$lib/v2/pickers.js';
   import { TriangleAlert, BellOff, Plus } from '@lucide/svelte';
+
+  const capitalize = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /** "the Support team" / "the Support Team" (EN) — "el equipo Support" (ES).
+   *  `teamSaysSo` decides which of two catalog strings to use. @param {any} team */
+  function teamPhrase(team) {
+    const name = (team?.name ?? '').trim();
+    return $_(
+      teamSaysSo(name) ? 'settings.escalation.team_named' : 'settings.escalation.team_bare',
+      { values: { name } }
+    );
+  }
+
+  /** One escalation half's outcome, as a sentence. `escalationOutcome` hands
+   *  back a descriptor; the phrasing is assembled here. @param {any} o */
+  function outcomeText(o) {
+    if (o.kind === 'off') return $_('settings.escalation.outcome_off');
+    if (o.kind === 'no_target') return $_('settings.escalation.outcome_no_target');
+    if (o.kind === 'no_target_team') {
+      return $_('settings.escalation.outcome_no_target_team', {
+        values: { team: teamPhrase(o.team) }
+      });
+    }
+    const who = o.team
+      ? $_('settings.escalation.outcome_who_team', {
+          values: { name: o.targetName, team: teamPhrase(o.team) }
+        })
+      : o.targetName;
+    return $_('settings.escalation.outcome_fires', {
+      values: { action: $_(escalationActionKey(o.action)), who }
+    });
+  }
+
+  /** @param {{ team: any }} note */
+  function teamIgnoredText(note) {
+    return $_('settings.escalation.team_ignored', {
+      values: { team: capitalize(teamPhrase(note.team)) }
+    });
+  }
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -107,9 +150,10 @@
    */
   function targetLabel(policy, half) {
     const configured = policy[`${half}_hours`];
-    if (configured) return `${configured}h`;
+    if (configured)
+      return $_('settings.escalation.target_hours', { values: { hours: configured } });
     const fallback = (DEFAULT_SLA_HOURS[policy.priority] ?? DEFAULT_SLA_HOURS.Normal)[half];
-    return `${fallback}h default`;
+    return $_('settings.escalation.target_hours_default', { values: { hours: fallback } });
   }
 
   function openCreate() {
@@ -158,18 +202,22 @@
   );
 </script>
 
-<PageHeader title="Escalation">
+<PageHeader title={$_('settings.escalation.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
     {#if allConfigured}
-      One policy per priority · all four are configured
+      {$_('settings.escalation.sub_all')}
     {:else}
-      One policy per priority · <span class="v2-num">{count(policies.length)}</span> configured
+      {$_('settings.escalation.sub_prefix')}
+      <span class="v2-num">{count(policies.length)}</span>
+      {$_('settings.escalation.sub_configured')}
     {/if}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit && !editing && availablePriorities.length > 0}
-      <button class="v2-btn v2-btn-primary" onclick={openCreate}><Plus />New policy</button>
+      <button class="v2-btn v2-btn-primary" onclick={openCreate}>
+        <Plus />{$_('settings.escalation.new_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
@@ -178,10 +226,16 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     {#if editing}
       <SettingsFormPanel
-        title={editing === 'new' ? 'New policy' : `Edit ${editing.priority} policy`}
+        title={editing === 'new'
+          ? $_('settings.escalation.form_new')
+          : $_('settings.escalation.form_edit', {
+              values: { priority: $_(casePriorityKey(editing.priority)) }
+            })}
         action={editing === 'new' ? '?/create' : '?/update'}
         error={editing === 'new' ? form?.create?.error : form?.update?.error}
-        submitLabel={editing === 'new' ? 'Add policy' : 'Save policy'}
+        submitLabel={editing === 'new'
+          ? $_('settings.escalation.add_button')
+          : $_('settings.escalation.save_button')}
         oncancel={() => (editing = null)}
         ondone={() => (editing = null)}
       >
@@ -191,7 +245,7 @@
           {/if}
 
           <div class="v2-field">
-            <label for="e-priority">Priority</label>
+            <label for="e-priority">{$_('settings.escalation.field_priority')}</label>
             {#if editing === 'new'}
               <select
                 id="e-priority"
@@ -201,17 +255,17 @@
                 required
               >
                 {#each availablePriorities as p (p)}
-                  <option value={p}>{p}</option>
+                  <option value={p}>{$_(casePriorityKey(p))}</option>
                 {/each}
               </select>
             {:else}
-              <div style="font-size:13px">{editing.priority}</div>
-              <p class="v2-hint">Fixed after creation. One policy per priority.</p>
+              <div style="font-size:13px">{$_(casePriorityKey(editing.priority))}</div>
+              <p class="v2-hint">{$_('settings.escalation.priority_fixed_hint')}</p>
             {/if}
           </div>
 
           <div class="v2-field">
-            <label for="e-fr-hours">First response target (hours)</label>
+            <label for="e-fr-hours">{$_('settings.escalation.field_fr_hours')}</label>
             <input
               id="e-fr-hours"
               class="v2-input"
@@ -220,20 +274,23 @@
               inputmode="numeric"
               min="1"
               max="8760"
-              placeholder={`${defaults.first_response} (default)`}
+              placeholder={$_('settings.escalation.hours_placeholder', {
+                values: { hours: defaults.first_response }
+              })}
               bind:value={firstResponseHours}
             />
             <!-- Says "a ticket at this priority" rather than naming the
                  priority, which produced "a urgent ticket" for three of the
                  four values. -->
             <p class="v2-hint">
-              How long a ticket at this priority may wait for its first reply, counted in business
-              hours. Leave blank to use the built-in {defaults.first_response}.
+              {$_('settings.escalation.fr_hours_hint', {
+                values: { hours: defaults.first_response }
+              })}
             </p>
           </div>
 
           <div class="v2-field">
-            <label for="e-res-hours">Resolution target (hours)</label>
+            <label for="e-res-hours">{$_('settings.escalation.field_res_hours')}</label>
             <input
               id="e-res-hours"
               class="v2-input"
@@ -242,38 +299,37 @@
               inputmode="numeric"
               min="1"
               max="8760"
-              placeholder={`${defaults.resolution} (default)`}
+              placeholder={$_('settings.escalation.hours_placeholder', {
+                values: { hours: defaults.resolution }
+              })}
               bind:value={resolutionHours}
             />
-            <p class="v2-hint">
-              Applies to tickets opened from now on, and to any ticket moved to this priority.
-              Tickets already open keep the target they were given.
-            </p>
+            <p class="v2-hint">{$_('settings.escalation.res_hours_hint')}</p>
           </div>
 
           <div class="v2-field">
-            <label for="e-fr-action">First response action</label>
+            <label for="e-fr-action">{$_('settings.escalation.field_fr_action')}</label>
             <select
               id="e-fr-action"
               class="v2-input"
               name="first_response_action"
               bind:value={firstResponseAction}
             >
-              {#each Object.entries(ESCALATION_ACTION_LABEL) as [value, label] (value)}
-                <option {value}>{label}</option>
+              {#each Object.keys(ESCALATION_ACTION_LABEL) as value (value)}
+                <option {value}>{$_(escalationActionKey(value))}</option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="e-fr-target">First response target</label>
+            <label for="e-fr-target">{$_('settings.escalation.field_fr_target')}</label>
             <select
               id="e-fr-target"
               class="v2-input"
               name="first_response_target_id"
               bind:value={firstResponseTarget}
             >
-              <option value="">Nobody</option>
+              <option value="">{$_('settings.escalation.nobody')}</option>
               {#if missingFirstTarget}
                 <option value={missingFirstTarget.id}>
                   {inactiveOptionLabel(missingFirstTarget.name)}
@@ -287,48 +343,42 @@
                  changing the select away from a deactivated target clears the
                  warning with it. -->
             {#if missingFirstTarget && firstResponseTarget === missingFirstTarget.id}
-              <p class="v2-hint">
-                This target's account is no longer active. It stays set until you change it, and a
-                breach sent there waits for someone who cannot sign in.
-              </p>
+              <p class="v2-hint">{$_('settings.escalation.target_inactive_hint')}</p>
             {:else if !firstResponseTarget}
               <!-- Not tied to the action. Picking Notify and leaving this empty
                    is the same dead half as picking Reassign and leaving it
                    empty: `_scan_org` never reaches `_dispatch_breach` without a
                    target. The action select is the control an admin is most
                    likely to believe fixed it. -->
-              <p class="v2-hint">
-                Nothing happens on this half until a target is picked. A team on its own is not
-                notified.
-              </p>
+              <p class="v2-hint">{$_('settings.escalation.no_target_hint')}</p>
             {:else if !actionNotifies(firstResponseAction)}
-              <p class="v2-hint">Reassigns the ticket. No email is sent, to them or to the team.</p>
+              <p class="v2-hint">{$_('settings.escalation.reassign_hint')}</p>
             {/if}
           </div>
 
           <div class="v2-field">
-            <label for="e-res-action">Resolution action</label>
+            <label for="e-res-action">{$_('settings.escalation.field_res_action')}</label>
             <select
               id="e-res-action"
               class="v2-input"
               name="resolution_action"
               bind:value={resolutionAction}
             >
-              {#each Object.entries(ESCALATION_ACTION_LABEL) as [value, label] (value)}
-                <option {value}>{label}</option>
+              {#each Object.keys(ESCALATION_ACTION_LABEL) as value (value)}
+                <option {value}>{$_(escalationActionKey(value))}</option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="e-res-target">Resolution target</label>
+            <label for="e-res-target">{$_('settings.escalation.field_res_target')}</label>
             <select
               id="e-res-target"
               class="v2-input"
               name="resolution_target_id"
               bind:value={resolutionTarget}
             >
-              <option value="">Nobody</option>
+              <option value="">{$_('settings.escalation.nobody')}</option>
               {#if missingResolutionTarget}
                 <option value={missingResolutionTarget.id}>
                   {inactiveOptionLabel(missingResolutionTarget.name)}
@@ -342,29 +392,25 @@
                  changing the select away from a deactivated target clears the
                  warning with it. -->
             {#if missingResolutionTarget && resolutionTarget === missingResolutionTarget.id}
-              <p class="v2-hint">
-                This target's account is no longer active. It stays set until you change it, and a
-                breach sent there waits for someone who cannot sign in.
-              </p>
+              <p class="v2-hint">{$_('settings.escalation.target_inactive_hint')}</p>
             {:else if !resolutionTarget}
               <!-- Not tied to the action. Picking Notify and leaving this empty
                    is the same dead half as picking Reassign and leaving it
                    empty: `_scan_org` never reaches `_dispatch_breach` without a
                    target. The action select is the control an admin is most
                    likely to believe fixed it. -->
-              <p class="v2-hint">
-                Nothing happens on this half until a target is picked. A team on its own is not
-                notified.
-              </p>
+              <p class="v2-hint">{$_('settings.escalation.no_target_hint')}</p>
             {:else if !actionNotifies(resolutionAction)}
-              <p class="v2-hint">Reassigns the ticket. No email is sent, to them or to the team.</p>
+              <p class="v2-hint">{$_('settings.escalation.reassign_hint')}</p>
             {/if}
           </div>
 
           <div class="v2-field">
-            <label for="e-team">Notify team</label>
+            <label for="e-team">{$_('settings.escalation.field_notify_team')}</label>
             <select id="e-team" class="v2-input" name="notify_team_id">
-              <option value="" selected={editing === 'new' || !editing.notify_team}>No team</option>
+              <option value="" selected={editing === 'new' || !editing.notify_team}>
+                {$_('settings.escalation.no_team')}
+              </option>
               {#each data.teams as t (t.id)}
                 <option
                   value={t.id}
@@ -375,16 +421,16 @@
               {/each}
             </select>
             {#if !data.teams.length}
-              <p class="v2-hint">No teams in this org yet.</p>
+              <p class="v2-hint">{$_('settings.escalation.no_teams')}</p>
             {/if}
           </div>
 
           {#if editing === 'new'}
             <div class="v2-field">
-              <label for="e-active">Active</label>
+              <label for="e-active">{$_('settings.escalation.field_active')}</label>
               <label style="display:flex;gap:8px;align-items:center;font-weight:400">
                 <input id="e-active" type="checkbox" name="is_active" value="true" checked />
-                Starts escalating breaches at this priority as soon as it is saved.
+                {$_('settings.escalation.active_help')}
               </label>
             </div>
           {/if}
@@ -408,8 +454,8 @@
            note hangs alone. The empty state says what a policy is and what its
            absence means, and centres itself like every other empty state. -->
       <EmptyState
-        title="No escalation policies yet"
-        body="An escalation policy decides what happens when a ticket misses its first-response or resolution target. One per priority. None are set for this organisation, so a breach currently escalates to nobody."
+        title={$_('settings.escalation.empty_title')}
+        body={$_('settings.escalation.empty_body')}
       >
         {#snippet icon()}<BellOff size={21} />{/snippet}
       </EmptyState>
@@ -422,13 +468,16 @@
           <BellOff size={17} style="color:var(--v2-clay);flex:none;margin-top:1px" />
           <div>
             <div style="font-weight:600;font-size:13px">
-              <span class="v2-num">{count(unheard)}</span> breaches in the last 30 days told nobody
+              <span class="v2-num">{count(unheard)}</span>
+              {$_('settings.escalation.unheard_heading', { values: { count: unheard } })}
             </div>
             <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
               {deadCount === 0
-                ? 'Some halves of these policies resolve to no recipient.'
-                : `${deadCount} of ${policies.length} policies do nothing at all when a ticket breaches.`}
-              A policy that exists is not the same as a policy that fires.
+                ? $_('settings.escalation.unheard_body_some')
+                : $_('settings.escalation.unheard_body_dead', {
+                    values: { dead: deadCount, total: policies.length }
+                  })}
+              {$_('settings.escalation.unheard_body_tail')}
             </p>
           </div>
         </div>
@@ -443,40 +492,48 @@
               style="display:flex;gap:9px;align-items:center;margin-bottom:12px;justify-content:space-between"
             >
               <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
-                <Pill tone={PRIORITY_TONE[p.priority]}>{p.priority}</Pill>
-                {#if !p.is_active}<Pill tone="slate">Off</Pill>{/if}
+                <Pill tone={PRIORITY_TONE[p.priority]}>{$_(casePriorityKey(p.priority))}</Pill>
+                {#if !p.is_active}<Pill tone="slate">{$_('settings.escalation.pill_off')}</Pill
+                  >{/if}
                 <!-- The promise itself. Naming the source of each number means
                      "4h" never reads as a deliberate choice when it is just the
                      built-in default nobody has changed. -->
                 <span class="v2-sub" style="font-size:11.5px">
-                  {targetLabel(p, 'first_response')} reply · {targetLabel(p, 'resolution')} resolve
+                  {$_('settings.escalation.targets_summary', {
+                    values: {
+                      fr: targetLabel(p, 'first_response'),
+                      res: targetLabel(p, 'resolution')
+                    }
+                  })}
                 </span>
               </div>
 
               {#if data.can_edit}
                 <div style="display:flex;gap:6px;align-items:center;flex:none">
                   <button class="v2-btn v2-btn-sm" type="button" onclick={() => openEdit(p)}>
-                    Edit
+                    {$_('settings.escalation.edit_button')}
                   </button>
                   {#if p.is_active}
                     <ConfirmAction
                       action="?/deactivate"
-                      label="Turn off"
-                      confirmLabel="Turn off"
-                      explain="Stops escalating breaches at this priority. It stays in the list, off, until turned back on."
+                      label={$_('settings.escalation.turn_off')}
+                      confirmLabel={$_('settings.escalation.turn_off')}
+                      explain={$_('settings.escalation.deactivate_explain')}
                       hidden={{ id: p.id }}
                     />
                   {:else}
                     <form method="POST" action="?/activate" use:enhance>
                       <input type="hidden" name="id" value={p.id} />
-                      <button class="v2-btn v2-btn-sm" type="submit">Turn on</button>
+                      <button class="v2-btn v2-btn-sm" type="submit">
+                        {$_('settings.escalation.turn_on')}
+                      </button>
                     </form>
                   {/if}
                   <ConfirmAction
                     action="?/remove"
-                    label="Delete"
-                    confirmLabel="Delete"
-                    explain="Deleted permanently. Breaches at this priority will escalate to nobody."
+                    label={$_('settings.escalation.delete_button')}
+                    confirmLabel={$_('settings.escalation.delete_button')}
+                    explain={$_('settings.escalation.remove_explain')}
                     hidden={{ id: p.id }}
                   />
                 </div>
@@ -484,7 +541,7 @@
             </div>
 
             <div class="v2-escalation-halves">
-              {#each [{ label: 'Missed first response', note: teamIgnoredNote(p, 'first_response'), o: first, n: p.breaches_last_30d.first_response }, { label: 'Missed resolution', note: teamIgnoredNote(p, 'resolution'), o: res, n: p.breaches_last_30d.resolution }] as half (half.label)}
+              {#each [{ label: $_('settings.escalation.missed_fr'), note: teamIgnoredNote(p, 'first_response'), o: first, n: p.breaches_last_30d.first_response }, { label: $_('settings.escalation.missed_res'), note: teamIgnoredNote(p, 'resolution'), o: res, n: p.breaches_last_30d.resolution }] as half (half.label)}
                 <div class="v2-escalation-half">
                   <div class="v2-label" style="font-size:10px;margin-bottom:5px">{half.label}</div>
                   <div style="display:flex;gap:7px;align-items:flex-start">
@@ -495,7 +552,7 @@
                       />
                     {/if}
                     <span style="font-size:13px;{half.o.dead ? 'color:var(--v2-slate)' : ''}">
-                      {half.o.text}
+                      {outcomeText(half.o)}
                     </span>
                   </div>
                   {#if half.note}
@@ -505,12 +562,14 @@
                          the outcome sentence alone cannot say so without naming
                          a team the half does not use. -->
                     <div class="v2-sub" style="font-size:11.5px;margin-top:4px">
-                      {half.note}
+                      {teamIgnoredText(half.note)}
                     </div>
                   {/if}
                   <div class="v2-sub" style="font-size:11.5px;margin-top:6px">
                     <span class="v2-num">{count(half.n)}</span>
-                    in the last 30 days{half.o.dead && half.n > 0 ? ', none of them acted on' : ''}
+                    {$_('settings.escalation.half_count')}{half.o.dead && half.n > 0
+                      ? $_('settings.escalation.half_count_none_acted')
+                      : ''}
                   </div>
                 </div>
               {/each}
@@ -525,18 +584,23 @@
              anywhere, and its breaches escalate to nobody with nothing on the
              page saying so. -->
         <p class="v2-sub" style="font-size:11.5px;margin-top:16px;max-width:64ch">
-          {joinWithAnd(availablePriorities)}
-          {availablePriorities.length === 1 ? 'has' : 'have'} no policy, so breaches at
-          {availablePriorities.length === 1 ? 'that priority' : 'those priorities'} escalate to nobody
-          and are not counted above.
+          {$_('settings.escalation.unconfigured_note', {
+            values: {
+              count: availablePriorities.length,
+              list: joinWithAnd(
+                availablePriorities.map((pr) => $_(casePriorityKey(pr))),
+                $_('settings.escalation.and_word')
+              )
+            }
+          })}
         </p>
       {/if}
 
       <p class="v2-sub" style="font-size:11.5px;margin-top:16px;max-width:64ch">
-        Targets are measured on
-        <a href={resolve('/settings/business-hours')} style="color:inherit">business hours</a>, so a
-        breach counts working time only, and time spent waiting on the customer does not count at
-        all. Editing a policy sets both the target and who hears about a breach.
+        {$_('settings.escalation.footer_before')}
+        <a href={resolve('/settings/business-hours')} style="color:inherit"
+          >{$_('settings.escalation.footer_link')}</a
+        >{$_('settings.escalation.footer_after')}
       </p>
     {/if}
   </div>

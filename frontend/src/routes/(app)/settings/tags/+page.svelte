@@ -18,6 +18,7 @@
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count } from '$lib/v2/format.js';
   import { Plus, Merge, Tags as TagsIcon } from '@lucide/svelte';
 
@@ -101,10 +102,11 @@
   });
 </script>
 
-<PageHeader title="Tags">
+<PageHeader title={$_('settings.tags.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(totals.active)}</span> in use across accounts, leads, deals and tickets
+    <span class="v2-num">{count(totals.active)}</span>
+    {$_('settings.tags.sub')}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit}
@@ -133,19 +135,21 @@
           <input
             class="v2-input"
             name="name"
-            placeholder="Tag name"
+            placeholder={$_('settings.tags.name_placeholder')}
             required
             autofocus
             disabled={busy}
           />
-          <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}>Create</button>
+          <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}>
+            {$_('settings.tags.create_button')}
+          </button>
           <button class="v2-btn" type="button" disabled={busy} onclick={() => (adding = false)}>
-            Cancel
+            {$_('settings.tags.cancel_button')}
           </button>
         </form>
       {:else}
         <button class="v2-btn v2-btn-primary" onclick={() => (adding = true)}
-          ><Plus />New tag</button
+          ><Plus />{$_('settings.tags.new_button')}</button
         >
       {/if}
     {/if}
@@ -154,14 +158,18 @@
 
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
-    <StatCard label="Active" value={count(totals.active)} tone="ink" />
+    <StatCard label={$_('settings.tags.stat_active')} value={count(totals.active)} tone="ink" />
     <StatCard
-      label="Applied to nothing"
+      label={$_('settings.tags.stat_unused')}
       value={count(totals.unused)}
       tone={totals.unused > 0 ? 'clay' : 'slate'}
-      detail="Counts accounts, leads, deals and tickets only"
+      detail={$_('settings.tags.stat_unused_detail')}
     />
-    <StatCard label="Turned off" value={count(totals.count - totals.active)} tone="slate" />
+    <StatCard
+      label={$_('settings.tags.stat_off')}
+      value={count(totals.count - totals.active)}
+      tone="slate"
+    />
   </div>
 </div>
 
@@ -172,11 +180,18 @@
         <Merge size={16} style="color:var(--v2-clay);flex:none;margin-top:1px" />
         <div>
           <div style="font-weight:600;font-size:13px">
-            {group.all.map((t) => t.name).join(' and ')} look like the same tag
+            {$_('settings.tags.dup_heading', {
+              values: {
+                names: group.all.map((t) => t.name).join(` ${$_('settings.tags.join_and')} `)
+              }
+            })}
           </div>
           <p class="v2-sub" style="font-size:12px;margin:4px 0 0;line-height:1.5">
-            {group.all.map((t) => `${t.name} is on ${used(t)} records`).join('; ')}. Anyone
-            filtering by one of them misses the other.
+            {group.all
+              .map((t) =>
+                $_('settings.tags.dup_on_records', { values: { name: t.name, count: used(t) } })
+              )
+              .join('; ')}. {$_('settings.tags.dup_tail')}
           </p>
         </div>
         {#if data.can_edit}
@@ -190,9 +205,13 @@
             {#each group.merge as loser (loser.id)}
               <ConfirmAction
                 action="?/merge"
-                label={group.merge.length > 1 ? `Merge ${loser.name}` : 'Merge'}
-                confirmLabel="Merge"
-                explain={`${used(loser)} ${used(loser) === 1 ? 'record moves' : 'records move'} from ${loser.name} to ${group.keep.name}, and ${loser.name} is turned off. Records already on ${group.keep.name} are untouched. This cannot be undone by merging back.`}
+                label={group.merge.length > 1
+                  ? $_('settings.tags.merge_named', { values: { name: loser.name } })
+                  : $_('settings.tags.merge_button')}
+                confirmLabel={$_('settings.tags.merge_button')}
+                explain={$_('settings.tags.merge_explain', {
+                  values: { count: used(loser), from: loser.name, to: group.keep.name }
+                })}
                 hidden={{ id: loser.id, into: group.keep.id }}
               />
             {/each}
@@ -206,8 +225,9 @@
     {/if}
     {#if form?.merged}
       <p class="v2-sub" style="margin-bottom:12px">
-        Merged into {form.merged.name}. {count(form.merged.moved)}
-        {form.merged.moved === 1 ? 'record' : 'records'} moved.
+        {$_('settings.tags.merged_result', {
+          values: { name: form.merged.name, count: form.merged.moved }
+        })}
       </p>
     {/if}
 
@@ -218,19 +238,19 @@
       <p class="v2-error" style="margin-bottom:12px">{form.restore.error}</p>
     {/if}
 
-    <div class="v2-label" style="margin-bottom:10px">All tags</div>
+    <div class="v2-label" style="margin-bottom:10px">{$_('settings.tags.all_tags')}</div>
     <div class="v2-table-wrap">
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Tag</th>
-            <th style="text-align:right">Accounts</th>
-            <th style="text-align:right">Contacts</th>
-            <th style="text-align:right">Leads</th>
-            <th style="text-align:right">Deals</th>
-            <th style="text-align:right">Tickets</th>
-            <th style="text-align:right">Tasks</th>
-            <th style="text-align:right">Total</th>
+            <th>{$_('settings.tags.col_tag')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_accounts')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_contacts')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_leads')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_deals')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_tickets')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_tasks')}</th>
+            <th style="text-align:right">{$_('settings.tags.col_total')}</th>
             <th></th>
             {#if data.can_edit}<th></th>{/if}
           </tr>
@@ -255,9 +275,9 @@
               <td class="v2-num" style="text-align:right;font-weight:600">{used(t) || '—'}</td>
               <td style="text-align:right">
                 {#if !t.is_active}
-                  <Pill tone="slate">Off</Pill>
+                  <Pill tone="slate">{$_('settings.tags.pill_off')}</Pill>
                 {:else if used(t) === 0}
-                  <Pill tone="clay">Unused</Pill>
+                  <Pill tone="clay">{$_('settings.tags.pill_unused')}</Pill>
                 {/if}
               </td>
               {#if data.can_edit}
@@ -271,11 +291,11 @@
                          not a vague warning. -->
                     <ConfirmAction
                       action="?/archive"
-                      label="Turn off"
-                      confirmLabel="Turn off"
+                      label={$_('settings.tags.turn_off')}
+                      confirmLabel={$_('settings.tags.turn_off')}
                       explain={used(t) > 0
-                        ? `${used(t)} ${used(t) === 1 ? 'record keeps' : 'records keep'} this tag. Turning it off stops it being offered on new records, and keeps it on the ones that have it. You can turn it back on.`
-                        : 'Nothing carries this tag. Turning it off stops it being offered on new records. You can turn it back on.'}
+                        ? $_('settings.tags.archive_explain_used', { values: { count: used(t) } })
+                        : $_('settings.tags.archive_explain_empty')}
                       hidden={{ id: t.id }}
                     />
                   {:else}
@@ -284,7 +304,9 @@
                          two-click confirm. -->
                     <form method="POST" action="?/restore" use:enhance>
                       <input type="hidden" name="id" value={t.id} />
-                      <button class="v2-btn v2-btn-sm" type="submit">Turn back on</button>
+                      <button class="v2-btn v2-btn-sm" type="submit">
+                        {$_('settings.tags.turn_on')}
+                      </button>
                     </form>
                   {/if}
                 </td>
@@ -294,8 +316,8 @@
             <tr>
               <td colspan={data.can_edit ? 8 : 7}>
                 <EmptyState
-                  title="No tags yet"
-                  body="Tags are shared across every record type, so the first one is worth naming carefully."
+                  title={$_('settings.tags.empty_title')}
+                  body={$_('settings.tags.empty_body')}
                 >
                   {#snippet icon()}<TagsIcon size={21} />{/snippet}
                 </EmptyState>
@@ -307,8 +329,7 @@
     </div>
 
     <p class="v2-sub" style="font-size:11.5px;margin-top:14px;max-width:64ch">
-      Turning a tag off hides it from the pickers and leaves it on the records that already carry
-      it. Nothing is removed, and you can turn a tag back on at any time.
+      {$_('settings.tags.footer')}
     </p>
   </div>
 </div>

@@ -24,6 +24,7 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SettingsCrumb from '$lib/v2/components/SettingsCrumb.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { CURRENCY_CODES } from '$lib/constants/filters.js';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -90,11 +91,11 @@
     /** @type {Record<string, string>} */
     const e = {};
     if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
-      e.email = 'That does not look like an email address.';
+      e.email = $_('settings.organization.edit.err_email');
     // The model stores this in a URLField, which wants a real URL. A light check
     // here saves a server round-trip; the serializer is the actual rule.
     if (form.website && !/^https?:\/\/.+\..+/.test(form.website))
-      e.website = 'Include the full address, starting with http:// or https://.';
+      e.website = $_('settings.organization.edit.err_website');
     return e;
   });
 
@@ -125,21 +126,23 @@
 </script>
 
 {#if data.forbidden}
-  <PageHeader title="Organization">
+  <PageHeader title={$_('settings.organization.edit.forbidden_title')}>
     {#snippet crumb()}<SettingsCrumb />{/snippet}
   </PageHeader>
   <div class="v2-pad" style="padding-top:40px">
     <NextAction
-      label="Admins only"
-      text="Editing organization details is limited to admins. Ask an admin on your team if a company detail, currency, or survey setting needs changing."
+      label={$_('settings.organization.edit.forbidden_label')}
+      text={$_('settings.organization.edit.forbidden_text')}
     />
   </div>
 {:else}
-  <PageHeader title="Edit organization" center>
+  <PageHeader title={$_('settings.organization.edit.title')} center>
     {#snippet crumb()}
-      <a href={resolve('/settings')}>Settings</a>
+      <a href={resolve('/settings')}>{$_('settings.organization.edit.crumb_settings')}</a>
       <ChevronRight size={12} />
-      <a href={resolve('/settings/organization')}>Organization</a>
+      <a href={resolve('/settings/organization')}
+        >{$_('settings.organization.edit.crumb_organization')}</a
+      >
     {/snippet}
   </PageHeader>
 
@@ -153,7 +156,9 @@
         >
           <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
           <div class="v2-next-body">
-            <div style="font-weight:600">The server refused this change</div>
+            <div style="font-weight:600">
+              {$_('settings.organization.edit.server_error_heading')}
+            </div>
             <div class="v2-sub" style="margin-top:2px">{result.error}</div>
           </div>
         </div>
@@ -170,21 +175,26 @@
             <!-- Counted, not assumed. Only two fields are checked here, but one
                  of them failing on its own is the common case. -->
             <div style="font-weight:600">
-              {Object.keys(errors).length === 1 ? 'One field to check' : 'Two fields to check'}
+              {Object.keys(errors).length === 1
+                ? $_('settings.organization.edit.one_field')
+                : $_('settings.organization.edit.two_fields')}
             </div>
-            <div class="v2-sub" style="margin-top:2px">Nothing has been saved yet.</div>
+            <div class="v2-sub" style="margin-top:2px">
+              {$_('settings.organization.edit.nothing_saved')}
+            </div>
           </div>
         </div>
       {/if}
 
-      <div class="v2-label" style="margin-bottom:12px">What customers see</div>
+      <div class="v2-label" style="margin-bottom:12px">
+        {$_('settings.organization.edit.section_customers')}
+      </div>
       <p class="v2-hint" style="margin-top:-4px;margin-bottom:14px">
-        Printed on every invoice and estimate. Changes apply from now on; documents already sent
-        keep what they were sent with.
+        {$_('settings.organization.edit.customers_note')}
       </p>
 
       <div class="v2-field">
-        <label for="f-company">Legal name</label>
+        <label for="f-company">{$_('settings.organization.edit.legal_name')}</label>
         <input
           id="f-company"
           name="company_name"
@@ -192,18 +202,18 @@
           maxlength="255"
           bind:value={form.company_name}
         />
-        <p class="v2-hint">The registered company name, as it should appear on a document.</p>
+        <p class="v2-hint">{$_('settings.organization.edit.legal_name_hint')}</p>
       </div>
 
       <div class="v2-field">
-        <label for="f-name">Trading name</label>
+        <label for="f-name">{$_('settings.organization.edit.trading_name')}</label>
         <input id="f-name" name="name" class="v2-input" maxlength="100" bind:value={form.name} />
-        <p class="v2-hint">What this organisation is called across the app.</p>
+        <p class="v2-hint">{$_('settings.organization.edit.trading_name_hint')}</p>
       </div>
 
       <div class="pair">
         <div class="v2-field">
-          <label for="f-tax">Tax ID</label>
+          <label for="f-tax">{$_('settings.organization.edit.tax_id')}</label>
           <input
             id="f-tax"
             name="tax_id"
@@ -213,7 +223,7 @@
           />
         </div>
         <div class="v2-field">
-          <label for="f-phone">Phone</label>
+          <label for="f-phone">{$_('settings.organization.edit.phone')}</label>
           <input
             id="f-phone"
             name="phone"
@@ -226,7 +236,7 @@
 
       <div class="pair">
         <div class="v2-field">
-          <label for="f-email">Email</label>
+          <label for="f-email">{$_('settings.organization.edit.email')}</label>
           <input
             id="f-email"
             name="email"
@@ -239,7 +249,7 @@
           {#if show('email')}<p class="v2-error">{errors.email}</p>{/if}
         </div>
         <div class="v2-field">
-          <label for="f-website">Website</label>
+          <label for="f-website">{$_('settings.organization.edit.website')}</label>
           <input
             id="f-website"
             name="website"
@@ -254,7 +264,7 @@
       </div>
 
       <div class="v2-field">
-        <label for="f-address">Address</label>
+        <label for="f-address">{$_('settings.organization.edit.address')}</label>
         <input
           id="f-address"
           name="address_line"
@@ -266,11 +276,11 @@
 
       <div class="triple">
         <div class="v2-field">
-          <label for="f-city">City</label>
+          <label for="f-city">{$_('settings.organization.edit.city')}</label>
           <input id="f-city" name="city" class="v2-input" maxlength="100" bind:value={form.city} />
         </div>
         <div class="v2-field">
-          <label for="f-state">State</label>
+          <label for="f-state">{$_('settings.organization.edit.state')}</label>
           <input
             id="f-state"
             name="state"
@@ -280,7 +290,7 @@
           />
         </div>
         <div class="v2-field">
-          <label for="f-postcode">Postcode</label>
+          <label for="f-postcode">{$_('settings.organization.edit.postcode')}</label>
           <input
             id="f-postcode"
             name="postcode"
@@ -292,19 +302,21 @@
       </div>
 
       <div class="v2-field">
-        <label for="f-country">Country</label>
+        <label for="f-country">{$_('settings.organization.edit.country')}</label>
         <select id="f-country" name="country" class="v2-input" bind:value={form.country}>
-          <option value="">Not recorded</option>
+          <option value="">{$_('settings.organization.edit.country_none')}</option>
           {#each countryOptions as c (c.value)}
             <option value={c.value}>{c.label}</option>
           {/each}
         </select>
       </div>
 
-      <div class="v2-label" style="margin:24px 0 12px">Defaults</div>
+      <div class="v2-label" style="margin:24px 0 12px">
+        {$_('settings.organization.edit.section_defaults')}
+      </div>
       <div class="pair">
         <div class="v2-field">
-          <label for="f-currency">Currency</label>
+          <label for="f-currency">{$_('settings.organization.edit.currency')}</label>
           <select
             id="f-currency"
             name="default_currency"
@@ -315,73 +327,75 @@
               <option value={c.value}>{c.label}</option>
             {/each}
           </select>
-          <p class="v2-hint">Applied to new invoices and estimates. Existing ones keep theirs.</p>
+          <p class="v2-hint">{$_('settings.organization.edit.currency_hint')}</p>
         </div>
         <div class="v2-field">
-          <label for="f-defcountry">Country default</label>
+          <label for="f-defcountry">{$_('settings.organization.edit.country_default')}</label>
           <select
             id="f-defcountry"
             name="default_country"
             class="v2-input"
             bind:value={form.default_country}
           >
-            <option value="">Not set</option>
+            <option value="">{$_('settings.organization.edit.country_default_none')}</option>
             {#each countryOptions as c (c.value)}
               <option value={c.value}>{c.label}</option>
             {/each}
           </select>
-          <p class="v2-hint">Pre-filled on new addresses.</p>
+          <p class="v2-hint">{$_('settings.organization.edit.country_default_hint')}</p>
         </div>
       </div>
 
       <div class="v2-field">
-        <label for="f-timezone">Time zone</label>
+        <label for="f-timezone">{$_('settings.organization.edit.timezone')}</label>
         <select id="f-timezone" name="timezone" class="v2-input" bind:value={form.timezone}>
           {#each timezones as zone (zone.name)}
             <option value={zone.name}>{zone.label}</option>
           {/each}
         </select>
         <p class="v2-hint">
-          When a day starts for this organisation. Changing it moves what counts as due today and
-          overdue, for everyone here.
+          {$_('settings.organization.edit.timezone_hint')}
         </p>
       </div>
 
-      <div class="v2-label" style="margin:24px 0 12px">Behaviour</div>
+      <div class="v2-label" style="margin:24px 0 12px">
+        {$_('settings.organization.edit.section_behaviour')}
+      </div>
 
       <div class="v2-field">
-        <label for="f-csat">Satisfaction surveys</label>
+        <label for="f-csat">{$_('settings.organization.edit.csat')}</label>
         <select id="f-csat" name="csat_enabled" class="v2-input" bind:value={form.csat_enabled}>
-          <option value="true">Sending. A survey goes out after a ticket closes</option>
-          <option value="false">Off, no surveys, org-wide</option>
+          <option value="true">{$_('settings.organization.edit.csat_on')}</option>
+          <option value="false">{$_('settings.organization.edit.csat_off')}</option>
         </select>
         <p class="v2-hint">
-          Off stops every survey org-wide. There is no per-team exception and no notice on the
-          ticket.
+          {$_('settings.organization.edit.csat_hint')}
         </p>
       </div>
 
       <div class="v2-field">
-        <label for="f-cascade">Close child tickets with the parent</label>
+        <label for="f-cascade">{$_('settings.organization.edit.cascade')}</label>
         <select
           id="f-cascade"
           name="auto_close_children_on_parent_close"
           class="v2-input"
           bind:value={form.auto_close_children_on_parent_close}
         >
-          <option value="true">Offer it on. The close prompt starts ticked</option>
-          <option value="false">Offer it off. The close prompt starts unticked</option>
+          <option value="true">{$_('settings.organization.edit.cascade_on')}</option>
+          <option value="false">{$_('settings.organization.edit.cascade_off')}</option>
         </select>
         <p class="v2-hint">
-          Only sets how the prompt starts, and only on the mobile app, which is where closing a
-          parent offers to close its open children. The person still confirms. Closing a parent on
-          the web leaves its children open, with no prompt.
+          {$_('settings.organization.edit.cascade_hint')}
         </p>
       </div>
 
       <div class="actions">
-        <button class="v2-btn v2-btn-primary" type="submit">Save changes</button>
-        <a class="v2-btn" href={resolve('/settings/organization')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit">
+          {$_('settings.organization.edit.save')}
+        </button>
+        <a class="v2-btn" href={resolve('/settings/organization')}>
+          {$_('settings.organization.edit.cancel')}
+        </a>
       </div>
     </form>
   </div>

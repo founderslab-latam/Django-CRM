@@ -43,11 +43,16 @@ export function deliveryState(mailbox) {
   return 'live';
 }
 
-const LABEL = {
-  off: 'Creating nothing',
-  unsupported: 'Provider not wired up',
-  unconfirmed: 'Not connected yet',
-  live: 'Creating tickets'
+/**
+ * i18n catalog keys, not English. `deliveryLabel` returns the key for a state;
+ * the page resolves it with `$_`. Kept as descriptors so this module stays
+ * testable without the i18n store, matching `tickets/[id]/close.js`.
+ */
+const LABEL_KEY = {
+  off: 'settings.inbound_email.delivery_label.off',
+  unsupported: 'settings.inbound_email.delivery_label.unsupported',
+  unconfirmed: 'settings.inbound_email.delivery_label.unconfirmed',
+  live: 'settings.inbound_email.delivery_label.live'
 };
 
 const TONE = {
@@ -57,9 +62,9 @@ const TONE = {
   live: 'moss'
 };
 
-/** @param {string} state */
+/** The catalog key for a state's pill label. @param {string} state */
 export function deliveryLabel(state) {
-  return LABEL[state] ?? LABEL.off;
+  return LABEL_KEY[state] ?? LABEL_KEY.off;
 }
 
 /** @param {string} state */
@@ -68,23 +73,26 @@ export function deliveryTone(state) {
 }
 
 /**
- * Why nothing is arriving, in the words the page uses, or null when it is.
- *
- * `providerLabel` is passed in rather than imported so this module stays free
- * of the enum map the page already holds.
+ * Why nothing is arriving, as a catalog key plus its interpolation values, or
+ * null when mail is getting through. `providerLabel` is passed in (already
+ * translated) rather than imported so this module stays free of the enum map.
  *
  * @param {string} state
  * @param {string} providerLabel
+ * @returns {{ key: string, values?: Record<string, string> } | null}
  */
 export function deliveryExplanation(state, providerLabel) {
   if (state === 'off') {
-    return 'Mail still arrives here and no ticket is opened. Nothing bounces, so whoever wrote gets silence rather than an error.';
+    return { key: 'settings.inbound_email.delivery_why.off' };
   }
   if (state === 'unsupported') {
-    return `${providerLabel} deliveries are not implemented. The webhook refuses them, so mail to this address becomes nothing whatever else is set here. Only AWS SES is wired up.`;
+    return {
+      key: 'settings.inbound_email.delivery_why.unsupported',
+      values: { provider: providerLabel }
+    };
   }
   if (state === 'unconfirmed') {
-    return 'Waiting on the first confirmed delivery from SNS. Until the topic subscription is confirmed, every notification is rejected, so this address is not receiving yet.';
+    return { key: 'settings.inbound_email.delivery_why.unconfirmed' };
   }
   return null;
 }
@@ -126,8 +134,11 @@ export function silentMailboxes(mailboxes) {
  * would silently rewrite a mailbox already set to one. They say so instead.
  *
  * @param {string} value
- * @param {string} label
+ * @param {string} label the already-translated provider name
+ * @returns {{ key: string, values: { label: string } }}
  */
 export function providerChoiceLabel(value, label) {
-  return SUPPORTED_PROVIDERS.includes(value) ? label : `${label} (not wired up yet)`;
+  return SUPPORTED_PROVIDERS.includes(value)
+    ? { key: 'settings.inbound_email.provider_choice_plain', values: { label } }
+    : { key: 'settings.inbound_email.provider_choice_not_wired', values: { label } };
 }

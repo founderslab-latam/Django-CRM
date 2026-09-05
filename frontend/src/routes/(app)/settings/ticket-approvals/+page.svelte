@@ -32,8 +32,10 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count } from '$lib/v2/format.js';
-  import { ROLE_LABEL } from '$lib/v2/enums.js';
+  import { approverRoleKey } from '$lib/settings/labels.js';
+  import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
   import { missingOptions, inactiveOptionLabel } from '$lib/v2/pickers.js';
   import {
     approverSentence,
@@ -53,12 +55,38 @@
   const MATCH_PRIORITIES = ['Low', 'Normal', 'High', 'Urgent'];
   const MATCH_CASE_TYPES = ['Question', 'Incident', 'Problem'];
 
-  // `ROLE_LABEL` covers `Profile.role` (ADMIN/USER), not the approver-role
-  // vocabulary this form offers (ADMIN/MANAGER). MANAGER is not a real
-  // `Profile.role` value (see the module docstring), so it has no entry in
-  // that map and would render as `undefined`. Labelled here instead.
-  function approverRoleLabel(role) {
-    return role === 'MANAGER' ? 'Manager' : (ROLE_LABEL[role] ?? role);
+  /**
+   * Everyone who can clear a rule, as a sentence. `approverSentence` hands back
+   * a descriptor; the phrasing (and the " or " join) is put together here.
+   * @param {ReturnType<typeof approverSentence>} a
+   */
+  function approverText(a) {
+    if (a.kind === 'admin') return $_('settings.ticket_approvals.cleared_admin');
+    if (a.kind === 'nobody') return $_('settings.ticket_approvals.cleared_nobody');
+    const names = a.named.join(` ${$_('settings.ticket_approvals.or_word')} `);
+    if (a.kind === 'named') return names;
+    return $_('settings.ticket_approvals.cleared_admin_or', { values: { named: names } });
+  }
+
+  /**
+   * What a rule gates, as a sentence. Raw enum values from the descriptor are
+   * translated through `$lib/cases/labels.js` so the vocabulary matches Cases.
+   * @param {ReturnType<typeof ruleMatchSentence>} m
+   */
+  function matchText(m) {
+    if (m.kind === 'every') return $_('settings.ticket_approvals.match_every');
+    /** @type {string[]} */
+    const parts = [];
+    if (m.priority)
+      parts.push(
+        $_('settings.ticket_approvals.match_priority', {
+          values: { priority: $_(casePriorityKey(m.priority)) }
+        })
+      );
+    if (m.caseType) parts.push($_(caseTypeKey(m.caseType)).toLowerCase());
+    if (m.team)
+      parts.push($_('settings.ticket_approvals.match_team', { values: { team: m.team } }));
+    return parts.join(' · ');
   }
 
   // `null` when the panel is closed, `'new'` when adding, or the rule object
@@ -89,15 +117,19 @@
   let shadowed = $derived(shadowedRuleIds(rules));
 </script>
 
-<PageHeader title="Approval rules">
+<PageHeader title={$_('settings.ticket_approvals.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(totals.active)}</span> active ·
-    <span class="v2-num">{count(totals.pending)}</span> approvals waiting on them right now
+    <span class="v2-num">{count(totals.active)}</span>
+    {$_('settings.ticket_approvals.sub_active', { values: { count: totals.active } })} ·
+    <span class="v2-num">{count(totals.pending)}</span>
+    {$_('settings.ticket_approvals.sub_pending')}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit && !editing}
-      <button class="v2-btn v2-btn-primary" onclick={openCreate}><Plus />New rule</button>
+      <button class="v2-btn v2-btn-primary" onclick={openCreate}>
+        <Plus />{$_('settings.ticket_approvals.new_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
@@ -106,10 +138,14 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     {#if editing}
       <SettingsFormPanel
-        title={editing === 'new' ? 'New rule' : `Edit ${editing.name}`}
+        title={editing === 'new'
+          ? $_('settings.ticket_approvals.form_new')
+          : $_('settings.ticket_approvals.form_edit', { values: { name: editing.name } })}
         action={editing === 'new' ? '?/create' : '?/update'}
         error={editing === 'new' ? form?.create?.error : form?.update?.error}
-        submitLabel={editing === 'new' ? 'Add rule' : 'Save rule'}
+        submitLabel={editing === 'new'
+          ? $_('settings.ticket_approvals.add_button')
+          : $_('settings.ticket_approvals.save_button')}
         oncancel={() => (editing = null)}
         ondone={() => (editing = null)}
       >
@@ -119,7 +155,7 @@
           {/if}
 
           <div class="v2-field">
-            <label for="a-name">Name</label>
+            <label for="a-name">{$_('settings.ticket_approvals.field_name')}</label>
             <input
               id="a-name"
               class="v2-input"
@@ -131,21 +167,21 @@
           </div>
 
           <div class="v2-field">
-            <label for="a-role">Approver role</label>
+            <label for="a-role">{$_('settings.ticket_approvals.field_role')}</label>
             <select id="a-role" class="v2-input" name="approver_role">
               {#each ['ADMIN', 'MANAGER'] as role (role)}
                 <option
                   value={role}
                   selected={editing === 'new' ? role === 'ADMIN' : editing.approver_role === role}
                 >
-                  {approverRoleLabel(role)}
+                  {$_(approverRoleKey(role))}
                 </option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field v2-sfp-wide">
-            <label for="a-approvers">Named approvers</label>
+            <label for="a-approvers">{$_('settings.ticket_approvals.field_approvers')}</label>
             <select
               id="a-approvers"
               class="v2-input"
@@ -169,51 +205,50 @@
                 </option>
               {/each}
             </select>
-            <p class="v2-hint">
-              Named approvers are in addition to the role above. Leave this empty and anyone with
-              that role can clear the approval.
-            </p>
+            <p class="v2-hint">{$_('settings.ticket_approvals.approvers_hint')}</p>
             {#if missingApprovers.length}
               <p class="v2-hint">
-                {missingApprovers.length === 1
-                  ? 'One approver is'
-                  : `${missingApprovers.length} approvers are`}
-                no longer active. They stay named until you deselect them, and they cannot clear an approval
-                while their account is off.
+                {$_('settings.ticket_approvals.approvers_inactive', {
+                  values: { count: missingApprovers.length }
+                })}
               </p>
             {/if}
           </div>
 
           <div class="v2-field">
-            <label for="a-priority">Priority</label>
+            <label for="a-priority">{$_('settings.ticket_approvals.field_priority')}</label>
             <select id="a-priority" class="v2-input" name="match_priority">
-              <option value="" selected={editing === 'new' || !editing.match_priority}>Any</option>
+              <option value="" selected={editing === 'new' || !editing.match_priority}>
+                {$_('settings.ticket_approvals.any')}
+              </option>
               {#each MATCH_PRIORITIES as p (p)}
                 <option value={p} selected={editing !== 'new' && editing.match_priority === p}>
-                  {p}
+                  {$_(casePriorityKey(p))}
                 </option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="a-type">Ticket type</label>
+            <label for="a-type">{$_('settings.ticket_approvals.field_type')}</label>
             <select id="a-type" class="v2-input" name="match_case_type">
               <option value="" selected={editing === 'new' || !editing.match_case_type}>
-                Any
+                {$_('settings.ticket_approvals.any')}
               </option>
               {#each MATCH_CASE_TYPES as t (t)}
                 <option value={t} selected={editing !== 'new' && editing.match_case_type === t}>
-                  {t}
+                  {$_(caseTypeKey(t))}
                 </option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="a-team">Team</label>
+            <label for="a-team">{$_('settings.ticket_approvals.field_team')}</label>
             <select id="a-team" class="v2-input" name="match_team_id">
-              <option value="" selected={editing === 'new' || !editing.match_team}>Any team</option>
+              <option value="" selected={editing === 'new' || !editing.match_team}>
+                {$_('settings.ticket_approvals.any_team')}
+              </option>
               {#each data.teams as t (t.id)}
                 <option
                   value={t.id}
@@ -224,16 +259,16 @@
               {/each}
             </select>
             {#if !data.teams.length}
-              <p class="v2-hint">No teams in this org yet.</p>
+              <p class="v2-hint">{$_('settings.ticket_approvals.no_teams')}</p>
             {/if}
           </div>
 
           {#if editing === 'new'}
             <div class="v2-field">
-              <label for="a-active">Active</label>
+              <label for="a-active">{$_('settings.ticket_approvals.field_active')}</label>
               <label style="display:flex;gap:8px;align-items:center;font-weight:400">
                 <input id="a-active" type="checkbox" name="is_active" value="true" checked />
-                Starts gating matching ticket closes as soon as it is saved.
+                {$_('settings.ticket_approvals.active_help')}
               </label>
             </div>
           {/if}
@@ -257,21 +292,18 @@
            saying nothing here would read as a delete that failed silently. -->
       <div class="v2-rule-flag" style="margin-bottom:12px">
         <TriangleAlert size={14} style="color:var(--v2-clay);flex:none" />
-        <span>
-          That rule had approval history, so it was turned off instead of deleted. The approvals it
-          already gated have to keep pointing at it. It is still in the list below, marked Off, and
-          gates nothing.
-        </span>
+        <span>{$_('settings.ticket_approvals.turned_off_notice')}</span>
       </div>
     {/if}
 
-    <div class="v2-label" style="margin-bottom:4px">Rules</div>
+    <div class="v2-label" style="margin-bottom:4px">
+      {$_('settings.ticket_approvals.section_rules')}
+    </div>
     <!-- The list reads as cumulative and is not. Worth one line above it,
          since every row below describes a gate and only one of them is ever
          the gate for a given ticket. -->
     <p class="v2-sub" style="font-size:11.5px;margin:0 0 10px">
-      A ticket is gated by one rule, the most specific that matches it. The others are fallbacks for
-      the tickets it misses.
+      {$_('settings.ticket_approvals.rules_note')}
     </p>
     <div style="display:flex;flex-direction:column;gap:9px">
       {#each rules as r (r.id)}
@@ -281,26 +313,31 @@
             <div style="flex:1;min-width:0">
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <b style="font-size:13.5px">{r.name}</b>
-                {#if !r.is_active}<Pill tone="slate">Off</Pill>{/if}
-                {#if clearableByNobody(r)}<Pill tone="rust">Nobody can clear</Pill>{/if}
-                {#if beatenBy}<Pill tone="rust">Never runs</Pill>{/if}
+                {#if !r.is_active}
+                  <Pill tone="slate">{$_('settings.ticket_approvals.pill_off')}</Pill>
+                {/if}
+                {#if clearableByNobody(r)}
+                  <Pill tone="rust">{$_('settings.ticket_approvals.pill_nobody')}</Pill>
+                {/if}
+                {#if beatenBy}<Pill tone="rust">{$_('settings.ticket_approvals.pill_never')}</Pill
+                  >{/if}
               </div>
 
               <div class="v2-sub" style="font-size:12.5px;margin-top:5px;white-space:normal">
-                <b style="font-weight:600;color:var(--v2-ink)">Gates</b>
-                {ruleMatchSentence(r)}
+                <b style="font-weight:600;color:var(--v2-ink)"
+                  >{$_('settings.ticket_approvals.gates_label')}</b
+                >
+                {matchText(ruleMatchSentence(r))}
                 <b style="font-weight:600;color:var(--v2-ink)">→</b>
-                cleared by {approverSentence(r)}
+                {$_('settings.ticket_approvals.cleared_by', {
+                  values: { who: approverText(approverSentence(r)) }
+                })}
               </div>
 
               {#if clearableByNobody(r)}
                 <div class="v2-rule-flag">
                   <TriangleAlert size={14} style="color:var(--v2-rust);flex:none" />
-                  <span>
-                    This organisation has admins and members. There is no manager role. With no
-                    named approvers, the first ticket this gates cannot be closed by anyone. Name
-                    approvers, or set it to admin.
-                  </span>
+                  <span>{$_('settings.ticket_approvals.nobody_flag')}</span>
                 </div>
               {/if}
 
@@ -308,10 +345,9 @@
                 <div class="v2-rule-flag">
                   <TriangleAlert size={14} style="color:var(--v2-rust);flex:none" />
                   <span>
-                    <b style="font-weight:600;color:var(--v2-ink)">{beatenBy.name}</b> gates exactly the
-                    same tickets and was written later. One rule gates a close, the most specific match,
-                    and the newest wins between equals, so this one never runs. Turn it off, delete it,
-                    or narrow what it matches.
+                    <b style="font-weight:600;color:var(--v2-ink)">{beatenBy.name}</b>{$_(
+                      'settings.ticket_approvals.shadow_flag_after'
+                    )}
                   </span>
                 </div>
               {/if}
@@ -324,7 +360,8 @@
                   class="v2-sub"
                   style="font-size:12px;display:inline-flex;align-items:center;gap:2px"
                 >
-                  <span class="v2-num">{count(r.pending_count)}</span> waiting
+                  <span class="v2-num">{count(r.pending_count)}</span>
+                  {$_('settings.ticket_approvals.waiting')}
                   <ChevronRight size={13} />
                 </a>
               {/if}
@@ -333,20 +370,22 @@
             {#if data.can_edit}
               <div style="display:flex;gap:6px;align-items:center;flex:none">
                 <button class="v2-btn v2-btn-sm" type="button" onclick={() => openEdit(r)}>
-                  Edit
+                  {$_('settings.ticket_approvals.edit_button')}
                 </button>
                 {#if r.is_active}
                   <ConfirmAction
                     action="?/deactivate"
-                    label="Turn off"
-                    confirmLabel="Turn off"
-                    explain="Stops gating new ticket closes. It stays in the list, off, until turned back on."
+                    label={$_('settings.ticket_approvals.turn_off')}
+                    confirmLabel={$_('settings.ticket_approvals.turn_off')}
+                    explain={$_('settings.ticket_approvals.deactivate_explain')}
                     hidden={{ id: r.id }}
                   />
                 {:else}
                   <form method="POST" action="?/activate" use:enhance>
                     <input type="hidden" name="id" value={r.id} />
-                    <button class="v2-btn v2-btn-sm" type="submit">Turn on</button>
+                    <button class="v2-btn v2-btn-sm" type="submit">
+                      {$_('settings.ticket_approvals.turn_on')}
+                    </button>
                   </form>
                 {/if}
                 <!-- Not "deleted permanently". The backend destroys a rule
@@ -359,11 +398,13 @@
                      actually happened afterwards. -->
                 <ConfirmAction
                   action="?/remove"
-                  label="Delete"
-                  confirmLabel="Delete"
+                  label={$_('settings.ticket_approvals.delete_button')}
+                  confirmLabel={$_('settings.ticket_approvals.delete_button')}
                   explain={r.pending_count > 0
-                    ? `${r.pending_count} approvals are waiting on this rule. A rule that has ever gated a close is turned off rather than deleted, because the record has to be kept.`
-                    : 'A rule that has never gated a close is deleted for good. One with any approval history is turned off instead, because the record has to be kept.'}
+                    ? $_('settings.ticket_approvals.delete_explain_pending', {
+                        values: { count: r.pending_count }
+                      })
+                    : $_('settings.ticket_approvals.delete_explain_clean')}
                   hidden={{ id: r.id }}
                 />
               </div>

@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getMailboxes,
   createMailbox,
@@ -60,9 +62,13 @@ export const actions = {
       await createMailbox(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { create: { error: 'Only an admin can change inbound mailboxes.' } });
+        return fail(403, { create: { error: get(_)('settings.inbound_email.error_forbidden') } });
       }
-      return fail(400, { create: { error: readableError(err, 'Could not add the address.') } });
+      return fail(400, {
+        create: {
+          error: readableError(err, get(_)('settings.inbound_email.error_create_fallback'))
+        }
+      });
     }
     return { created: true };
   },
@@ -75,9 +81,13 @@ export const actions = {
       await updateMailbox(event, id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { update: { error: 'Only an admin can change inbound mailboxes.' } });
+        return fail(403, { update: { error: get(_)('settings.inbound_email.error_forbidden') } });
       }
-      return fail(400, { update: { error: readableError(err, 'Could not save the address.') } });
+      return fail(400, {
+        update: {
+          error: readableError(err, get(_)('settings.inbound_email.error_update_fallback'))
+        }
+      });
     }
     return { updated: true };
   },
@@ -89,10 +99,14 @@ export const actions = {
       await updateMailbox(event, id, { is_active: false });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { deactivate: { error: 'Only an admin can change inbound mailboxes.' } });
+        return fail(403, {
+          deactivate: { error: get(_)('settings.inbound_email.error_forbidden') }
+        });
       }
       return fail(400, {
-        deactivate: { error: readableError(err, 'Could not turn the address off.') }
+        deactivate: {
+          error: readableError(err, get(_)('settings.inbound_email.error_deactivate_fallback'))
+        }
       });
     }
     return { deactivated: true };
@@ -113,10 +127,12 @@ export const actions = {
       await updateMailbox(event, id, { is_active: true });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { activate: { error: 'Only an admin can change inbound mailboxes.' } });
+        return fail(403, { activate: { error: get(_)('settings.inbound_email.error_forbidden') } });
       }
       return fail(400, {
-        activate: { error: readableError(err, 'Could not turn the address on.') }
+        activate: {
+          error: readableError(err, get(_)('settings.inbound_email.error_activate_fallback'))
+        }
       });
     }
     return { activated: true };
@@ -133,9 +149,13 @@ export const actions = {
       await deleteMailbox(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { remove: { error: 'Only an admin can change inbound mailboxes.' } });
+        return fail(403, { remove: { error: get(_)('settings.inbound_email.error_forbidden') } });
       }
-      return fail(400, { remove: { error: readableError(err, 'Could not delete the address.') } });
+      return fail(400, {
+        remove: {
+          error: readableError(err, get(_)('settings.inbound_email.error_remove_fallback'))
+        }
+      });
     }
     return { removed: true };
   }

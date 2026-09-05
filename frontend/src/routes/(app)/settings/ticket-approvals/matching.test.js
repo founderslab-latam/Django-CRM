@@ -43,32 +43,37 @@ describe('roleClears', () => {
   });
 });
 
+// `approverSentence` and `ruleMatchSentence` return structured descriptors now
+// rather than English; the page composes the sentence with `$_`. Same move as
+// `tickets/[id]/close.js`.
 describe('approverSentence', () => {
   it('names the role when nobody is named', () => {
-    expect(approverSentence(rule())).toBe('any admin');
+    expect(approverSentence(rule())).toEqual({ kind: 'admin' });
   });
 
   it('adds named approvers to the role rather than replacing it', () => {
     // The finding. `can_be_acted_on_by` returns True for a named approver OR
     // anyone holding the role, and the row used to list only the names, so an
     // admin read a rule as tighter than it is.
-    expect(approverSentence(rule({ approvers: [ADA, BOB] }))).toBe(
-      'any admin, or ada@acme.com or bob@acme.com'
-    );
+    expect(approverSentence(rule({ approvers: [ADA, BOB] }))).toEqual({
+      kind: 'admin_and_named',
+      named: ['ada@acme.com', 'bob@acme.com']
+    });
   });
 
   it('is the names alone when the role matches nobody', () => {
-    expect(approverSentence(rule({ approver_role: 'MANAGER', approvers: [ADA] }))).toBe(
-      'ada@acme.com'
-    );
+    expect(approverSentence(rule({ approver_role: 'MANAGER', approvers: [ADA] }))).toEqual({
+      kind: 'named',
+      named: ['ada@acme.com']
+    });
   });
 
   it('says nobody when the role matches nobody and no one is named', () => {
-    expect(approverSentence(rule({ approver_role: 'MANAGER' }))).toBe('nobody');
+    expect(approverSentence(rule({ approver_role: 'MANAGER' }))).toEqual({ kind: 'nobody' });
   });
 
   it('ignores an approver row with no email rather than printing a blank', () => {
-    expect(approverSentence(rule({ approvers: [{ id: 'p9' }] }))).toBe('any admin');
+    expect(approverSentence(rule({ approvers: [{ id: 'p9' }] }))).toEqual({ kind: 'admin' });
   });
 });
 
@@ -92,15 +97,15 @@ describe('clearableByNobody', () => {
 
 describe('ruleMatchSentence', () => {
   it('says every ticket when nothing narrows it', () => {
-    expect(ruleMatchSentence(rule())).toBe('Every ticket');
+    expect(ruleMatchSentence(rule())).toEqual({ kind: 'every' });
   });
 
-  it('joins the conditions that are set', () => {
+  it('passes through the conditions that are set', () => {
     expect(
       ruleMatchSentence(
         rule({ match_priority: 'Urgent', match_case_type: 'Incident', match_team: SUPPORT })
       )
-    ).toBe('Urgent priority · incident · Support team');
+    ).toEqual({ kind: 'parts', priority: 'Urgent', caseType: 'Incident', team: 'Support' });
   });
 });
 

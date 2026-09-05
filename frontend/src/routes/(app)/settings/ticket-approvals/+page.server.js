@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getApprovalRules,
   createApprovalRule,
@@ -59,9 +61,15 @@ export const actions = {
       await createApprovalRule(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { create: { error: 'Only an admin can change approval rules.' } });
+        return fail(403, {
+          create: { error: get(_)('settings.ticket_approvals.error_forbidden') }
+        });
       }
-      return fail(400, { create: { error: readableError(err, 'Could not add the rule.') } });
+      return fail(400, {
+        create: {
+          error: readableError(err, get(_)('settings.ticket_approvals.error_create_fallback'))
+        }
+      });
     }
     return { created: true };
   },
@@ -74,9 +82,15 @@ export const actions = {
       await updateApprovalRule(event, id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { update: { error: 'Only an admin can change approval rules.' } });
+        return fail(403, {
+          update: { error: get(_)('settings.ticket_approvals.error_forbidden') }
+        });
       }
-      return fail(400, { update: { error: readableError(err, 'Could not save the rule.') } });
+      return fail(400, {
+        update: {
+          error: readableError(err, get(_)('settings.ticket_approvals.error_update_fallback'))
+        }
+      });
     }
     return { updated: true };
   },
@@ -88,10 +102,14 @@ export const actions = {
       await updateApprovalRule(event, id, { is_active: false });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { deactivate: { error: 'Only an admin can change approval rules.' } });
+        return fail(403, {
+          deactivate: { error: get(_)('settings.ticket_approvals.error_forbidden') }
+        });
       }
       return fail(400, {
-        deactivate: { error: readableError(err, 'Could not turn the rule off.') }
+        deactivate: {
+          error: readableError(err, get(_)('settings.ticket_approvals.error_deactivate_fallback'))
+        }
       });
     }
     return { deactivated: true };
@@ -112,10 +130,14 @@ export const actions = {
       await updateApprovalRule(event, id, { is_active: true });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { activate: { error: 'Only an admin can change approval rules.' } });
+        return fail(403, {
+          activate: { error: get(_)('settings.ticket_approvals.error_forbidden') }
+        });
       }
       return fail(400, {
-        activate: { error: readableError(err, 'Could not turn the rule on.') }
+        activate: {
+          error: readableError(err, get(_)('settings.ticket_approvals.error_activate_fallback'))
+        }
       });
     }
     return { activated: true };
@@ -137,9 +159,15 @@ export const actions = {
       outcome = await deleteApprovalRule(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { remove: { error: 'Only an admin can change approval rules.' } });
+        return fail(403, {
+          remove: { error: get(_)('settings.ticket_approvals.error_forbidden') }
+        });
       }
-      return fail(400, { remove: { error: readableError(err, 'Could not delete the rule.') } });
+      return fail(400, {
+        remove: {
+          error: readableError(err, get(_)('settings.ticket_approvals.error_remove_fallback'))
+        }
+      });
     }
     return { removed: !outcome.turned_off, remove: { turned_off: outcome.turned_off } };
   }

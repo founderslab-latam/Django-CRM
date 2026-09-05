@@ -28,24 +28,22 @@
  *
  * `mobile/lib/data/models/escalation_policy.dart` carries the same rules.
  */
-import { ESCALATION_ACTION_LABEL, ESCALATION_PRIORITIES } from '$lib/v2/enums.js';
+import { ESCALATION_PRIORITIES } from '$lib/v2/enums.js';
 
 /**
- * "the Support team", but "the Support Team" when the name already says so.
- *
- * Seeded orgs name their team "Support Team", and appending the word
- * unconditionally reads "the Support Team team". The suffix is what makes a
- * team named "Support" read as a team rather than a person, so it stays for
- * every other name.
+ * Whether a team's name already ends in the word "team", so the page must not
+ * append it again ("the Support Team team"). Seeded orgs name their team
+ * "Support Team"; a team named just "Support" needs the suffix to read as a
+ * team rather than a person. The page uses this to pick between two catalog
+ * strings; the English phrasing is no longer built here.
  *
  * @param {string} name
  */
-export function teamPhrase(name) {
-  const trimmed = (name ?? '').trim();
-  const lower = trimmed.toLowerCase();
-  const saysSo =
-    lower === 'team' || lower === 'teams' || lower.endsWith(' team') || lower.endsWith(' teams');
-  return saysSo ? `the ${trimmed}` : `the ${trimmed} team`;
+export function teamSaysSo(name) {
+  const lower = (name ?? '').trim().toLowerCase();
+  return (
+    lower === 'team' || lower === 'teams' || lower.endsWith(' team') || lower.endsWith(' teams')
+  );
 }
 
 /** Whether an action emails anybody at all. @param {string} action */
@@ -65,14 +63,20 @@ export function halfFires(policy, kind) {
 }
 
 /**
- * What this half does, in a sentence, including when that is nothing.
+ * What this half does, as a structured descriptor the page turns into a
+ * sentence with `$_` (including when the answer is "nothing"). Kept free of
+ * display strings so it stays testable without the i18n store, matching
+ * `tickets/[id]/close.js`.
  *
  * @param {any} policy
  * @param {'first_response' | 'resolution'} kind
- * @returns {{ text: string, dead: boolean }}
+ * @returns {{ kind: 'off', dead: true }
+ *   | { kind: 'no_target', dead: true }
+ *   | { kind: 'no_target_team', team: any, dead: true }
+ *   | { kind: 'fires', action: string, targetName: string, team: any, dead: false }}
  */
 export function escalationOutcome(policy, kind) {
-  if (!policy?.is_active) return { text: 'Nothing. The policy is turned off', dead: true };
+  if (!policy?.is_active) return { kind: 'off', dead: true };
 
   const target = policy[`${kind}_target`];
   const team = policy.notify_team;
@@ -80,19 +84,17 @@ export function escalationOutcome(policy, kind) {
   if (!target) {
     // Naming the team here is the correction, not decoration. A team set with
     // no target reads as "somebody is told" and is the case where nobody is.
-    return {
-      text: team
-        ? `Nothing. No target is set, and ${teamPhrase(team.name)} is not notified on its own`
-        : 'Nothing. No target is set',
-      dead: true
-    };
+    return team ? { kind: 'no_target_team', team, dead: true } : { kind: 'no_target', dead: true };
   }
 
   const action = policy[`${kind}_action`];
-  const label = ESCALATION_ACTION_LABEL[action] ?? action;
-  const who =
-    team && actionNotifies(action) ? `${target.name} and ${teamPhrase(team.name)}` : target.name;
-  return { text: `${label} ${who}`, dead: false };
+  return {
+    kind: 'fires',
+    action,
+    targetName: target.name,
+    team: team && actionNotifies(action) ? team : null,
+    dead: false
+  };
 }
 
 /**
@@ -103,14 +105,13 @@ export function escalationOutcome(policy, kind) {
  *
  * @param {any} policy
  * @param {'first_response' | 'resolution'} kind
- * @returns {string | null}
+ * @returns {{ team: any } | null}
  */
 export function teamIgnoredNote(policy, kind) {
   const team = policy?.notify_team;
   if (!team || !halfFires(policy, kind)) return null;
   if (actionNotifies(policy[`${kind}_action`])) return null;
-  const phrase = teamPhrase(team.name);
-  return `${phrase[0].toUpperCase()}${phrase.slice(1)} is not notified here: this half only reassigns.`;
+  return { team };
 }
 
 /** @type {('first_response' | 'resolution')[]} */
@@ -158,9 +159,15 @@ export function unconfiguredPriorities(policies) {
   return ESCALATION_PRIORITIES.filter((priority) => !taken.has(priority));
 }
 
-/** "Urgent and High", "Urgent, High and Normal". @param {string[]} parts */
-export function joinWithAnd(parts) {
+/**
+ * "Urgent and High", "Urgent, High and Normal". `conjunction` defaults to the
+ * English "and"; the page passes the translated word.
+ *
+ * @param {string[]} parts
+ * @param {string} [conjunction]
+ */
+export function joinWithAnd(parts, conjunction = 'and') {
   if (!parts.length) return '';
   if (parts.length === 1) return parts[0];
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  return `${parts.slice(0, -1).join(', ')} ${conjunction} ${parts[parts.length - 1]}`;
 }

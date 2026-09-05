@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getCustomFields,
   createCustomField,
@@ -54,9 +56,15 @@ export const actions = {
       await createCustomField(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { create: { error: 'Only an admin can add custom fields.' } });
+        return fail(403, {
+          create: { error: get(_)('settings.custom_fields.err_create_forbidden') }
+        });
       }
-      return fail(400, { create: { error: readableError(err, 'Could not add the field.') } });
+      return fail(400, {
+        create: {
+          error: readableError(err, get(_)('settings.custom_fields.err_create_fallback'))
+        }
+      });
     }
     return { created: true };
   },
@@ -69,9 +77,15 @@ export const actions = {
       await updateCustomField(event, id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { update: { error: 'Only an admin can change custom fields.' } });
+        return fail(403, {
+          update: { error: get(_)('settings.custom_fields.err_update_forbidden') }
+        });
       }
-      return fail(400, { update: { error: readableError(err, 'Could not save the field.') } });
+      return fail(400, {
+        update: {
+          error: readableError(err, get(_)('settings.custom_fields.err_update_fallback'))
+        }
+      });
     }
     return { updated: true };
   },
@@ -83,10 +97,14 @@ export const actions = {
       await deactivateCustomField(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { deactivate: { error: 'Only an admin can turn custom fields off.' } });
+        return fail(403, {
+          deactivate: { error: get(_)('settings.custom_fields.err_deactivate_forbidden') }
+        });
       }
       return fail(400, {
-        deactivate: { error: readableError(err, 'Could not turn the field off.') }
+        deactivate: {
+          error: readableError(err, get(_)('settings.custom_fields.err_deactivate_fallback'))
+        }
       });
     }
     return { deactivated: true };
@@ -108,10 +126,14 @@ export const actions = {
       await updateCustomField(event, id, { is_active: true });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { activate: { error: 'Only an admin can turn custom fields on.' } });
+        return fail(403, {
+          activate: { error: get(_)('settings.custom_fields.err_activate_forbidden') }
+        });
       }
       return fail(400, {
-        activate: { error: readableError(err, 'Could not turn the field on.') }
+        activate: {
+          error: readableError(err, get(_)('settings.custom_fields.err_activate_fallback'))
+        }
       });
     }
     return { activated: true };

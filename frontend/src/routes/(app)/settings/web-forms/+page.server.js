@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getWebForms,
   createWebForm,
@@ -54,9 +56,9 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can create a web form. A form accepts leads from anyone on the internet, so making one is an admin action.',
-        'That form no longer exists.',
-        'Could not create the form.'
+        get(_)('settings.web_forms.list.err_create_forbidden'),
+        get(_)('settings.web_forms.list.err_missing'),
+        get(_)('settings.web_forms.list.err_create_fallback')
       );
       return fail(status, { create: { error: message } });
     }
@@ -75,9 +77,9 @@ export const actions = {
       // publishing" is the response, and `readableError` carries it through.
       const { status, message } = actionError(
         err,
-        'Only an admin can publish a web form.',
-        'That form no longer exists.',
-        'Could not publish the form.'
+        get(_)('settings.web_forms.list.err_publish_forbidden'),
+        get(_)('settings.web_forms.list.err_missing'),
+        get(_)('settings.web_forms.list.err_publish_fallback')
       );
       return fail(status, { publish: { error: message } });
     }
@@ -92,9 +94,9 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can unpublish a web form.',
-        'That form no longer exists.',
-        'Could not unpublish the form.'
+        get(_)('settings.web_forms.list.err_unpublish_forbidden'),
+        get(_)('settings.web_forms.list.err_missing'),
+        get(_)('settings.web_forms.list.err_unpublish_fallback')
       );
       return fail(status, { unpublish: { error: message } });
     }
@@ -109,9 +111,9 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can remove a web form.',
-        'That form no longer exists.',
-        'Could not remove the form.'
+        get(_)('settings.web_forms.list.err_delete_forbidden'),
+        get(_)('settings.web_forms.list.err_missing'),
+        get(_)('settings.web_forms.list.err_delete_fallback')
       );
       return fail(status, { delete: { error: message } });
     }

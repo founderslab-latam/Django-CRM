@@ -38,14 +38,16 @@
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, relativeTime, shortDate } from '$lib/v2/format.js';
-  import { LEAD_SOURCES, LEAD_SOURCE_LABEL } from '$lib/v2/enums.js';
+  import { LEAD_SOURCES } from '$lib/v2/enums.js';
+  import { leadSourceKey } from '$lib/leads/status-source-labels.js';
+  import { webformLeadFieldKey, webformSubmissionStatusKey } from '$lib/settings/labels.js';
   import {
     moveField,
     withOrder,
     isFieldComplete,
     hasRequiredField,
-    leadFieldLabel,
     WEBFORM_LEAD_FIELDS
   } from '$lib/v2/webform-fields.js';
   import { ChevronUp, ChevronDown, GripVertical, Plus, Trash2, Copy, Check } from '@lucide/svelte';
@@ -118,13 +120,13 @@
    * URL typed but not yet saved would not be there when the server looked.
    */
   let publishBlocker = $derived.by(() => {
-    if (!fields.length) return 'Add at least one field first.';
+    if (!fields.length) return $_('settings.web_forms.detail.publish_blocker_no_fields');
     if (!hasRequiredField(fields)) {
-      return 'Add an email field before publishing. It is what lets a repeat submission update the existing lead instead of failing.';
+      return $_('settings.web_forms.detail.publish_blocker_no_email');
     }
-    if (!complete) return 'Every field needs a label and something to write into.';
+    if (!complete) return $_('settings.web_forms.detail.publish_blocker_incomplete');
     if (wf.success_mode === 'redirect' && !wf.redirect_url) {
-      return 'This form redirects on success but has no redirect URL set.';
+      return $_('settings.web_forms.detail.publish_blocker_no_redirect');
     }
     return null;
   });
@@ -178,10 +180,11 @@
    */
   function pickLeadField(index, value) {
     const row = fields[index];
-    const wasSuggested = !row.label.trim() || row.label === leadFieldLabel(row.lead_field);
+    const suggestedFor = (/** @type {string} */ v) => (v ? $_(webformLeadFieldKey(v)) : '');
+    const wasSuggested = !row.label.trim() || row.label === suggestedFor(row.lead_field);
     row.lead_field = value;
     row.custom_field = null;
-    if (wasSuggested) row.label = leadFieldLabel(value);
+    if (wasSuggested) row.label = suggestedFor(value);
   }
 
   /**
@@ -241,28 +244,23 @@
     status === 'accepted' || status === 'accepted_duplicate' ? 'moss' : 'slate';
 
   /** @param {string} status */
-  const statusLabel = (status) =>
-    ({
-      accepted: 'Lead created',
-      accepted_duplicate: 'Merged into an existing lead',
-      rejected_spam: 'Rejected as spam',
-      rejected_invalid: 'Rejected, invalid',
-      rejected_captcha: 'Rejected, captcha'
-    })[status] ?? status;
+  const statusLabel = (status) => $_(webformSubmissionStatusKey(status));
 </script>
 
 <PageHeader title={wf.name} record>
   {#snippet crumb()}
-    <a href={resolve('/settings/web-forms')}>Web forms</a>
+    <a href={resolve('/settings/web-forms')}>{$_('settings.web_forms.detail.crumb')}</a>
   {/snippet}
   {#snippet sub()}
     <Pill tone={wf.is_published ? 'moss' : 'slate'}>
-      {wf.is_published ? 'Published' : 'Draft'}
+      {wf.is_published
+        ? $_('settings.web_forms.detail.state_published')
+        : $_('settings.web_forms.detail.state_draft')}
     </Pill>
     <span style="margin-left:8px">
       {wf.is_published
-        ? 'Accepting submissions from anyone with the embed.'
-        : 'Collecting nothing until it is published.'}
+        ? $_('settings.web_forms.detail.state_published_sub')
+        : $_('settings.web_forms.detail.state_draft_sub')}
     </span>
   {/snippet}
   {#snippet actions()}
@@ -270,14 +268,14 @@
       {#if wf.is_published}
         <ConfirmAction
           action="?/unpublish"
-          label="Unpublish"
-          confirmLabel="Unpublish it"
-          explain="The embed stays on the site and starts refusing people."
+          label={$_('settings.web_forms.detail.unpublish_label')}
+          confirmLabel={$_('settings.web_forms.detail.unpublish_confirm')}
+          explain={$_('settings.web_forms.detail.unpublish_explain')}
         />
       {:else}
         <form method="POST" action="?/publish" use:enhance={working}>
           <button class="v2-btn v2-btn-primary" disabled={busy || Boolean(publishBlocker)}>
-            Publish
+            {$_('settings.web_forms.detail.publish_button')}
           </button>
         </form>
       {/if}
@@ -289,15 +287,22 @@
   <div class="v2-pad wf-body">
     {#if actionError}
       <div style="margin-bottom:18px">
-        <NextAction label="That did not work" text={actionError} tone="rust" />
+        <NextAction
+          label={$_('settings.web_forms.detail.error_label')}
+          text={actionError}
+          tone="rust"
+        />
       </div>
     {:else if form?.saved}
-      <p class="v2-sub wf-ok">Saved.</p>
+      <p class="v2-sub wf-ok">{$_('settings.web_forms.detail.saved')}</p>
     {/if}
 
     {#if !wf.is_published && publishBlocker && canManage}
       <div style="margin-bottom:18px">
-        <NextAction label="Before you can publish" text={publishBlocker} />
+        <NextAction
+          label={$_('settings.web_forms.detail.publish_blocker_label')}
+          text={publishBlocker}
+        />
       </div>
     {/if}
 
@@ -310,15 +315,14 @@
       <!-- ============ Fields ============ -->
       <section class="wf-section">
         <div class="wf-section-head">
-          <h2 class="v2-section">Fields</h2>
+          <h2 class="v2-section">{$_('settings.web_forms.detail.section_fields')}</h2>
           <p class="v2-sub wf-section-sub">
-            What a visitor is asked, in the order they are asked it. An email field is required
-            before the form can be published.
+            {$_('settings.web_forms.detail.section_fields_sub')}
           </p>
         </div>
 
         {#if !fields.length}
-          <p class="v2-sub wf-empty">No fields yet. A form with no fields collects nothing.</p>
+          <p class="v2-sub wf-empty">{$_('settings.web_forms.detail.no_fields')}</p>
         {/if}
 
         <ul class="wf-fields">
@@ -341,7 +345,9 @@
 
               <div class="wf-row-body">
                 <div class="wf-row-line">
-                  <label class="wf-sr" for="src-{field.key}">Field type</label>
+                  <label class="wf-sr" for="src-{field.key}"
+                    >{$_('settings.web_forms.detail.field_type_sr')}</label
+                  >
                   <select
                     id="src-{field.key}"
                     class="v2-input wf-narrow"
@@ -353,14 +359,18 @@
                       field.custom_field = null;
                     }}
                   >
-                    <option value="lead">Lead field</option>
+                    <option value="lead">{$_('settings.web_forms.detail.source_lead')}</option>
                     <option value="custom" disabled={!data.customFields.length}>
-                      Custom field{data.customFields.length ? '' : ' (none defined)'}
+                      {$_('settings.web_forms.detail.source_custom')}{data.customFields.length
+                        ? ''
+                        : $_('settings.web_forms.detail.source_custom_none')}
                     </option>
                   </select>
 
                   {#if field.source === 'custom'}
-                    <label class="wf-sr" for="tgt-{field.key}">Custom field</label>
+                    <label class="wf-sr" for="tgt-{field.key}"
+                      >{$_('settings.web_forms.detail.custom_field_sr')}</label
+                    >
                     <select
                       id="tgt-{field.key}"
                       class="v2-input wf-narrow"
@@ -368,13 +378,15 @@
                       value={field.custom_field ?? ''}
                       onchange={(e) => pickCustomField(i, e.currentTarget.value)}
                     >
-                      <option value="">Choose one…</option>
+                      <option value="">{$_('settings.web_forms.detail.choose_one')}</option>
                       {#each data.customFields as c (c.id)}
                         <option value={c.id}>{c.label}</option>
                       {/each}
                     </select>
                   {:else}
-                    <label class="wf-sr" for="tgt-{field.key}">Lead field</label>
+                    <label class="wf-sr" for="tgt-{field.key}"
+                      >{$_('settings.web_forms.detail.lead_field_sr')}</label
+                    >
                     <select
                       id="tgt-{field.key}"
                       class="v2-input wf-narrow"
@@ -382,38 +394,42 @@
                       value={field.lead_field}
                       onchange={(e) => pickLeadField(i, e.currentTarget.value)}
                     >
-                      <option value="">Choose one…</option>
+                      <option value="">{$_('settings.web_forms.detail.choose_one')}</option>
                       {#each WEBFORM_LEAD_FIELDS as f (f.value)}
-                        <option value={f.value}>{f.label}</option>
+                        <option value={f.value}>{$_(webformLeadFieldKey(f.value))}</option>
                       {/each}
                     </select>
                   {/if}
                 </div>
 
                 <div class="wf-row-line">
-                  <label class="wf-sr" for="lbl-{field.key}">Label</label>
+                  <label class="wf-sr" for="lbl-{field.key}"
+                    >{$_('settings.web_forms.detail.label_sr')}</label
+                  >
                   <input
                     id="lbl-{field.key}"
                     class="v2-input"
                     disabled={!canManage}
                     maxlength="255"
-                    placeholder="Label the visitor sees"
+                    placeholder={$_('settings.web_forms.detail.label_placeholder')}
                     bind:value={field.label}
                   />
-                  <label class="wf-sr" for="ph-{field.key}">Placeholder</label>
+                  <label class="wf-sr" for="ph-{field.key}"
+                    >{$_('settings.web_forms.detail.placeholder_sr')}</label
+                  >
                   <input
                     id="ph-{field.key}"
                     class="v2-input"
                     disabled={!canManage}
                     maxlength="255"
-                    placeholder="Placeholder (optional)"
+                    placeholder={$_('settings.web_forms.detail.placeholder_placeholder')}
                     bind:value={field.placeholder}
                   />
                 </div>
 
                 <label class="wf-check">
                   <input type="checkbox" disabled={!canManage} bind:checked={field.is_required} />
-                  Required
+                  {$_('settings.web_forms.detail.required')}
                 </label>
               </div>
 
@@ -426,7 +442,11 @@
                       type="button"
                       class="wf-move-btn"
                       disabled={i === 0}
-                      aria-label="Move {field.label || 'this field'} up"
+                      aria-label={$_('settings.web_forms.detail.move_up', {
+                        values: {
+                          label: field.label || $_('settings.web_forms.detail.this_field')
+                        }
+                      })}
                       onclick={() => (fields = moveField(fields, i, -1))}
                     >
                       <ChevronUp size={16} />
@@ -435,7 +455,11 @@
                       type="button"
                       class="wf-move-btn"
                       disabled={i === fields.length - 1}
-                      aria-label="Move {field.label || 'this field'} down"
+                      aria-label={$_('settings.web_forms.detail.move_down', {
+                        values: {
+                          label: field.label || $_('settings.web_forms.detail.this_field')
+                        }
+                      })}
                       onclick={() => (fields = moveField(fields, i, 1))}
                     >
                       <ChevronDown size={16} />
@@ -444,7 +468,11 @@
                   <button
                     type="button"
                     class="wf-move-btn"
-                    aria-label="Remove {field.label || 'this field'}"
+                    aria-label={$_('settings.web_forms.detail.remove_field', {
+                      values: {
+                        label: field.label || $_('settings.web_forms.detail.this_field')
+                      }
+                    })}
                     onclick={() => removeField(i)}
                   >
                     <Trash2 size={15} />
@@ -457,7 +485,7 @@
 
         {#if canManage}
           <button type="button" class="v2-btn v2-btn-sm wf-add" onclick={addField}>
-            <Plus size={13} />Add a field
+            <Plus size={13} />{$_('settings.web_forms.detail.add_field')}
           </button>
         {/if}
       </section>
@@ -465,15 +493,15 @@
       <!-- ============ Behaviour ============ -->
       <section class="wf-section">
         <div class="wf-section-head">
-          <h2 class="v2-section">Behaviour</h2>
+          <h2 class="v2-section">{$_('settings.web_forms.detail.section_behaviour')}</h2>
           <p class="v2-sub wf-section-sub">
-            What the visitor sees after they submit, and where the lead lands.
+            {$_('settings.web_forms.detail.section_behaviour_sub')}
           </p>
         </div>
 
         <div class="wf-grid">
           <div class="v2-field">
-            <label for="name">Name</label>
+            <label for="name">{$_('settings.web_forms.detail.name')}</label>
             <input
               id="name"
               name="name"
@@ -483,11 +511,11 @@
               disabled={!canManage}
               value={wf.name}
             />
-            <p class="v2-hint">Internal only. The visitor never sees it.</p>
+            <p class="v2-hint">{$_('settings.web_forms.detail.name_hint')}</p>
           </div>
 
           <div class="v2-field">
-            <label for="submit_button_label">Submit button</label>
+            <label for="submit_button_label">{$_('settings.web_forms.detail.submit_button')}</label>
             <input
               id="submit_button_label"
               name="submit_button_label"
@@ -499,7 +527,7 @@
           </div>
 
           <div class="v2-field">
-            <label for="success_mode">After a successful submission</label>
+            <label for="success_mode">{$_('settings.web_forms.detail.success_mode')}</label>
             <select
               id="success_mode"
               name="success_mode"
@@ -507,14 +535,17 @@
               disabled={!canManage}
               bind:value={successMode}
             >
-              <option value="message">Show a message</option>
-              <option value="redirect">Redirect to a URL</option>
+              <option value="message">{$_('settings.web_forms.detail.success_mode_message')}</option
+              >
+              <option value="redirect"
+                >{$_('settings.web_forms.detail.success_mode_redirect')}</option
+              >
             </select>
           </div>
 
           {#if successMode === 'redirect'}
             <div class="v2-field">
-              <label for="redirect_url">Redirect URL</label>
+              <label for="redirect_url">{$_('settings.web_forms.detail.redirect_url')}</label>
               <input
                 id="redirect_url"
                 name="redirect_url"
@@ -526,13 +557,12 @@
                 placeholder="https://example.com/thanks"
               />
               <p class="v2-hint">
-                http or https only. The embed navigates the visitor's browser here, so any other
-                scheme would be a script running on your own site.
+                {$_('settings.web_forms.detail.redirect_url_hint')}
               </p>
             </div>
           {:else}
             <div class="v2-field wf-wide">
-              <label for="success_message">Success message</label>
+              <label for="success_message">{$_('settings.web_forms.detail.success_message')}</label>
               <textarea
                 id="success_message"
                 name="success_message"
@@ -544,7 +574,7 @@
           {/if}
 
           <div class="v2-field">
-            <label for="assign_to">Assign new leads to</label>
+            <label for="assign_to">{$_('settings.web_forms.detail.assign_to')}</label>
             <select
               id="assign_to"
               name="assign_to"
@@ -552,7 +582,7 @@
               disabled={!canManage}
               value={wf.assign_to ?? ''}
             >
-              <option value="">Nobody</option>
+              <option value="">{$_('settings.web_forms.detail.assign_nobody')}</option>
               {#each data.profiles as p (p.id)}
                 <option value={p.id}>{p.name}</option>
               {/each}
@@ -560,7 +590,7 @@
           </div>
 
           <div class="v2-field">
-            <label for="lead_source">Record the source as</label>
+            <label for="lead_source">{$_('settings.web_forms.detail.lead_source')}</label>
             <select
               id="lead_source"
               name="lead_source"
@@ -569,16 +599,16 @@
               value={wf.lead_source}
             >
               {#each LEAD_SOURCES as s (s)}
-                <option value={s}>{LEAD_SOURCE_LABEL[s] ?? s}</option>
+                <option value={s}>{$_(leadSourceKey(s))}</option>
               {/each}
             </select>
             <p class="v2-hint">
-              Which form a lead came from is recorded separately, so this can stay broad.
+              {$_('settings.web_forms.detail.lead_source_hint')}
             </p>
           </div>
 
           <div class="v2-field">
-            <label for="notify_profiles">Email these people on each lead</label>
+            <label for="notify_profiles">{$_('settings.web_forms.detail.notify_profiles')}</label>
             <select
               id="notify_profiles"
               name="notify_profiles"
@@ -591,11 +621,11 @@
                 <option value={p.id} selected={wf.notify_profiles?.includes(p.id)}>{p.name}</option>
               {/each}
             </select>
-            <p class="v2-hint">Nobody selected means no notification is sent.</p>
+            <p class="v2-hint">{$_('settings.web_forms.detail.notify_profiles_hint')}</p>
           </div>
 
           <div class="v2-field">
-            <label for="tags">Tag every lead with</label>
+            <label for="tags">{$_('settings.web_forms.detail.tags')}</label>
             <select
               id="tags"
               name="tags"
@@ -615,16 +645,15 @@
       <!-- ============ Spam ============ -->
       <section class="wf-section">
         <div class="wf-section-head">
-          <h2 class="v2-section">Spam</h2>
+          <h2 class="v2-section">{$_('settings.web_forms.detail.section_spam')}</h2>
           <p class="v2-sub wf-section-sub">
-            A hidden honeypot field, a per-address rate limit and a per-form one are always on and
-            are not configurable. These are the parts you choose.
+            {$_('settings.web_forms.detail.section_spam_sub')}
           </p>
         </div>
 
         <div class="wf-grid">
           <div class="v2-field wf-wide">
-            <label for="allowed_origins">Allowed origins</label>
+            <label for="allowed_origins">{$_('settings.web_forms.detail.allowed_origins')}</label>
             <textarea
               id="allowed_origins"
               name="allowed_origins"
@@ -634,10 +663,9 @@
               placeholder="https://example.com">{(wf.allowed_origins ?? []).join('\n')}</textarea
             >
             <p class="v2-hint">
-              One per line, scheme and host only, no path. Leave empty and the iframe embed works
-              anywhere. <strong>The script embed needs the site's origin listed here</strong>: the
-              browser refuses a cross-origin POST that we have not permitted, and a form with no
-              listed origins permits none.
+              {$_('settings.web_forms.detail.allowed_origins_hint_1')}<strong
+                >{$_('settings.web_forms.detail.allowed_origins_hint_strong')}</strong
+              >{$_('settings.web_forms.detail.allowed_origins_hint_2')}
             </p>
           </div>
 
@@ -649,12 +677,12 @@
                 disabled={!canManage}
                 checked={wf.reject_disposable_email}
               />
-              Reject throwaway email addresses
+              {$_('settings.web_forms.detail.reject_disposable')}
             </label>
           </div>
 
           <div class="v2-field">
-            <label for="captcha_provider">Challenge</label>
+            <label for="captcha_provider">{$_('settings.web_forms.detail.captcha_provider')}</label>
             <select
               id="captcha_provider"
               name="captcha_provider"
@@ -662,14 +690,16 @@
               disabled={!canManage}
               bind:value={captchaProvider}
             >
-              <option value="">None</option>
-              <option value="turnstile">Cloudflare Turnstile</option>
+              <option value="">{$_('settings.web_forms.detail.captcha_none')}</option>
+              <option value="turnstile">{$_('settings.web_forms.detail.captcha_turnstile')}</option>
             </select>
           </div>
 
           {#if captchaProvider === 'turnstile'}
             <div class="v2-field">
-              <label for="captcha_site_key">Turnstile site key</label>
+              <label for="captcha_site_key"
+                >{$_('settings.web_forms.detail.captcha_site_key')}</label
+              >
               <input
                 id="captcha_site_key"
                 name="captcha_site_key"
@@ -681,7 +711,7 @@
             </div>
 
             <div class="v2-field wf-wide">
-              <label for="captcha_secret">Turnstile secret</label>
+              <label for="captcha_secret">{$_('settings.web_forms.detail.captcha_secret')}</label>
               <input
                 id="captcha_secret"
                 name="captcha_secret"
@@ -691,16 +721,14 @@
                 maxlength="255"
                 disabled={!canManage}
                 placeholder={wf.has_captcha_secret
-                  ? 'Stored. Leave blank to keep it.'
-                  : 'Paste the secret from Cloudflare'}
+                  ? $_('settings.web_forms.detail.captcha_secret_ph_stored')
+                  : $_('settings.web_forms.detail.captcha_secret_ph_empty')}
               />
               <p class="v2-hint">
-                Never shown again once saved; we only send it to Cloudflare. Leaving this blank
-                keeps whatever is stored rather than clearing it.
+                {$_('settings.web_forms.detail.captcha_secret_hint')}
                 {#if !wf.has_captcha_secret}
                   <strong>
-                    No secret is stored yet. Verification fails closed, so publishing with Turnstile
-                    on and no secret would refuse every submission.
+                    {$_('settings.web_forms.detail.captcha_secret_hint_strong')}
                   </strong>
                 {/if}
               </p>
@@ -711,7 +739,9 @@
 
       {#if canManage}
         <div class="wf-save">
-          <button class="v2-btn v2-btn-primary" disabled={busy}>Save changes</button>
+          <button class="v2-btn v2-btn-primary" disabled={busy}>
+            {$_('settings.web_forms.detail.save')}
+          </button>
         </div>
       {/if}
     </form>
@@ -719,23 +749,24 @@
     <!-- ============ Embed ============ -->
     <section class="wf-section">
       <div class="wf-section-head">
-        <h2 class="v2-section">Embed</h2>
+        <h2 class="v2-section">{$_('settings.web_forms.detail.section_embed')}</h2>
         <p class="v2-sub wf-section-sub">
-          Paste one of these into your own site. Both are built by the server, because they need
-          this API's address and a browser only knows your site's.
+          {$_('settings.web_forms.detail.section_embed_sub')}
         </p>
       </div>
 
       <div class="wf-snippet">
         <div class="wf-snippet-head">
-          <b>iframe</b>
-          <span class="v2-sub">Works anywhere, no origin list needed.</span>
+          <b>{$_('settings.web_forms.detail.embed_iframe')}</b>
+          <span class="v2-sub">{$_('settings.web_forms.detail.embed_iframe_note')}</span>
           <button
             type="button"
             class="v2-btn v2-btn-sm"
             onclick={() => copy(wf.embed_html, 'html')}
           >
-            {#if copied === 'html'}<Check size={13} />Copied{:else}<Copy size={13} />Copy{/if}
+            {#if copied === 'html'}<Check size={13} />{$_(
+                'settings.web_forms.detail.copied'
+              )}{:else}<Copy size={13} />{$_('settings.web_forms.detail.copy')}{/if}
           </button>
         </div>
         <pre>{wf.embed_html}</pre>
@@ -743,17 +774,18 @@
 
       <div class="wf-snippet">
         <div class="wf-snippet-head">
-          <b>script</b>
-          <span class="v2-sub">Inherits your site's styling.</span>
+          <b>{$_('settings.web_forms.detail.embed_script')}</b>
+          <span class="v2-sub">{$_('settings.web_forms.detail.embed_script_note')}</span>
           <button type="button" class="v2-btn v2-btn-sm" onclick={() => copy(wf.embed_js, 'js')}>
-            {#if copied === 'js'}<Check size={13} />Copied{:else}<Copy size={13} />Copy{/if}
+            {#if copied === 'js'}<Check size={13} />{$_(
+                'settings.web_forms.detail.copied'
+              )}{:else}<Copy size={13} />{$_('settings.web_forms.detail.copy')}{/if}
           </button>
         </div>
         <pre>{wf.embed_js}</pre>
         {#if !(wf.allowed_origins ?? []).length}
           <p class="v2-hint wf-warn">
-            This one will not work yet. Add the site's origin under Spam first: the browser blocks a
-            cross-origin POST unless we permit that origin, and this form permits none.
+            {$_('settings.web_forms.detail.embed_script_warn')}
           </p>
         {/if}
       </div>
@@ -762,46 +794,54 @@
     <!-- ============ Activity ============ -->
     <section class="wf-section">
       <div class="wf-section-head">
-        <h2 class="v2-section">Activity</h2>
+        <h2 class="v2-section">{$_('settings.web_forms.detail.section_activity')}</h2>
         <p class="v2-sub wf-section-sub">
-          The last 30 days. A view is counted when the embed loads, whether or not anyone fills it
-          in.
+          {$_('settings.web_forms.detail.section_activity_sub')}
         </p>
       </div>
 
       {#if totals}
         <div class="v2-stats" style="margin-bottom:16px">
-          <StatCard label="Views" value={count(totals.views)} tone="slate" />
-          <StatCard label="Leads" value={count(totals.submissions)} tone="ink" />
           <StatCard
-            label="Conversion"
-            value={totals.views ? `${Math.round(totals.conversion_rate * 100)}%` : '-'}
+            label={$_('settings.web_forms.detail.stat_views')}
+            value={count(totals.views)}
             tone="slate"
-            detail={totals.views ? null : 'No views yet'}
           />
           <StatCard
-            label="Spam blocked"
+            label={$_('settings.web_forms.detail.stat_leads')}
+            value={count(totals.submissions)}
+            tone="ink"
+          />
+          <StatCard
+            label={$_('settings.web_forms.detail.stat_conversion')}
+            value={totals.views ? `${Math.round(totals.conversion_rate * 100)}%` : '-'}
+            tone="slate"
+            detail={totals.views ? null : $_('settings.web_forms.detail.stat_conversion_none')}
+          />
+          <StatCard
+            label={$_('settings.web_forms.detail.stat_spam')}
             value={count(totals.spam)}
             tone="slate"
-            detail={totals.spam ? 'Never reached a lead' : 'None'}
+            detail={totals.spam
+              ? $_('settings.web_forms.detail.stat_spam_detail')
+              : $_('settings.web_forms.detail.detail_none')}
           />
         </div>
       {/if}
 
       {#if !submissions.length}
         <p class="v2-sub wf-empty">
-          Nothing submitted yet. Rejected attempts would be listed here too, so an empty list means
-          nobody has reached the form at all.
+          {$_('settings.web_forms.detail.activity_empty')}
         </p>
       {:else}
         <div class="v2-table-wrap">
           <table class="v2-table">
             <thead>
               <tr>
-                <th>Submitted</th>
-                <th>Outcome</th>
-                <th data-m="hide">Lead</th>
-                <th data-m="hide">From</th>
+                <th>{$_('settings.web_forms.detail.col_submitted')}</th>
+                <th>{$_('settings.web_forms.detail.col_outcome')}</th>
+                <th data-m="hide">{$_('settings.web_forms.detail.col_lead')}</th>
+                <th data-m="hide">{$_('settings.web_forms.detail.col_from')}</th>
               </tr>
             </thead>
             <tbody>
@@ -818,7 +858,7 @@
                     {#if s.lead}
                       <a href={resolve(`/leads/${s.lead}`)}>{s.lead_name}</a>
                     {:else}
-                      <span class="v2-muted">No lead</span>
+                      <span class="v2-muted">{$_('settings.web_forms.detail.no_lead')}</span>
                     {/if}
                   </td>
                   <td data-m="hide" class="v2-muted">{s.referer || s.submitted_ip || '—'}</td>
@@ -829,8 +869,11 @@
         </div>
         {#if data.count > submissions.length}
           <p class="v2-sub" style="margin-top:10px;font-size:12px">
-            Showing the {submissions.length} most recent of
-            <span class="v2-num">{count(data.count)}</span>.
+            {$_('settings.web_forms.detail.showing_before', {
+              values: { shown: submissions.length }
+            })}<span class="v2-num">{count(data.count)}</span>{$_(
+              'settings.web_forms.detail.showing_after'
+            )}
           </p>
         {/if}
       {/if}
@@ -839,17 +882,16 @@
     {#if canManage}
       <section class="wf-section wf-danger">
         <div>
-          <b>Delete this form</b>
+          <b>{$_('settings.web_forms.detail.delete_heading')}</b>
           <p class="v2-sub" style="font-size:12px;margin:4px 0 0;max-width:60ch">
-            Removes the form and its submission history. Leads it already created stay where they
-            are. Any embed still on your site will stop working.
+            {$_('settings.web_forms.detail.delete_body')}
           </p>
         </div>
         <ConfirmAction
           action="?/delete"
-          label="Delete"
-          confirmLabel="Delete permanently"
-          explain="This cannot be undone."
+          label={$_('settings.web_forms.detail.delete_label')}
+          confirmLabel={$_('settings.web_forms.detail.delete_confirm')}
+          explain={$_('settings.web_forms.detail.delete_explain')}
         />
       </section>
     {/if}

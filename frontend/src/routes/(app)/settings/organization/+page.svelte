@@ -48,6 +48,7 @@
   import SettingsCrumb from '$lib/v2/components/SettingsCrumb.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, shortDate } from '$lib/v2/format.js';
   import { FileText, ShieldAlert, Pencil, Trash2 } from '@lucide/svelte';
   import { enhance } from '$app/forms';
@@ -95,25 +96,30 @@
   function reportSummary(report) {
     const created = report?.created?.length ?? 0;
     const skipped = report?.skipped?.length ?? 0;
-    if (!created && !skipped) return 'Nothing to add. This org already has all of it.';
-    if (!skipped) return `Created ${created} item${created === 1 ? '' : 's'}.`;
-    if (!created) {
-      return `Already had everything from this pack, skipped ${skipped} item${skipped === 1 ? '' : 's'} you already had.`;
+    if (!created && !skipped) return $_('settings.organization.read.pack_summary_nothing');
+    if (!skipped) {
+      return $_('settings.organization.read.pack_summary_created', { values: { count: created } });
     }
-    return `Created ${created} item${created === 1 ? '' : 's'}, skipped ${skipped} you already had.`;
+    if (!created) {
+      return $_('settings.organization.read.pack_summary_skipped_only', {
+        values: { count: skipped }
+      });
+    }
+    return $_('settings.organization.read.pack_summary_both', { values: { created, skipped } });
   }
 </script>
 
-<PageHeader title="Organization">
+<PageHeader title={$_('settings.organization.read.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(org.member_count)}</span> members · created
-    {shortDate(org.created_at)}
+    <span class="v2-num">{count(org.member_count)}</span>
+    {$_('settings.organization.read.sub_members', { values: { count: org.member_count } })} ·
+    {$_('settings.organization.read.sub_created', { values: { date: shortDate(org.created_at) } })}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit}
       <a class="v2-btn v2-btn-primary" href={resolve('/settings/organization/edit')}>
-        <Pencil size={13} />Edit details
+        <Pencil size={13} />{$_('settings.organization.read.edit_button')}
       </a>
     {/if}
   {/snippet}
@@ -123,25 +129,31 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     <div class="v2-split">
       <div>
-        <div class="v2-label" style="margin-bottom:10px">What customers see</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.organization.read.section_customers')}
+        </div>
         <div class="v2-card" style="padding:16px 18px;margin-bottom:12px">
           <dl class="v2-kv">
-            <dt>Legal name</dt>
+            <dt>{$_('settings.organization.read.legal_name')}</dt>
             <dd>{org.company_name || '—'}</dd>
-            <dt>Trading as</dt>
+            <dt>{$_('settings.organization.read.trading_as')}</dt>
             <dd>{org.name}</dd>
-            <dt>Address</dt>
+            <dt>{$_('settings.organization.read.address')}</dt>
             <dd>{address || '—'}</dd>
-            <dt>Tax ID</dt>
+            <dt>{$_('settings.organization.read.tax_id')}</dt>
             <dd class="v2-num" style="font-size:12px">{org.tax_id || '—'}</dd>
-            <dt>Email</dt>
+            <dt>{$_('settings.organization.read.email')}</dt>
             <dd>{org.email || '—'}</dd>
-            <dt>Phone</dt>
+            <dt>{$_('settings.organization.read.phone')}</dt>
             <dd class="v2-num" style="font-size:12px">{org.phone || '—'}</dd>
-            <dt>Website</dt>
+            <dt>{$_('settings.organization.read.website')}</dt>
             <dd>{org.website || '—'}</dd>
-            <dt>Logo</dt>
-            <dd>{org.logo_url ? 'Set' : 'Not set'}</dd>
+            <dt>{$_('settings.organization.read.logo')}</dt>
+            <dd>
+              {org.logo_url
+                ? $_('settings.organization.read.logo_set')
+                : $_('settings.organization.read.logo_not_set')}
+            </dd>
           </dl>
         </div>
 
@@ -149,64 +161,71 @@
           <div style="display:flex;gap:10px;align-items:flex-start">
             <FileText size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
             <p class="v2-sub" style="font-size:12.5px;margin:0;line-height:1.5">
-              These fields are printed on every invoice and estimate. Changing one changes documents
-              from that moment on; PDFs already sent keep what they were sent with. How they are
-              laid out is set in
-              <a href={resolve('/invoices/templates')} style="color:inherit">invoice templates</a>.
+              {$_('settings.organization.read.customers_note_before')}<a
+                href={resolve('/invoices/templates')}
+                style="color:inherit">{$_('settings.organization.read.customers_note_link')}</a
+              >{$_('settings.organization.read.customers_note_after')}
             </p>
           </div>
         </div>
       </div>
 
       <div>
-        <div class="v2-label" style="margin-bottom:10px">Defaults</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.organization.read.section_defaults')}
+        </div>
         <div class="v2-card" style="overflow:hidden;margin-bottom:20px">
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Currency</b>
+              <b>{$_('settings.organization.read.currency')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                Applied to new invoices and estimates. Existing ones keep theirs.
+                {$_('settings.organization.read.currency_hint')}
               </span>
             </div>
             <span class="v2-num" style="font-size:13px">{org.default_currency || '—'}</span>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Country</b>
-              <span class="v2-sub" style="font-size:11.5px">Default for new addresses.</span>
+              <b>{$_('settings.organization.read.country')}</b>
+              <span class="v2-sub" style="font-size:11.5px"
+                >{$_('settings.organization.read.country_hint')}</span
+              >
             </div>
             <span style="font-size:13px">{org.default_country || '—'}</span>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Time zone</b>
+              <b>{$_('settings.organization.read.timezone')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                When a day starts here, so "due today" and "overdue" mean what your team expects.
+                {$_('settings.organization.read.timezone_hint')}
               </span>
             </div>
             <span style="font-size:13px">{(org.timezone || 'UTC').replace(/_/g, ' ')}</span>
           </div>
         </div>
 
-        <div class="v2-label" style="margin-bottom:10px">Behaviour</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.organization.read.section_behaviour')}
+        </div>
         <div class="v2-card" style="overflow:hidden">
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Satisfaction surveys</b>
+              <b>{$_('settings.organization.read.csat')}</b>
               <!-- Org-level kill switch: the post-close signal short-circuits
                    before any email is sent. Off is silent, everywhere. -->
               <span class="v2-sub" style="font-size:11.5px">
-                Off stops every survey org-wide, with no per-team exception and no notice on the
-                ticket.
+                {$_('settings.organization.read.csat_hint')}
               </span>
             </div>
             <Pill tone={org.csat_enabled ? 'moss' : 'slate'}>
-              {org.csat_enabled ? 'Sending' : 'Off'}
+              {org.csat_enabled
+                ? $_('settings.organization.read.csat_on')
+                : $_('settings.organization.read.csat_off')}
             </Pill>
           </div>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Close child tickets with the parent</b>
+              <b>{$_('settings.organization.read.cascade')}</b>
               <!-- Only the DEFAULT state of the prompt; the person closing the
                    ticket still confirms. This used to claim the prompt without
                    saying where it is, and there is no such prompt on the web:
@@ -214,13 +233,13 @@
                    closing a parent here leaves its children open. The phone is
                    the client that asks, and the one this setting reaches. -->
               <span class="v2-sub" style="font-size:11.5px">
-                Sets how the close prompt starts on the mobile app, which offers to close a parent's
-                open children with it. On the web there is no such prompt yet: closing a parent
-                leaves its children open.
+                {$_('settings.organization.read.cascade_hint')}
               </span>
             </div>
             <Pill tone={org.auto_close_children_on_parent_close ? 'clay' : 'slate'}>
-              {org.auto_close_children_on_parent_close ? 'Offered on' : 'Offered off'}
+              {org.auto_close_children_on_parent_close
+                ? $_('settings.organization.read.cascade_on')
+                : $_('settings.organization.read.cascade_off')}
             </Pill>
           </div>
         </div>
@@ -229,12 +248,14 @@
           <div style="display:flex;gap:10px;align-items:flex-start">
             <ShieldAlert size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
             <div>
-              <div style="font-weight:600;font-size:13px">The organisation API key is not here</div>
+              <div style="font-weight:600;font-size:13px">
+                {$_('settings.organization.read.apikey_heading')}
+              </div>
               <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-                It authenticates as the whole organisation, so it is never rendered on a page you
-                can reach by browsing. For per-person programmatic access, use
-                <a href={resolve('/settings/api-tokens')} style="color:inherit">API tokens</a>,
-                which can be revoked one at a time.
+                {$_('settings.organization.read.apikey_before')}<a
+                  href={resolve('/settings/api-tokens')}
+                  style="color:inherit">{$_('settings.organization.read.apikey_link')}</a
+                >{$_('settings.organization.read.apikey_after')}
               </p>
             </div>
           </div>
@@ -243,34 +264,41 @@
     </div>
 
     <div style="margin-top:24px">
-      <div class="v2-label" style="margin-bottom:10px">Vertical pack</div>
+      <div class="v2-label" style="margin-bottom:10px">
+        {$_('settings.organization.read.pack_section')}
+      </div>
       <div class="v2-card" style="padding:16px 18px">
         <p class="v2-sub" style="font-size:12.5px;margin:0 0 14px;line-height:1.5">
-          A pack adds starter pipelines, tags, custom fields, products and a set of sample records
-          (accounts, contacts, deals, tickets, tasks and leads) for one kind of business. Applying
-          one only fills in what this org is missing. Anything already set up is left exactly as it
-          is, and applying the same pack twice is safe.
+          {$_('settings.organization.read.pack_intro')}
         </p>
 
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-          <span class="v2-sub" style="font-size:11.5px">First pack applied</span>
+          <span class="v2-sub" style="font-size:11.5px"
+            >{$_('settings.organization.read.pack_first_applied')}</span
+          >
           {#if appliedPack}
             <Pill tone="moss">{appliedPack.name}</Pill>
           {:else if org.vertical}
             <Pill tone="slate">{org.vertical}</Pill>
           {:else}
-            <span class="v2-sub" style="font-size:12.5px">None yet</span>
+            <span class="v2-sub" style="font-size:12.5px"
+              >{$_('settings.organization.read.pack_none_yet')}</span
+            >
           {/if}
         </div>
 
         {#if !data.can_edit}
           <p class="v2-sub" style="font-size:12px;margin:0">
-            Applying a pack or clearing sample data is limited to administrators.
+            {$_('settings.organization.read.pack_admin_only')}
           </p>
         {:else}
           {#if form?.error}
             <div style="margin-bottom:14px">
-              <NextAction label="That did not work" text={form.error} tone="rust" />
+              <NextAction
+                label={$_('settings.organization.read.error_label')}
+                text={form.error}
+                tone="rust"
+              />
             </div>
           {/if}
 
@@ -284,12 +312,18 @@
               class="v2-card"
               style="padding:14px 16px;margin-bottom:16px;border-color:color-mix(in srgb, var(--v2-moss) 40%, var(--v2-line))"
             >
-              <div style="font-weight:650;font-size:13px">Applied “{appliedName}”</div>
+              <div style="font-weight:650;font-size:13px">
+                {$_('settings.organization.read.pack_applied_heading', {
+                  values: { name: appliedName }
+                })}
+              </div>
               <p class="v2-sub" style="font-size:12.5px;margin:4px 0 10px">
                 {reportSummary(form.report)}
               </p>
               {#if skipped.length}
-                <div class="v2-label" style="margin-bottom:4px">Skipped, already had these</div>
+                <div class="v2-label" style="margin-bottom:4px">
+                  {$_('settings.organization.read.pack_skipped_heading')}
+                </div>
                 <ul style="margin:0 0 10px;padding-left:18px;font-size:12.5px;line-height:1.7">
                   {#each skipped as item (item.type + ':' + item.name)}
                     <li>
@@ -302,7 +336,9 @@
                 </ul>
               {/if}
               {#if created.length}
-                <div class="v2-label" style="margin-bottom:4px">Created</div>
+                <div class="v2-label" style="margin-bottom:4px">
+                  {$_('settings.organization.read.pack_created_heading')}
+                </div>
                 <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">
                   {#each created as item (item.type + ':' + item.name)}
                     <li>
@@ -328,17 +364,21 @@
                   </span>
                 </div>
                 {#if pack.id === org.vertical}
-                  <Pill tone="moss">Applied</Pill>
+                  <Pill tone="moss">{$_('settings.organization.read.pack_applied_pill')}</Pill>
                 {/if}
                 <form method="POST" action="?/apply" use:enhance={applySubmit}>
                   <input type="hidden" name="pack_id" value={pack.id} />
-                  <button class="v2-btn v2-btn-sm" disabled={busy}>Apply</button>
+                  <button class="v2-btn v2-btn-sm" disabled={busy}>
+                    {$_('settings.organization.read.pack_apply_button')}
+                  </button>
                 </form>
               </div>
             {/each}
             {#if !packs.length}
               <div class="v2-setting">
-                <span class="v2-sub" style="font-size:12.5px">No packs available right now.</span>
+                <span class="v2-sub" style="font-size:12.5px"
+                  >{$_('settings.organization.read.pack_none_available')}</span
+                >
               </div>
             {/if}
           </div>
@@ -352,12 +392,11 @@
                 style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"
               >
                 <span class="v2-sub" style="font-size:12px">
-                  Permanently delete every sample record a pack created for this org? This cannot be
-                  undone. Your real records are never touched, and any sample record you have since
-                  attached real work to is kept.
+                  {$_('settings.organization.read.clear_confirm_text')}
                 </span>
                 <button class="v2-btn danger-btn" type="submit" disabled={busy}>
-                  <Trash2 size={14} /> Clear sample data
+                  <Trash2 size={14} />
+                  {$_('settings.organization.read.clear_button')}
                 </button>
                 <button
                   class="v2-btn"
@@ -365,17 +404,20 @@
                   disabled={busy}
                   onclick={() => (confirmingClear = false)}
                 >
-                  Cancel
+                  {$_('settings.organization.read.cancel')}
                 </button>
               </form>
             {:else if form?.cleared !== undefined}
               <span class="v2-sub" style="font-size:12.5px">
                 {form.cleared
-                  ? `Deleted ${form.cleared} sample ${form.cleared === 1 ? 'record' : 'records'}.`
-                  : 'No sample data to clear.'}
+                  ? $_('settings.organization.read.cleared_result', {
+                      values: { count: form.cleared }
+                    })
+                  : $_('settings.organization.read.cleared_none')}
                 {#if form.retained}
-                  Kept {form.retained}
-                  {form.retained === 1 ? 'record' : 'records'} you have since attached real work to.
+                  {$_('settings.organization.read.retained_result', {
+                    values: { count: form.retained }
+                  })}
                 {/if}
               </span>
             {:else}
@@ -384,11 +426,11 @@
                 type="button"
                 onclick={() => (confirmingClear = true)}
               >
-                <Trash2 size={14} /> Clear sample data
+                <Trash2 size={14} />
+                {$_('settings.organization.read.clear_button')}
               </button>
               <span class="v2-sub" style="font-size:11.5px">
-                Removes only the records a pack created as samples. Your real records are never
-                touched.
+                {$_('settings.organization.read.clear_hint')}
               </span>
             {/if}
           </div>

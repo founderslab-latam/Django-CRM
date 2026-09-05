@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getBusinessHours,
   updateBusinessHours,
@@ -45,8 +47,9 @@ function readDays(form) {
   });
 }
 
-/** The one 403 body all three admin-only writes share, turned into a sentence. */
-const FORBIDDEN = 'Only admins can update business hours.';
+/** The one 403 body all three admin-only writes share, turned into a sentence.
+ *  Resolved per call (not at module load) so the active locale is used. */
+const forbidden = () => get(_)('settings.business_hours.error_forbidden');
 
 /**
  * All three actions below are admin-only, enforced server-side by
@@ -74,10 +77,12 @@ export const actions = {
       await updateBusinessHours(event, calendar.id, days, meta);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { updateHours: { error: FORBIDDEN } });
+        return fail(403, { updateHours: { error: forbidden() } });
       }
       return fail(400, {
-        updateHours: { error: readableError(err, 'Could not save business hours.') }
+        updateHours: {
+          error: readableError(err, get(_)('settings.business_hours.error_save_fallback'))
+        }
       });
     }
     return { hoursUpdated: true };
@@ -98,9 +103,13 @@ export const actions = {
       existing = await addHolidayWrite(event, calendar.id, { date, name });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { addHoliday: { error: FORBIDDEN } });
+        return fail(403, { addHoliday: { error: forbidden() } });
       }
-      return fail(400, { addHoliday: { error: readableError(err, 'Could not add the holiday.') } });
+      return fail(400, {
+        addHoliday: {
+          error: readableError(err, get(_)('settings.business_hours.error_add_holiday_fallback'))
+        }
+      });
     }
     const storedName = existing?.name ?? '';
     if (storedName && storedName !== name) {
@@ -117,10 +126,12 @@ export const actions = {
       await removeHolidayWrite(event, calendar.id, holidayId);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { removeHoliday: { error: FORBIDDEN } });
+        return fail(403, { removeHoliday: { error: forbidden() } });
       }
       return fail(400, {
-        removeHoliday: { error: readableError(err, 'Could not remove the holiday.') }
+        removeHoliday: {
+          error: readableError(err, get(_)('settings.business_hours.error_remove_holiday_fallback'))
+        }
       });
     }
     return { holidayRemoved: true };

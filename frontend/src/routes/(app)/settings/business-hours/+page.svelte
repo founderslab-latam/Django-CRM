@@ -22,9 +22,25 @@
   import SettingsCrumb from '$lib/v2/components/SettingsCrumb.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { shortDate, relativeDays } from '$lib/v2/format.js';
   import { weeklyHours, isAlwaysOn } from './week.js';
   import { Plus, Clock, TriangleAlert } from '@lucide/svelte';
+
+  /** Weekday name → catalog key. The stored value ("Monday") stays the key
+   *  everywhere else on this page (form field prefixes, the today comparison);
+   *  only what a person reads is translated. */
+  const DAY_KEYS = {
+    Monday: 'monday',
+    Tuesday: 'tuesday',
+    Wednesday: 'wednesday',
+    Thursday: 'thursday',
+    Friday: 'friday',
+    Saturday: 'saturday',
+    Sunday: 'sunday'
+  };
+  /** @param {string} day */
+  const dayNameKey = (day) => `settings.business_hours.day.${DAY_KEYS[day] ?? day}`;
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -67,19 +83,22 @@
   let addingHoliday = $state(false);
 </script>
 
-<PageHeader title="Business hours">
+<PageHeader title={$_('settings.business_hours.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
     {calendar.name} · {calendar.timezone} ·
     {#if alwaysOn}
-      no day open, so targets run around the clock
+      {$_('settings.business_hours.sub_always_on')}
     {:else}
-      <span class="v2-num">{weekly}</span> hours a week
+      <span class="v2-num">{weekly}</span>
+      {$_('settings.business_hours.sub_hours_suffix')}
     {/if}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit && !editingHours}
-      <button class="v2-btn v2-btn-primary" onclick={openHoursEdit}>Edit hours</button>
+      <button class="v2-btn v2-btn-primary" onclick={openHoursEdit}>
+        {$_('settings.business_hours.edit_hours_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
@@ -88,20 +107,22 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     <div class="v2-split">
       <div>
-        <div class="v2-label" style="margin-bottom:10px">Open hours</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.business_hours.section_hours')}
+        </div>
 
         {#if editingHours}
           <SettingsFormPanel
-            title="Edit business hours"
+            title={$_('settings.business_hours.form_title')}
             action="?/updateHours"
             error={form?.updateHours?.error}
-            submitLabel="Save hours"
+            submitLabel={$_('settings.business_hours.save_hours_button')}
             oncancel={() => (editingHours = false)}
             ondone={() => (editingHours = false)}
           >
             {#snippet fields()}
               <div class="v2-field">
-                <label for="bh-name">Name</label>
+                <label for="bh-name">{$_('settings.business_hours.field_name')}</label>
                 <input
                   id="bh-name"
                   class="v2-input"
@@ -113,7 +134,7 @@
               </div>
 
               <div class="v2-field">
-                <label for="bh-timezone">Timezone</label>
+                <label for="bh-timezone">{$_('settings.business_hours.field_timezone')}</label>
                 <input
                   id="bh-timezone"
                   class="v2-input"
@@ -123,14 +144,16 @@
                   value={calendar.timezone}
                   placeholder="America/New_York"
                 />
-                <p class="v2-hint">IANA timezone name.</p>
+                <p class="v2-hint">{$_('settings.business_hours.timezone_hint')}</p>
               </div>
 
               <div class="v2-field v2-sfp-wide">
-                <label for="bh-day-0-open">Week</label>
+                <label for="bh-day-0-open">{$_('settings.business_hours.field_week')}</label>
                 {#each hourRows as row, i (row.key)}
                   <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
-                    <span style="width:84px;font-size:13px;flex:none">{row.day}</span>
+                    <span style="width:84px;font-size:13px;flex:none"
+                      >{$_(dayNameKey(row.day))}</span
+                    >
                     <label
                       style="display:flex;gap:6px;align-items:center;font-size:12px;font-weight:400;flex:none"
                     >
@@ -140,7 +163,7 @@
                         value="true"
                         bind:checked={row.closed}
                       />
-                      Closed
+                      {$_('settings.business_hours.closed')}
                     </label>
                     <input
                       id={i === 0 ? 'bh-day-0-open' : undefined}
@@ -151,7 +174,7 @@
                       disabled={row.closed}
                       style="width:auto"
                     />
-                    <span class="v2-sub">to</span>
+                    <span class="v2-sub">{$_('settings.business_hours.to')}</span>
                     <input
                       class="v2-input"
                       type="time"
@@ -172,12 +195,10 @@
             <TriangleAlert size={17} style="color:var(--v2-clay);flex:none;margin-top:1px" />
             <div>
               <div style="font-weight:600;font-size:13px">
-                Every day is closed, and the clock still runs
+                {$_('settings.business_hours.always_on_heading')}
               </div>
               <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
-                A four-hour target expires four hours after the ticket arrives, weekend or not. The
-                engine drops a calendar that never opens rather than treating it as permanently
-                shut, so open at least one day to make this calendar count.
+                {$_('settings.business_hours.always_on_body')}
               </p>
             </div>
           </div>
@@ -187,16 +208,20 @@
           {#each calendar.days as d (d.day)}
             <div class="v2-setting" style={d.day === todayName ? 'background:var(--v2-hover)' : ''}>
               <div class="v2-setting-body">
-                <b>{d.day}</b>
+                <b>{$_(dayNameKey(d.day))}</b>
                 {#if d.day === todayName}
-                  <span class="v2-sub" style="font-size:11px">today</span>
+                  <span class="v2-sub" style="font-size:11px"
+                    >{$_('settings.business_hours.today')}</span
+                  >
                 {/if}
               </div>
               {#if d.open && d.close}
                 <span class="v2-num" style="font-size:13px">{d.open} - {d.close}</span>
               {:else}
                 <!-- Named, not blank. A blank cell reads as missing data. -->
-                <span class="v2-sub" style="font-size:12.5px">Closed</span>
+                <span class="v2-sub" style="font-size:12.5px"
+                  >{$_('settings.business_hours.closed')}</span
+                >
               {/if}
             </div>
           {/each}
@@ -204,49 +229,48 @@
 
         {#if calendar.is_default}
           <p class="v2-sub" style="font-size:11.5px;margin-top:11px">
-            This is the default calendar, so it applies to every ticket that does not have a more
-            specific one.
+            {$_('settings.business_hours.default_note')}
           </p>
         {/if}
       </div>
 
       <div>
         <div style="display:flex;align-items:baseline;margin-bottom:10px">
-          <div class="v2-label">Holidays</div>
+          <div class="v2-label">{$_('settings.business_hours.section_holidays')}</div>
           {#if data.can_edit && !addingHoliday}
             <button
               class="v2-btn v2-btn-sm"
               style="margin-left:auto"
               onclick={() => (addingHoliday = true)}
             >
-              <Plus size={12} />Add
+              <Plus size={12} />{$_('settings.business_hours.add_button')}
             </button>
           {/if}
         </div>
 
         {#if addingHoliday}
           <SettingsFormPanel
-            title="Add holiday"
+            title={$_('settings.business_hours.holiday_form_title')}
             action="?/addHoliday"
             error={form?.addHoliday?.error}
-            submitLabel="Add holiday"
+            submitLabel={$_('settings.business_hours.add_holiday_button')}
             oncancel={() => (addingHoliday = false)}
             ondone={() => (addingHoliday = false)}
           >
             {#snippet fields()}
               <div class="v2-field">
-                <label for="bh-holiday-date">Date</label>
+                <label for="bh-holiday-date">{$_('settings.business_hours.field_date')}</label>
                 <input id="bh-holiday-date" class="v2-input" type="date" name="date" required />
               </div>
               <div class="v2-field">
-                <label for="bh-holiday-name">Name</label>
+                <label for="bh-holiday-name">{$_('settings.business_hours.field_name')}</label>
                 <input
                   id="bh-holiday-name"
                   class="v2-input"
                   name="name"
                   maxlength="100"
                   required
-                  placeholder="Christmas"
+                  placeholder={$_('settings.business_hours.holiday_name_placeholder')}
                 />
               </div>
             {/snippet}
@@ -261,9 +285,10 @@
                was already stored, so the name just typed was discarded. Silence
                here reads as a successful rename. -->
           <p class="v2-sub" style="margin-bottom:12px;font-size:12px">
-            That date was already a holiday, called
-            <b style="font-weight:600">{form.holidayAlreadyNamed}</b>. The name you typed was not
-            saved: remove it and add it again to rename it.
+            {$_('settings.business_hours.holiday_dup_before')}
+            <b style="font-weight:600">{form.holidayAlreadyNamed}</b>{$_(
+              'settings.business_hours.holiday_dup_after'
+            )}
           </p>
         {/if}
 
@@ -278,16 +303,16 @@
               {#if data.can_edit}
                 <ConfirmAction
                   action="?/removeHoliday"
-                  label="Remove"
-                  confirmLabel="Remove"
-                  explain="Deletes it. The day counts as working time again."
+                  label={$_('settings.business_hours.remove_button')}
+                  confirmLabel={$_('settings.business_hours.remove_button')}
+                  explain={$_('settings.business_hours.remove_holiday_explain')}
                   hidden={{ holiday_id: h.id }}
                 />
               {/if}
             </div>
           {:else}
             <p class="v2-sub" style="padding:14px 16px;font-size:12.5px;margin:0">
-              No holidays set. Targets will keep running on public holidays.
+              {$_('settings.business_hours.holidays_empty')}
             </p>
           {/each}
         </div>
@@ -297,31 +322,35 @@
         >
           <Clock size={16} style="color:var(--v2-slate);flex:none;margin-top:1px" />
           <div>
-            <div style="font-weight:600;font-size:13px">What this changes</div>
+            <div style="font-weight:600;font-size:13px">
+              {$_('settings.business_hours.effect_heading')}
+            </div>
             <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
               {#if alwaysOn}
                 <!-- The claim above this branch is false when nothing is open:
                      `_has_any_open_window` is what decides whether the calendar
                      is consulted at all, and with no open day it is not. -->
-                With no day open, targets do not count anything out: they run on the wall clock, through
-                evenings, weekends and the holidays below.
+                {$_('settings.business_hours.effect_always_on')}
               {:else}
-                Response and resolution targets count only the time inside these hours. A ticket
-                opened at 17:20 on Friday
+                {$_('settings.business_hours.effect_before')}
                 {#if calendar.days[0].open}
-                  starts its clock at <span class="v2-num">{calendar.days[0].open}</span> on Monday,
+                  {$_('settings.business_hours.effect_starts_at_before')}<span class="v2-num"
+                    >{calendar.days[0].open}</span
+                  >{$_('settings.business_hours.effect_starts_at_after')}
                 {:else}
                   <!-- Monday can be marked closed from this page now, so the
                        fixed "Monday morning" framing can no longer assume an
                        open time exists to quote. -->
-                  starts its clock whenever the week next opens,
+                  {$_('settings.business_hours.effect_starts_next')}
                 {/if}
-                so the weekend does not spend a four-hour target.
+                {$_('settings.business_hours.effect_after')}
               {/if}
             </p>
             <p class="v2-sub" style="font-size:12px;margin:8px 0 0">
-              <a href={resolve('/tickets/analytics')} style="color:inherit">Service analytics</a> is measured
-              on this calendar.
+              <a href={resolve('/tickets/analytics')} style="color:inherit"
+                >{$_('settings.business_hours.analytics_link')}</a
+              >
+              {$_('settings.business_hours.analytics_after')}
             </p>
           </div>
         </div>

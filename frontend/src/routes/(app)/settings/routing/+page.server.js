@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getRoutingRules,
   createRoutingRule,
@@ -65,9 +67,11 @@ export const actions = {
       await createRoutingRule(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { create: { error: 'Only an admin can add routing rules.' } });
+        return fail(403, { create: { error: get(_)('settings.routing.error_create_forbidden') } });
       }
-      return fail(400, { create: { error: readableError(err, 'Could not add the rule.') } });
+      return fail(400, {
+        create: { error: readableError(err, get(_)('settings.routing.error_create_fallback')) }
+      });
     }
     return { created: true };
   },
@@ -80,9 +84,11 @@ export const actions = {
       await updateRoutingRule(event, id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { update: { error: 'Only an admin can change routing rules.' } });
+        return fail(403, { update: { error: get(_)('settings.routing.error_update_forbidden') } });
       }
-      return fail(400, { update: { error: readableError(err, 'Could not save the rule.') } });
+      return fail(400, {
+        update: { error: readableError(err, get(_)('settings.routing.error_update_fallback')) }
+      });
     }
     return { updated: true };
   },
@@ -94,10 +100,14 @@ export const actions = {
       await updateRoutingRule(event, id, { is_active: false });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { deactivate: { error: 'Only an admin can turn routing rules off.' } });
+        return fail(403, {
+          deactivate: { error: get(_)('settings.routing.error_deactivate_forbidden') }
+        });
       }
       return fail(400, {
-        deactivate: { error: readableError(err, 'Could not turn the rule off.') }
+        deactivate: {
+          error: readableError(err, get(_)('settings.routing.error_deactivate_fallback'))
+        }
       });
     }
     return { deactivated: true };
@@ -118,10 +128,12 @@ export const actions = {
       await updateRoutingRule(event, id, { is_active: true });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { activate: { error: 'Only an admin can turn routing rules on.' } });
+        return fail(403, {
+          activate: { error: get(_)('settings.routing.error_activate_forbidden') }
+        });
       }
       return fail(400, {
-        activate: { error: readableError(err, 'Could not turn the rule on.') }
+        activate: { error: readableError(err, get(_)('settings.routing.error_activate_fallback')) }
       });
     }
     return { activated: true };
@@ -136,9 +148,11 @@ export const actions = {
       await deleteRoutingRule(event, id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { remove: { error: 'Only an admin can delete routing rules.' } });
+        return fail(403, { remove: { error: get(_)('settings.routing.error_remove_forbidden') } });
       }
-      return fail(400, { remove: { error: readableError(err, 'Could not delete the rule.') } });
+      return fail(400, {
+        remove: { error: readableError(err, get(_)('settings.routing.error_remove_fallback')) }
+      });
     }
     return { removed: true };
   }

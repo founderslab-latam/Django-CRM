@@ -31,8 +31,11 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, relativeDays } from '$lib/v2/format.js';
-  import { MAILBOX_PROVIDER_LABEL, PRIORITY_TONE } from '$lib/v2/enums.js';
+  import { PRIORITY_TONE } from '$lib/v2/enums.js';
+  import { mailboxProviderKey } from '$lib/settings/labels.js';
+  import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
   import { missingOption, inactiveOptionLabel } from '$lib/v2/pickers.js';
   import {
     deliveryState,
@@ -86,16 +89,21 @@
   );
 </script>
 
-<PageHeader title="Inbound email">
+<PageHeader title={$_('settings.inbound_email.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(delivering)}</span> of
-    <span class="v2-num">{count(totals.count)}</span> addresses creating tickets ·
-    <span class="v2-num">{count(totals.cases_last_30d)}</span> in the last 30 days
+    <span class="v2-num">{count(delivering)}</span>
+    {$_('settings.inbound_email.sub_of')}
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('settings.inbound_email.sub_addresses')} ·
+    <span class="v2-num">{count(totals.cases_last_30d)}</span>
+    {$_('settings.inbound_email.sub_last_30')}
   {/snippet}
   {#snippet actions()}
     {#if data.can_edit && !editing}
-      <button class="v2-btn v2-btn-primary" onclick={openCreate}><Plus />Add address</button>
+      <button class="v2-btn v2-btn-primary" onclick={openCreate}>
+        <Plus />{$_('settings.inbound_email.add_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
@@ -104,10 +112,14 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     {#if editing}
       <SettingsFormPanel
-        title={editing === 'new' ? 'New address' : `Edit ${editing.address}`}
+        title={editing === 'new'
+          ? $_('settings.inbound_email.form_new')
+          : $_('settings.inbound_email.form_edit', { values: { address: editing.address } })}
         action={editing === 'new' ? '?/create' : '?/update'}
         error={editing === 'new' ? form?.create?.error : form?.update?.error}
-        submitLabel={editing === 'new' ? 'Add address' : 'Save address'}
+        submitLabel={editing === 'new'
+          ? $_('settings.inbound_email.add_address_button')
+          : $_('settings.inbound_email.save_address_button')}
         oncancel={() => (editing = null)}
         ondone={() => (editing = null)}
       >
@@ -117,7 +129,7 @@
           {/if}
 
           <div class="v2-field">
-            <label for="m-address">Address</label>
+            <label for="m-address">{$_('settings.inbound_email.field_address')}</label>
             <input
               id="m-address"
               class="v2-input"
@@ -127,61 +139,59 @@
               value={editing === 'new' ? '' : editing.address}
             />
             {#if editing !== 'new'}
-              <p class="v2-hint">Mail to the old address stops becoming tickets.</p>
+              <p class="v2-hint">{$_('settings.inbound_email.address_hint')}</p>
             {/if}
           </div>
 
           <div class="v2-field">
-            <label for="m-provider">Provider</label>
+            <label for="m-provider">{$_('settings.inbound_email.field_provider')}</label>
             <select id="m-provider" class="v2-input" name="provider">
               {#each PROVIDERS as p (p)}
+                {@const pc = providerChoiceLabel(p, $_(mailboxProviderKey(p)))}
                 <option
                   value={p}
                   selected={editing === 'new' ? p === 'ses' : editing.provider === p}
                 >
-                  {providerChoiceLabel(p, MAILBOX_PROVIDER_LABEL[p])}
+                  {$_(pc.key, { values: pc.values })}
                 </option>
               {/each}
             </select>
-            <p class="v2-hint">
-              Only AWS SES is implemented. The other three are stored and accepted, and mail sent to
-              an address using one becomes nothing until that integration exists.
-            </p>
+            <p class="v2-hint">{$_('settings.inbound_email.provider_hint')}</p>
           </div>
 
           <div class="v2-field">
-            <label for="m-priority">Opens as priority</label>
+            <label for="m-priority">{$_('settings.inbound_email.field_priority')}</label>
             <select id="m-priority" class="v2-input" name="default_priority">
               {#each PRIORITIES as p (p)}
                 <option
                   value={p}
                   selected={editing === 'new' ? p === 'Normal' : editing.default_priority === p}
                 >
-                  {p}
+                  {$_(casePriorityKey(p))}
                 </option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="m-type">Opens as type</label>
+            <label for="m-type">{$_('settings.inbound_email.field_type')}</label>
             <select id="m-type" class="v2-input" name="default_case_type">
               <option value="" selected={editing === 'new' || !editing.default_case_type}>
-                None
+                {$_('settings.inbound_email.type_none')}
               </option>
               {#each CASE_TYPES as t (t)}
                 <option value={t} selected={editing !== 'new' && editing.default_case_type === t}>
-                  {t}
+                  {$_(caseTypeKey(t))}
                 </option>
               {/each}
             </select>
           </div>
 
           <div class="v2-field">
-            <label for="m-assignee">Default assignee</label>
+            <label for="m-assignee">{$_('settings.inbound_email.field_assignee')}</label>
             <select id="m-assignee" class="v2-input" name="default_assignee_id">
               <option value="" selected={editing === 'new' || !editing.default_assignee}>
-                Unassigned
+                {$_('settings.inbound_email.unassigned')}
               </option>
               {#if missingAssignee}
                 <option value={missingAssignee.id} selected>
@@ -198,19 +208,16 @@
               {/each}
             </select>
             {#if missingAssignee}
-              <p class="v2-hint">
-                This assignee's account is no longer active. It stays set until you change it, so
-                new tickets from this address land on someone who cannot sign in.
-              </p>
+              <p class="v2-hint">{$_('settings.inbound_email.assignee_inactive_hint')}</p>
             {/if}
           </div>
 
           {#if editing === 'new'}
             <div class="v2-field">
-              <label for="m-active">Active</label>
+              <label for="m-active">{$_('settings.inbound_email.field_active')}</label>
               <label style="display:flex;gap:8px;align-items:center;font-weight:400">
                 <input id="m-active" type="checkbox" name="is_active" value="true" checked />
-                Starts creating tickets from mail to this address as soon as it is saved.
+                {$_('settings.inbound_email.active_help')}
               </label>
             </div>
           {/if}
@@ -236,54 +243,72 @@
         <MailWarning size={17} style="color:var(--v2-clay);flex:none;margin-top:1px" />
         <div>
           <div style="font-weight:600;font-size:13px">
-            {silent.map((m) => m.address).join(', ')}
-            {silent.length === 1
-              ? 'is switched on and creates nothing'
-              : 'are switched on and create nothing'}
+            {$_('settings.inbound_email.silent_heading', {
+              values: {
+                addresses: silent.map((m) => m.address).join(', '),
+                count: silent.length
+              }
+            })}
           </div>
           <p class="v2-sub" style="font-size:12px;margin:4px 0 0;line-height:1.5">
-            Mail keeps arriving and nothing bounces, so anyone writing there gets no ticket and no
-            error, just silence. Each address says below what is stopping it.
+            {$_('settings.inbound_email.silent_body')}
           </p>
         </div>
       </div>
     {/if}
 
-    <div class="v2-label" style="margin-bottom:10px">Addresses</div>
+    <div class="v2-label" style="margin-bottom:10px">
+      {$_('settings.inbound_email.section_addresses')}
+    </div>
     <div style="display:flex;flex-direction:column;gap:9px">
       {#each mailboxes as m (m.id)}
         {@const state = deliveryState(m)}
-        {@const why = deliveryExplanation(state, MAILBOX_PROVIDER_LABEL[m.provider])}
+        {@const why = deliveryExplanation(state, $_(mailboxProviderKey(m.provider)))}
         <div class="v2-card v2-mbx" style="opacity:{state === 'live' ? 1 : 0.68}">
           <div style="flex:1;min-width:0">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <b style="font-size:13.5px">{m.address}</b>
-              <Pill tone={deliveryTone(state)}>{deliveryLabel(state)}</Pill>
+              <Pill tone={deliveryTone(state)}>{$_(deliveryLabel(state))}</Pill>
             </div>
             <div class="v2-sub" style="font-size:11.5px;margin-top:4px">
-              {MAILBOX_PROVIDER_LABEL[m.provider]} ·
+              {$_(mailboxProviderKey(m.provider))} ·
               {#if m.cases_last_30d}
-                <span class="v2-num">{count(m.cases_last_30d)}</span> tickets in 30 days · last mail
+                <span class="v2-num">{count(m.cases_last_30d)}</span>
+                {$_('settings.inbound_email.tickets_in_30', {
+                  values: { count: m.cases_last_30d }
+                })}
+                · {$_('settings.inbound_email.last_mail')}
                 {relativeDays(m.last_received_at)}
               {:else}
-                no tickets in 30 days · last mail {relativeDays(m.last_received_at)}
+                {$_('settings.inbound_email.no_tickets_in_30')} · {$_(
+                  'settings.inbound_email.last_mail'
+                )}
+                {relativeDays(m.last_received_at)}
               {/if}
             </div>
             {#if why}
-              <p class="v2-sub" style="font-size:11.5px;margin:6px 0 0;line-height:1.5">{why}</p>
+              <p class="v2-sub" style="font-size:11.5px;margin:6px 0 0;line-height:1.5">
+                {$_(why.key, { values: why.values })}
+              </p>
             {/if}
 
             <!-- What a ticket from here starts out as. These are the defaults
                  a routing rule then reads, so they are worth stating next to
                  the address rather than behind an edit dialog. -->
             <div class="v2-mbx-defaults">
-              <span class="v2-sub">Opens as</span>
-              <Pill tone={PRIORITY_TONE[m.default_priority]}>{m.default_priority}</Pill>
+              <span class="v2-sub">{$_('settings.inbound_email.opens_as')}</span>
+              <Pill tone={PRIORITY_TONE[m.default_priority]}>
+                {$_(casePriorityKey(m.default_priority))}
+              </Pill>
               {#if m.default_case_type}
-                <Pill tone="slate">{m.default_case_type}</Pill>
+                <Pill tone="slate">{$_(caseTypeKey(m.default_case_type))}</Pill>
               {/if}
               <span class="v2-sub">
-                {m.default_assignee ? `assigned to ${m.default_assignee.name}` : 'then routed'}
+                {m.default_assignee
+                  ? $_('settings.inbound_email.assigned_to', {
+                      values: { name: m.default_assignee.name }
+                    })
+                  : $_('settings.inbound_email.then_routed')}
               </span>
             </div>
           </div>
@@ -291,27 +316,29 @@
           {#if data.can_edit}
             <div style="display:flex;gap:6px;align-items:center;flex:none">
               <button class="v2-btn v2-btn-sm" type="button" onclick={() => openEdit(m)}>
-                Edit
+                {$_('settings.inbound_email.edit_button')}
               </button>
               {#if m.is_active}
                 <ConfirmAction
                   action="?/deactivate"
-                  label="Turn off"
-                  confirmLabel="Turn off"
-                  explain="Stops opening tickets from this address. It stays in the list, off, until turned back on."
+                  label={$_('settings.inbound_email.turn_off')}
+                  confirmLabel={$_('settings.inbound_email.turn_off')}
+                  explain={$_('settings.inbound_email.deactivate_explain')}
                   hidden={{ id: m.id }}
                 />
               {:else}
                 <form method="POST" action="?/activate" use:enhance>
                   <input type="hidden" name="id" value={m.id} />
-                  <button class="v2-btn v2-btn-sm" type="submit">Turn on</button>
+                  <button class="v2-btn v2-btn-sm" type="submit">
+                    {$_('settings.inbound_email.turn_on')}
+                  </button>
                 </form>
               {/if}
               <ConfirmAction
                 action="?/remove"
-                label="Delete"
-                confirmLabel="Delete"
-                explain="Deleted permanently. Mail to this address stops becoming tickets, and the signing secret is destroyed."
+                label={$_('settings.inbound_email.delete_button')}
+                confirmLabel={$_('settings.inbound_email.delete_button')}
+                explain={$_('settings.inbound_email.remove_explain')}
                 hidden={{ id: m.id }}
               />
             </div>
@@ -335,27 +362,24 @@
       <div style="display:flex;gap:10px;align-items:flex-start">
         <KeyRound size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
         <div>
-          <div style="font-weight:600;font-size:13px">How a delivery is proved genuine</div>
+          <div style="font-weight:600;font-size:13px">
+            {$_('settings.inbound_email.proof_heading')}
+          </div>
           <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-            Two checks, and mail has to clear both: AWS signs each notification, and the address has
-            to be pinned to the exact SNS topic it was subscribed to. The signature alone proves
-            only that some AWS account sent it, so without the pin anyone who learned an address's
-            id could have AWS sign forged mail into this organisation. The pin is set from the first
-            confirmed subscription and is never shown here, because it carries the AWS account id.
+            {$_('settings.inbound_email.proof_body1')}
           </p>
           <p class="v2-sub" style="font-size:12.5px;margin:8px 0 0;line-height:1.5">
-            There is also a signing-secret field on each address, reserved for providers that sign
-            deliveries that way. None of those are implemented, so nothing compares it today. It can
-            be set through the API and is never readable back, here or anywhere.
+            {$_('settings.inbound_email.proof_body2')}
           </p>
         </div>
       </div>
     </div>
 
     <p class="v2-sub" style="font-size:11.5px;margin-top:14px">
-      Where a new ticket goes after it is created is decided by
-      <a href={resolve('/settings/routing')} style="color:inherit">ticket routing</a>, not by these
-      defaults.
+      {$_('settings.inbound_email.footer_before')}
+      <a href={resolve('/settings/routing')} style="color:inherit"
+        >{$_('settings.inbound_email.footer_link')}</a
+      >{$_('settings.inbound_email.footer_after')}
     </p>
   </div>
 </div>

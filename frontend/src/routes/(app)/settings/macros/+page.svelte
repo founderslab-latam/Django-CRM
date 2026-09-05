@@ -33,8 +33,9 @@
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, relativeDays } from '$lib/v2/format.js';
-  import { MACRO_SCOPE_LABEL } from '$lib/v2/enums.js';
+  import { macroScopeKey } from '$lib/settings/labels.js';
   import { Plus, TriangleAlert } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -106,30 +107,38 @@
   }
 </script>
 
-<PageHeader title="Macros">
+<PageHeader title={$_('settings.macros.title')}>
   {#snippet crumb()}<SettingsCrumb />{/snippet}
   {#snippet sub()}
-    <span class="v2-num">{count(totals.org)}</span> shared ·
-    <span class="v2-num">{count(totals.personal)}</span> yours
+    <span class="v2-num">{count(totals.org)}</span>
+    {$_('settings.macros.sub_shared', { values: { count: totals.org } })} ·
+    <span class="v2-num">{count(totals.personal)}</span>
+    {$_('settings.macros.sub_yours', { values: { count: totals.personal } })}
   {/snippet}
   {#snippet actions()}
     {#if !editing}
-      <button class="v2-btn v2-btn-primary" onclick={openCreate}><Plus />New macro</button>
+      <button class="v2-btn v2-btn-primary" onclick={openCreate}>
+        <Plus />{$_('settings.macros.new_button')}
+      </button>
     {/if}
   {/snippet}
 </PageHeader>
 
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
-    <StatCard label="Shared with everyone" value={count(totals.org)} tone="ink" />
-    <StatCard label="Only yours" value={count(totals.personal)} tone="slate" />
+    <StatCard label={$_('settings.macros.stat_shared')} value={count(totals.org)} tone="ink" />
     <StatCard
-      label="Broken placeholders"
+      label={$_('settings.macros.stat_yours')}
+      value={count(totals.personal)}
+      tone="slate"
+    />
+    <StatCard
+      label={$_('settings.macros.stat_broken')}
       value={count(totals.with_unknown_placeholders)}
       tone={totals.with_unknown_placeholders > 0 ? 'rust' : 'slate'}
-      detail="Sent to customers as typed"
+      detail={$_('settings.macros.stat_broken_detail')}
     />
-    <StatCard label="Turned off" value={count(totals.inactive)} tone="slate" />
+    <StatCard label={$_('settings.macros.stat_off')} value={count(totals.inactive)} tone="slate" />
   </div>
 </div>
 
@@ -137,10 +146,14 @@
   <div class="v2-pad" style="padding-bottom:32px">
     {#if editing}
       <SettingsFormPanel
-        title={editing === 'new' ? 'New macro' : `Edit ${editing.title}`}
+        title={editing === 'new'
+          ? $_('settings.macros.form_new')
+          : $_('settings.macros.form_edit', { values: { title: editing.title } })}
         action={editing === 'new' ? '?/create' : '?/update'}
         error={editing === 'new' ? form?.create?.error : form?.update?.error}
-        submitLabel={editing === 'new' ? 'Add macro' : 'Save macro'}
+        submitLabel={editing === 'new'
+          ? $_('settings.macros.add_button')
+          : $_('settings.macros.save_button')}
         oncancel={() => (editing = null)}
         ondone={() => (editing = null)}
       >
@@ -150,7 +163,7 @@
           {/if}
 
           <div class="v2-field">
-            <label for="m-title">Title</label>
+            <label for="m-title">{$_('settings.macros.field_title')}</label>
             <input
               id="m-title"
               class="v2-input"
@@ -162,28 +175,24 @@
           </div>
 
           <div class="v2-field">
-            <label for="m-scope">Who sees it</label>
+            <label for="m-scope">{$_('settings.macros.field_scope')}</label>
             <select id="m-scope" class="v2-input" name="scope" bind:value={scope}>
-              <option value="personal">Just me</option>
+              <option value="personal">{$_('settings.macros.scope_personal')}</option>
               {#if data.can_create_org}
-                <option value="org">Everyone in the org</option>
+                <option value="org">{$_('settings.macros.scope_org')}</option>
               {/if}
             </select>
             {#if !data.can_create_org}
-              <p class="v2-hint">Only an admin can share a macro with everyone.</p>
+              <p class="v2-hint">{$_('settings.macros.scope_hint')}</p>
             {/if}
           </div>
 
           <div class="v2-field v2-sfp-wide">
-            <label for="m-body">Body</label>
+            <label for="m-body">{$_('settings.macros.field_body')}</label>
             <textarea id="m-body" class="v2-input" name="body" rows="5" required
               >{editing === 'new' ? '' : editing.body}</textarea
             >
-            <p class="v2-hint">
-              Placeholders like %customer_name% are substituted when the macro is sent. The seven
-              supported tokens are listed to the right; anything else goes to the customer exactly
-              as typed.
-            </p>
+            <p class="v2-hint">{$_('settings.macros.body_hint')}</p>
           </div>
         {/snippet}
       </SettingsFormPanel>
@@ -198,27 +207,30 @@
 
     <div class="v2-split-wide">
       <div>
-        <div class="v2-label" style="margin-bottom:10px">Shared with everyone</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.macros.section_shared')}
+        </div>
         <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:24px">
           {#each orgMacros as m (m.id)}
             {@render macro(m)}
           {/each}
         </div>
 
-        <div class="v2-label" style="margin-bottom:10px">Only yours</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('settings.macros.section_yours')}</div>
         <div style="display:flex;flex-direction:column;gap:9px">
           {#each personalMacros as m (m.id)}
             {@render macro(m)}
           {/each}
         </div>
         <p class="v2-sub" style="font-size:11.5px;margin-top:11px">
-          Personal macros are visible only to you. Nobody else in the organisation, admins included,
-          sees this list.
+          {$_('settings.macros.personal_note')}
         </p>
       </div>
 
       <div>
-        <div class="v2-label" style="margin-bottom:10px">Placeholders that work</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('settings.macros.section_placeholders')}
+        </div>
         <div class="v2-card" style="overflow:hidden">
           {#each data.placeholders as p (p.token)}
             <div class="v2-setting" style="padding:10px 15px">
@@ -230,9 +242,7 @@
           {/each}
         </div>
         <p class="v2-sub" style="font-size:11.5px;margin-top:11px;line-height:1.5">
-          These seven are the whole set. Anything else between percent signs is left exactly as
-          written and goes out that way. The server does not guess, on purpose, so a typo is visible
-          in the composer rather than a blank in the customer's inbox.
+          {$_('settings.macros.placeholders_note')}
         </p>
       </div>
     </div>
@@ -243,10 +253,16 @@
   <div class="v2-card" style="padding:14px 16px;opacity:{m.is_active ? 1 : 0.62}">
     <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
       <b style="font-size:13.5px">{m.title}</b>
-      {#if !m.is_active}<Pill tone="slate">Off</Pill>{/if}
-      {#if m.unknown_placeholders.length}<Pill tone="rust">Broken placeholder</Pill>{/if}
+      {#if !m.is_active}<Pill tone="slate">{$_('settings.macros.pill_off')}</Pill>{/if}
+      {#if m.unknown_placeholders.length}
+        <Pill tone="rust">{$_('settings.macros.pill_broken')}</Pill>
+      {/if}
       <span class="v2-sub" style="font-size:11.5px;margin-left:auto">
-        used <span class="v2-num">{count(m.usage_count)}</span> times · {relativeDays(m.updated_at)}
+        {$_('settings.macros.used_prefix')}
+        <span class="v2-num">{count(m.usage_count)}</span>
+        {$_('settings.macros.used_suffix', { values: { count: m.usage_count } })} · {relativeDays(
+          m.updated_at
+        )}
       </span>
     </div>
 
@@ -266,12 +282,16 @@
       <div class="v2-macro-flag">
         <TriangleAlert size={14} style="color:var(--v2-rust);flex:none" />
         <span>
-          {m.unknown_placeholders.join(' and ')}
-          {m.unknown_placeholders.length === 1 ? 'is not a placeholder' : 'are not placeholders'},
-          {m.unknown_placeholders.length === 1 ? 'it goes' : 'they go'} to the customer exactly as written.
+          {$_('settings.macros.unknown_flag', {
+            values: {
+              tokens: m.unknown_placeholders.join(` ${$_('settings.macros.join_and')} `),
+              count: m.unknown_placeholders.length
+            }
+          })}
           {#if m.usage_count > 0}
-            This macro has been sent
-            <span class="v2-num">{count(m.usage_count)}</span> times.
+            {$_('settings.macros.unknown_sent_before')}
+            <span class="v2-num">{count(m.usage_count)}</span>
+            {$_('settings.macros.unknown_sent_after')}
           {/if}
         </span>
       </div>
@@ -279,13 +299,15 @@
 
     {#if m.owner}
       <div class="v2-sub" style="font-size:11px;margin-top:8px">
-        {MACRO_SCOPE_LABEL[m.scope]} · {m.owner.name}
+        {$_(macroScopeKey(m.scope))} · {m.owner.name}
       </div>
     {/if}
 
     {#if canWrite(m)}
       <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:10px">
-        <button class="v2-btn v2-btn-sm" type="button" onclick={() => openEdit(m)}>Edit</button>
+        <button class="v2-btn v2-btn-sm" type="button" onclick={() => openEdit(m)}>
+          {$_('settings.macros.edit_button')}
+        </button>
         {#if !m.is_active}
           <!-- Turning a macro back on restores nothing that was destroyed, so
                unlike "Turn off"/"Delete" this doesn't need the two-click
@@ -300,7 +322,7 @@
                this can never write a row `canWrite` above disagrees with. -->
           <form method="POST" action="?/activate" use:enhance>
             <input type="hidden" name="id" value={m.id} />
-            <button class="v2-btn v2-btn-sm" type="submit">Turn on</button>
+            <button class="v2-btn v2-btn-sm" type="submit">{$_('settings.macros.turn_on')}</button>
           </form>
         {:else if m.scope === 'org'}
           <!-- `MacroDetailView.delete` soft-deletes an org macro: it flips
@@ -308,9 +330,9 @@
                "Turn off", not "Delete", says what actually happens. -->
           <ConfirmAction
             action="?/delete"
-            label="Turn off"
-            confirmLabel="Turn off"
-            explain="Turns it off for everyone. It stops appearing in the picker."
+            label={$_('settings.macros.turn_off')}
+            confirmLabel={$_('settings.macros.turn_off')}
+            explain={$_('settings.macros.turn_off_explain_org')}
             hidden={{ id: m.id }}
           />
         {:else}
@@ -319,9 +341,9 @@
                nothing left to turn back on. -->
           <ConfirmAction
             action="?/delete"
-            label="Delete"
-            confirmLabel="Delete"
-            explain="Deletes it permanently."
+            label={$_('settings.macros.delete_button')}
+            confirmLabel={$_('settings.macros.delete_button')}
+            explain={$_('settings.macros.delete_explain')}
             hidden={{ id: m.id }}
           />
         {/if}

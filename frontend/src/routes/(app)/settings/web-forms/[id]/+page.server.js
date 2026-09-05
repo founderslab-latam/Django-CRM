@@ -1,4 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getWebForm,
   getSubmissions,
@@ -29,7 +31,7 @@ export async function load(event) {
   try {
     detail = await getWebForm(event, id);
   } catch (/** @type {any} */ err) {
-    if (err?.status === 404) error(404, 'That web form does not exist.');
+    if (err?.status === 404) error(404, get(_)('settings.web_forms.detail.err_not_found'));
     throw err;
   }
 
@@ -129,7 +131,9 @@ function readValues(form) {
  */
 function actionError(err, forbidden, fallback) {
   if (err?.status === 403) return { status: 403, message: forbidden };
-  if (err?.status === 404) return { status: 404, message: 'That form no longer exists.' };
+  if (err?.status === 404) {
+    return { status: 404, message: get(_)('settings.web_forms.detail.err_missing') };
+  }
   return { status: 400, message: readableError(err, fallback) };
 }
 
@@ -142,8 +146,8 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can change a web form.',
-        'Could not save the form.'
+        get(_)('settings.web_forms.detail.err_save_forbidden'),
+        get(_)('settings.web_forms.detail.err_save_fallback')
       );
       return fail(status, { save: { error: message } });
     }
@@ -158,8 +162,8 @@ export const actions = {
       // reason is the entire useful content of the response.
       const { status, message } = actionError(
         err,
-        'Only an admin can publish a web form.',
-        'Could not publish the form.'
+        get(_)('settings.web_forms.detail.err_publish_forbidden'),
+        get(_)('settings.web_forms.detail.err_publish_fallback')
       );
       return fail(status, { publish: { error: message } });
     }
@@ -172,8 +176,8 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can unpublish a web form.',
-        'Could not unpublish the form.'
+        get(_)('settings.web_forms.detail.err_unpublish_forbidden'),
+        get(_)('settings.web_forms.detail.err_unpublish_fallback')
       );
       return fail(status, { unpublish: { error: message } });
     }
@@ -186,8 +190,8 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       const { status, message } = actionError(
         err,
-        'Only an admin can remove a web form.',
-        'Could not remove the form.'
+        get(_)('settings.web_forms.detail.err_delete_forbidden'),
+        get(_)('settings.web_forms.detail.err_delete_fallback')
       );
       return fail(status, { delete: { error: message } });
     }

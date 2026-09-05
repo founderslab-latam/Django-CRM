@@ -47,11 +47,18 @@
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { count, relativeDays, shortDate } from '$lib/v2/format.js';
   import { ROLE_LABEL } from '$lib/v2/enums.js';
+  import {
+    tokenStateKey,
+    tokenScopeDescriptor,
+    tokenStalenessDescriptor,
+    tokenExpiryKey
+  } from '$lib/settings/labels.js';
   import { enhance } from '$app/forms';
   import { Plus, ShieldAlert, Copy, Check } from '@lucide/svelte';
-  import { tokenStatus, staleness, scopeSummary, EXPIRY_CHOICES } from '$lib/v2/token-rules.js';
+  import { tokenStatus, EXPIRY_CHOICES } from '$lib/v2/token-rules.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -95,44 +102,52 @@
 </script>
 
 {#if data.forbidden}
-  <PageHeader title="API tokens">
+  <PageHeader title={$_('settings.api_tokens.title')}>
     {#snippet crumb()}<SettingsCrumb />{/snippet}
   </PageHeader>
   <div class="v2-pad" style="padding-top:40px">
     <NextAction
-      label="Admins only"
-      text="Reviewing every token in the organization is limited to admins, because a token authenticates as its owner. Ask an admin if one needs issuing or revoking."
+      label={$_('settings.api_tokens.forbidden_label')}
+      text={$_('settings.api_tokens.forbidden_text')}
     />
   </div>
 {:else}
-  <PageHeader title="API tokens">
+  <PageHeader title={$_('settings.api_tokens.title')}>
     {#snippet crumb()}<SettingsCrumb />{/snippet}
     {#snippet sub()}
-      <span class="v2-num">{count(totals.live)}</span> live of
-      <span class="v2-num">{count(totals.count)}</span> ever issued
+      <span class="v2-num">{count(totals.live)}</span>
+      {$_('settings.api_tokens.sub_live_of')}
+      <span class="v2-num">{count(totals.count)}</span>
+      {$_('settings.api_tokens.sub_ever_issued')}
     {/snippet}
     {#snippet actions()}
       <button class="v2-btn v2-btn-primary" onclick={() => (creating = !creating)}>
-        <Plus />New token
+        <Plus />{$_('settings.api_tokens.new_button')}
       </button>
     {/snippet}
   </PageHeader>
 
   <div class="v2-pad" style="padding-top:16px;flex:none">
     <div class="v2-stats">
-      <StatCard label="Live tokens" value={count(totals.live)} tone="ink" />
+      <StatCard label={$_('settings.api_tokens.stat_live')} value={count(totals.live)} tone="ink" />
       <StatCard
-        label="Owner deactivated"
+        label={$_('settings.api_tokens.stat_orphaned')}
         value={count(totals.orphaned)}
         tone={totals.orphaned ? 'clay' : 'slate'}
-        detail={totals.orphaned ? 'Rejected at login, not revoked' : 'None'}
+        detail={totals.orphaned
+          ? $_('settings.api_tokens.stat_orphaned_detail')
+          : $_('settings.api_tokens.detail_none')}
       />
       <StatCard
-        label="Unused 90+ days"
+        label={$_('settings.api_tokens.stat_unused')}
         value={count(totals.unused_90d)}
         tone={totals.unused_90d ? 'clay' : 'slate'}
       />
-      <StatCard label="Issued in total" value={count(totals.count)} tone="slate" />
+      <StatCard
+        label={$_('settings.api_tokens.stat_total')}
+        value={count(totals.count)}
+        tone="slate"
+      />
     </div>
   </div>
 
@@ -146,11 +161,10 @@
           style="padding:15px 16px;margin-bottom:18px;border-color:color-mix(in srgb, var(--v2-moss) 40%, var(--v2-line))"
         >
           <div style="font-weight:650;font-size:13px">
-            “{form.created.name}” created, copy it now
+            {$_('settings.api_tokens.created_heading', { values: { name: form.created.name } })}
           </div>
           <p class="v2-sub" style="font-size:12px;margin:4px 0 10px">
-            This is the only time the full token is shown. Store it somewhere safe; it cannot be
-            retrieved again.
+            {$_('settings.api_tokens.created_body')}
           </p>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <code
@@ -160,7 +174,9 @@
               {form.created.token}
             </code>
             <button class="v2-btn v2-btn-sm" onclick={() => copyToken(form.created.token)}>
-              {#if copied}<Check size={13} />Copied{:else}<Copy size={13} />Copy{/if}
+              {#if copied}<Check size={13} />{$_('settings.api_tokens.copied')}{:else}<Copy
+                  size={13}
+                />{$_('settings.api_tokens.copy')}{/if}
             </button>
           </div>
         </div>
@@ -171,12 +187,13 @@
           class="v2-sub"
           style="color:var(--v2-moss);font-size:12.5px;margin:0 0 16px;font-weight:550"
         >
-          Revoked {form.revokedOrphaned}
-          {form.revokedOrphaned === 1 ? 'token' : 'tokens'} on deactivated accounts.
+          {$_('settings.api_tokens.revoked_orphaned_result', {
+            values: { count: form.revokedOrphaned }
+          })}
         </p>
       {:else if form?.error}
         <div style="margin-bottom:16px">
-          <NextAction label="That did not work" text={form.error} tone="rust" />
+          <NextAction label={$_('settings.api_tokens.error_label')} text={form.error} tone="rust" />
         </div>
       {/if}
 
@@ -190,7 +207,7 @@
         >
           <div style="flex:1;min-width:220px">
             <label class="v2-label" for="token-name" style="display:block;margin-bottom:4px">
-              What is this token for?
+              {$_('settings.api_tokens.form_name_label')}
             </label>
             <input
               id="token-name"
@@ -199,31 +216,33 @@
               maxlength="255"
               class="v2-input"
               style="width:100%"
-              placeholder="e.g. Nightly export job"
+              placeholder={$_('settings.api_tokens.form_name_placeholder')}
             />
           </div>
           <div>
             <label class="v2-label" for="token-access" style="display:block;margin-bottom:4px">
-              Access
+              {$_('settings.api_tokens.form_access_label')}
             </label>
             <select id="token-access" name="access" class="v2-input" style="width:180px">
-              <option value="read" selected>Read only</option>
-              <option value="full">Everything the owner can</option>
+              <option value="read" selected>{$_('settings.api_tokens.access_read')}</option>
+              <option value="full">{$_('settings.api_tokens.access_full')}</option>
             </select>
           </div>
           <div>
             <label class="v2-label" for="token-expiry" style="display:block;margin-bottom:4px">
-              Expires
+              {$_('settings.api_tokens.form_expiry_label')}
             </label>
             <select id="token-expiry" name="expiry" class="v2-input" style="width:150px">
               {#each EXPIRY_CHOICES as choice (choice.value)}
-                <option value={choice.value}>{choice.label}</option>
+                <option value={choice.value}>{$_(tokenExpiryKey(choice.value))}</option>
               {/each}
             </select>
           </div>
-          <button class="v2-btn v2-btn-primary" disabled={busy}>Create token</button>
+          <button class="v2-btn v2-btn-primary" disabled={busy}>
+            {$_('settings.api_tokens.form_submit')}
+          </button>
           <button type="button" class="v2-btn" disabled={busy} onclick={() => (creating = false)}>
-            Cancel
+            {$_('settings.api_tokens.form_cancel')}
           </button>
           {#if form?.create?.error}
             <p
@@ -239,8 +258,8 @@
       {#if totals.orphaned}
         <div style="margin-bottom:18px">
           <NextAction
-            label="Loose end"
-            text={`${totals.orphaned} live ${totals.orphaned === 1 ? 'token belongs' : 'tokens belong'} to a deactivated account. Deactivating already stops them at login, but they are not revoked. Reactivating the account would bring them back.`}
+            label={$_('settings.api_tokens.loose_end_label')}
+            text={$_('settings.api_tokens.loose_end_text', { values: { count: totals.orphaned } })}
           />
           <form
             method="POST"
@@ -249,7 +268,9 @@
             style="margin-top:10px"
           >
             <button class="v2-btn v2-btn-primary" disabled={busy}>
-              Revoke {totals.orphaned === 1 ? 'it' : 'them all'}
+              {$_('settings.api_tokens.revoke_orphaned_button', {
+                values: { count: totals.orphaned }
+              })}
             </button>
           </form>
         </div>
@@ -259,18 +280,19 @@
         <table class="v2-table">
           <thead>
             <tr>
-              <th>Token</th>
-              <th>Owner</th>
-              <th data-m="hide">Can do</th>
-              <th data-m="hide">Last used</th>
-              <th data-m="hide">Expires</th>
-              <th class="v2-r">State</th>
+              <th>{$_('settings.api_tokens.col_token')}</th>
+              <th>{$_('settings.api_tokens.col_owner')}</th>
+              <th data-m="hide">{$_('settings.api_tokens.col_can_do')}</th>
+              <th data-m="hide">{$_('settings.api_tokens.col_last_used')}</th>
+              <th data-m="hide">{$_('settings.api_tokens.col_expires')}</th>
+              <th class="v2-r">{$_('settings.api_tokens.col_state')}</th>
             </tr>
           </thead>
           <tbody>
             {#each data.tokens as t (t.id)}
               {@const s = tokenStatus(t)}
-              {@const stale = staleness(t)}
+              {@const stale = tokenStalenessDescriptor(t)}
+              {@const scope = tokenScopeDescriptor(t)}
               {@const owner = t.owner ?? {}}
               <tr style={t.is_live ? '' : 'opacity:.55'}>
                 <td>
@@ -285,25 +307,27 @@
                   {owner.name}
                   <span class="v2-table-secondary" style="display:block">
                     {ROLE_LABEL[owner.role] ?? owner.role}{owner.is_active === false
-                      ? ' · deactivated'
+                      ? $_('settings.api_tokens.owner_deactivated_suffix')
                       : ''}
                   </span>
                 </td>
                 <td data-m="hide">
-                  <span class="v2-sub" style="font-size:12px">{scopeSummary(t)}</span>
+                  <span class="v2-sub" style="font-size:12px"
+                    >{$_(scope.key, { values: scope.values })}</span
+                  >
                 </td>
                 <td data-m="hide">
                   {#if t.last_used_at}
                     {relativeDays(t.last_used_at)}
                   {:else}
-                    <span class="v2-muted">never</span>
+                    <span class="v2-muted">{$_('settings.api_tokens.last_used_never')}</span>
                   {/if}
                   {#if stale}
                     <span
                       class="v2-table-secondary"
                       style="display:block;color:var(--v2-clay);font-weight:600"
                     >
-                      {stale}
+                      {$_(stale.key, { values: stale.values })}
                     </span>
                   {/if}
                 </td>
@@ -311,16 +335,18 @@
                   {#if t.expires_at}
                     {shortDate(t.expires_at)}
                   {:else}
-                    <span class="v2-sub">never expires</span>
+                    <span class="v2-sub">{$_('settings.api_tokens.never_expires')}</span>
                   {/if}
                 </td>
                 <td class="v2-r">
                   <span style="display:inline-flex;gap:7px;align-items:center">
-                    <Pill tone={s.tone}>{s.label}</Pill>
+                    <Pill tone={s.tone}>{$_(tokenStateKey(t))}</Pill>
                     {#if t.is_live}
                       <form method="POST" action="?/revoke" use:enhance={working}>
                         <input type="hidden" name="id" value={t.id} />
-                        <button class="v2-btn v2-btn-sm" disabled={busy}>Revoke</button>
+                        <button class="v2-btn v2-btn-sm" disabled={busy}>
+                          {$_('settings.api_tokens.revoke_button')}
+                        </button>
                       </form>
                     {/if}
                   </span>
@@ -336,12 +362,11 @@
       >
         <ShieldAlert size={16} style="color:var(--v2-clay);flex:none;margin-top:1px" />
         <div>
-          <div style="font-weight:600;font-size:13px">A token is the whole account</div>
+          <div style="font-weight:600;font-size:13px">
+            {$_('settings.api_tokens.footer_heading')}
+          </div>
           <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
-            A token authenticates as its owner and inherits their role and organisation. There is no
-            narrower permission to give it. Issue one per integration so a single revocation stops a
-            single thing, set an expiry, and revoke anything you cannot name a use for. The value is
-            shown once when the token is created and cannot be recovered afterwards.
+            {$_('settings.api_tokens.footer_body')}
           </p>
         </div>
       </div>

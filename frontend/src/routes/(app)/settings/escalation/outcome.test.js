@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   actionNotifies,
-  teamPhrase,
+  teamSaysSo,
   halfFires,
   escalationOutcome,
   teamIgnoredNote,
@@ -87,71 +87,72 @@ describe('halfFires', () => {
   });
 });
 
+// `escalationOutcome` and `teamIgnoredNote` return structured descriptors now
+// rather than English; the page composes the sentence with `$_`. Same move as
+// `tickets/[id]/close.js`.
 describe('escalationOutcome', () => {
   it('names the policy being off before anything else', () => {
     const p = policy({ is_active: false, notify_team: SUPPORT });
-    expect(escalationOutcome(p, 'first_response')).toEqual({
-      text: 'Nothing. The policy is turned off',
-      dead: true
-    });
+    expect(escalationOutcome(p, 'first_response')).toEqual({ kind: 'off', dead: true });
   });
 
   it('says nothing happens when no target is set', () => {
     const p = policy({ first_response_target: null });
+    expect(escalationOutcome(p, 'first_response')).toEqual({ kind: 'no_target', dead: true });
+  });
+
+  it('carries the team when one is set with no target, which is the trap', () => {
+    const p = policy({ first_response_target: null, notify_team: SUPPORT });
     expect(escalationOutcome(p, 'first_response')).toEqual({
-      text: 'Nothing. No target is set',
+      kind: 'no_target_team',
+      team: SUPPORT,
       dead: true
     });
   });
 
-  it('names the team when one is set with no target, which is the trap', () => {
-    const p = policy({ first_response_target: null, notify_team: SUPPORT });
-    expect(escalationOutcome(p, 'first_response').text).toBe(
-      'Nothing. No target is set, and the Support team is not notified on its own'
-    );
-  });
-
-  it('appends the team on a notifying half', () => {
+  it('carries the team on a notifying half', () => {
     const p = policy({ notify_team: SUPPORT });
     expect(escalationOutcome(p, 'first_response')).toEqual({
-      text: 'Notify Alice and the Support team',
+      kind: 'fires',
+      action: 'notify',
+      targetName: 'Alice',
+      team: SUPPORT,
       dead: false
     });
   });
 
-  it('does not say "team" twice for a team named Support Team', () => {
+  it('still carries a team named Support Team; the page dedups the word', () => {
     const p = policy({ notify_team: SUPPORT_TEAM });
-    expect(escalationOutcome(p, 'first_response').text).toBe('Notify Alice and the Support Team');
+    expect(/** @type {any} */ (escalationOutcome(p, 'first_response')).team).toBe(SUPPORT_TEAM);
   });
 
-  it('leaves the team out of a reassign half, which never emails', () => {
+  it('drops the team from a reassign half, which never emails', () => {
     const p = policy({ first_response_action: 'reassign', notify_team: SUPPORT });
     expect(escalationOutcome(p, 'first_response')).toEqual({
-      text: 'Reassign to Alice',
+      kind: 'fires',
+      action: 'reassign',
+      targetName: 'Alice',
+      team: null,
       dead: false
     });
   });
 
-  it('never renders a label with nothing after it', () => {
+  it('always carries a target name on a firing half', () => {
     for (const action of ['notify', 'reassign', 'notify_and_reassign']) {
       for (const team of [null, SUPPORT]) {
-        const p = policy({
-          first_response_action: action,
-          first_response_target: null,
-          notify_team: team
-        });
-        expect(escalationOutcome(p, 'first_response').text).not.toMatch(/ $/);
+        const p = policy({ first_response_action: action, notify_team: team });
+        const out = /** @type {any} */ (escalationOutcome(p, 'first_response'));
+        expect(out.kind).toBe('fires');
+        expect(out.targetName).toBe('Alice');
       }
     }
   });
 });
 
 describe('teamIgnoredNote', () => {
-  it('warns when a team is set on a reassign half', () => {
+  it('flags the team set on a reassign half', () => {
     const p = policy({ first_response_action: 'reassign', notify_team: SUPPORT });
-    expect(teamIgnoredNote(p, 'first_response')).toBe(
-      'The Support team is not notified here: this half only reassigns.'
-    );
+    expect(teamIgnoredNote(p, 'first_response')).toEqual({ team: SUPPORT });
   });
 
   it('is null when the half notifies', () => {
@@ -232,19 +233,19 @@ describe('unconfiguredPriorities', () => {
   });
 });
 
-describe('teamPhrase', () => {
-  it('adds the word so a bare name reads as a team', () => {
-    expect(teamPhrase('Support')).toBe('the Support team');
+describe('teamSaysSo', () => {
+  it('is false for a bare name that needs the word added', () => {
+    expect(teamSaysSo('Support')).toBe(false);
   });
 
-  it('does not repeat it when the name already says team', () => {
-    expect(teamPhrase('Support Team')).toBe('the Support Team');
-    expect(teamPhrase('support teams')).toBe('the support teams');
-    expect(teamPhrase('Team')).toBe('the Team');
+  it('is true when the name already ends in team/teams', () => {
+    expect(teamSaysSo('Support Team')).toBe(true);
+    expect(teamSaysSo('support teams')).toBe(true);
+    expect(teamSaysSo('Team')).toBe(true);
   });
 
   it('does not fire on a name that merely ends in those letters', () => {
-    expect(teamPhrase('Downsteam')).toBe('the Downsteam team');
+    expect(teamSaysSo('Downsteam')).toBe(false);
   });
 });
 
@@ -254,5 +255,9 @@ describe('joinWithAnd', () => {
     expect(joinWithAnd(['Urgent'])).toBe('Urgent');
     expect(joinWithAnd(['Urgent', 'High'])).toBe('Urgent and High');
     expect(joinWithAnd(['Urgent', 'High', 'Low'])).toBe('Urgent, High and Low');
+  });
+
+  it('uses the conjunction it is given', () => {
+    expect(joinWithAnd(['Urgente', 'Alta', 'Baja'], 'y')).toBe('Urgente, Alta y Baja');
   });
 });

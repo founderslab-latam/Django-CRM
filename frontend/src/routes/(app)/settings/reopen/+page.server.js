@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getReopenPolicy, updateReopenPolicy } from '$lib/server/v2/reopen.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -29,10 +31,10 @@ export const actions = {
       await updateReopenPolicy(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { update: { error: 'Only an admin can change the reopen policy.' } });
+        return fail(403, { update: { error: get(_)('settings.reopen.error_forbidden') } });
       }
       return fail(400, {
-        update: { error: readableError(err, 'Could not save the reopen policy.') }
+        update: { error: readableError(err, get(_)('settings.reopen.error_save_fallback')) }
       });
     }
 

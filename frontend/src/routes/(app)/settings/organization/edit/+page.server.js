@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getOrgSettings,
   updateOrgSettings,
@@ -53,12 +55,12 @@ export const actions = {
       if (err?.status === 403) {
         return fail(403, {
           values: body,
-          error: 'Only an admin can change organization settings.'
+          error: get(_)('settings.organization.edit.error_forbidden')
         });
       }
       return fail(400, {
         values: body,
-        error: readableError(err, 'Could not save these settings.')
+        error: readableError(err, get(_)('settings.organization.edit.error_fallback'))
       });
     }
 
