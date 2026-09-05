@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listInvoiceTemplates, setDefaultTemplate } from '$lib/server/v2/templates.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -27,7 +29,7 @@ export const actions = {
   setDefault: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString();
-    if (!id) return fail(400, { error: 'Which template? None was given.' });
+    if (!id) return fail(400, { error: get(_)('invoices.templates.list.error_which') });
 
     try {
       await setDefaultTemplate({ cookies }, id);
@@ -35,8 +37,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'Only an administrator can change invoice templates.'
-            : readableError(err, 'Could not change the default template.')
+            ? get(_)('invoices.templates.list.error_forbidden')
+            : readableError(err, get(_)('invoices.templates.list.error_default_failed'))
       });
     }
     return { defaulted: true };

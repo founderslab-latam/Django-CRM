@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listEstimates, convertEstimate, FILTER_FIELDS } from '$lib/server/v2/estimates.js';
 import { listAccountsPicker } from '$lib/server/v2/accounts.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
@@ -39,7 +41,7 @@ export const actions = {
   convert: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString();
-    if (!id) return fail(400, { error: 'Which estimate? None was given.' });
+    if (!id) return fail(400, { error: get(_)('invoices.estimates.error_which') });
 
     let created;
     try {
@@ -48,8 +50,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This estimate is not yours to convert.'
-            : readableError(err, 'Could not raise an invoice from this estimate.')
+            ? get(_)('invoices.estimates.error_not_yours')
+            : readableError(err, get(_)('invoices.estimates.error_convert_failed'))
       });
     }
 

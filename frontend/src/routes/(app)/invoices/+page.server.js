@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listInvoices, sendInvoice, FILTER_FIELDS } from '$lib/server/v2/invoices.js';
 import { listAccountsPicker } from '$lib/server/v2/accounts.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
@@ -55,7 +57,7 @@ export const actions = {
   send: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString();
-    if (!id) return fail(400, { error: 'Which invoice?' });
+    if (!id) return fail(400, { error: get(_)('invoices.list.error_which_invoice') });
 
     try {
       await sendInvoice({ cookies }, id);
@@ -63,8 +65,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'That invoice is not yours to send.'
-            : readableError(err, 'Could not send that invoice.')
+            ? get(_)('invoices.list.error_not_yours_send')
+            : readableError(err, get(_)('invoices.list.error_send_failed'))
       });
     }
     return { sent: id };

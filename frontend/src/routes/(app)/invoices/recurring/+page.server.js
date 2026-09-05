@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listRecurringInvoices, toggleRecurring, FILTER_FIELDS } from '$lib/server/v2/recurring.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
@@ -28,7 +30,7 @@ export const actions = {
   toggle: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString();
-    if (!id) return fail(400, { error: 'Which schedule? None was given.' });
+    if (!id) return fail(400, { error: get(_)('invoices.recurring.error_which') });
 
     try {
       await toggleRecurring({ cookies }, id);
@@ -36,8 +38,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This schedule is not yours to pause or resume.'
-            : readableError(err, 'Could not change this schedule.')
+            ? get(_)('invoices.recurring.error_not_yours')
+            : readableError(err, get(_)('invoices.recurring.error_toggle_failed'))
       });
     }
     return { toggled: true };

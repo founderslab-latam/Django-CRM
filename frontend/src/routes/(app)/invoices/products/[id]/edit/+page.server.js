@@ -1,4 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getProductForEdit, updateProduct, deleteProduct } from '$lib/server/v2/products.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -42,17 +44,21 @@ export const actions = {
 
     const values = { name, sku, price, currency, category, description, is_active };
 
-    if (!name) return fail(400, { values, error: 'Give the product a name.' });
-    if (!priceOk(price)) return fail(400, { values, error: 'Enter a list price of 0 or more.' });
+    if (!name) return fail(400, { values, error: get(_)('invoices.products.edit.error_no_name') });
+    if (!priceOk(price))
+      return fail(400, { values, error: get(_)('invoices.products.edit.error_bad_price') });
 
     try {
       await updateProduct(event, event.params.id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { values, error: 'Only an administrator can change products.' });
+        return fail(403, { values, error: get(_)('invoices.products.edit.error_forbidden_save') });
       }
       if (err?.status === 404) error(404, 'Product not found');
-      return fail(400, { values, error: readableError(err, 'Could not save this product.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('invoices.products.edit.error_save_failed'))
+      });
     }
 
     redirect(303, '/invoices/products');
@@ -63,11 +69,13 @@ export const actions = {
       await deleteProduct(event, event.params.id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { error: 'Only an administrator can delete products.' });
+        return fail(403, { error: get(_)('invoices.products.edit.error_forbidden_delete') });
       }
       // 404 means it is already gone: fall through to the list either way.
       if (err?.status !== 404) {
-        return fail(400, { error: readableError(err, 'Could not delete this product.') });
+        return fail(400, {
+          error: readableError(err, get(_)('invoices.products.edit.error_delete_failed'))
+        });
       }
     }
 

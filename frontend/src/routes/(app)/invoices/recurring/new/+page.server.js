@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listAccounts } from '$lib/server/v2/accounts.js';
 import { listContacts } from '$lib/server/v2/contacts.js';
 import { listProducts } from '$lib/server/v2/products.js';
@@ -50,14 +52,14 @@ export const actions = {
     try {
       values = JSON.parse(form.get('payload')?.toString() || '{}');
     } catch {
-      return fail(400, { error: 'The schedule form could not be read. Please try again.' });
+      return fail(400, { error: get(_)('invoices.recurring.new_error_unreadable') });
     }
 
     try {
       await createRecurringInvoice({ cookies }, values);
     } catch (/** @type {any} */ err) {
       return fail(err?.status === 403 ? 403 : 400, {
-        error: readableError(err, 'Could not create the schedule.')
+        error: readableError(err, get(_)('invoices.recurring.new_error_create_failed'))
       });
     }
 

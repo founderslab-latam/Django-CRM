@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listAccounts } from '$lib/server/v2/accounts.js';
 import { listContacts } from '$lib/server/v2/contacts.js';
 import { listProducts } from '$lib/server/v2/products.js';
@@ -49,13 +51,13 @@ export const actions = {
     try {
       body = JSON.parse(form.get('payload')?.toString() || '{}');
     } catch {
-      return fail(400, { error: 'The invoice form could not be read. Please try again.' });
+      return fail(400, { error: get(_)('invoices.new.error_unreadable') });
     }
 
-    if (!body.account_id) return fail(400, { error: 'Choose an account.' });
-    if (!body.contact_id) return fail(400, { error: 'Choose a contact.' });
+    if (!body.account_id) return fail(400, { error: get(_)('invoices.new.error_no_account') });
+    if (!body.contact_id) return fail(400, { error: get(_)('invoices.new.error_no_contact') });
     if (!Array.isArray(body.line_items) || body.line_items.length === 0) {
-      return fail(400, { error: 'Add at least one line with a description and an amount.' });
+      return fail(400, { error: get(_)('invoices.new.error_no_lines') });
     }
 
     let created;
@@ -63,7 +65,7 @@ export const actions = {
       created = await createInvoice({ cookies }, body);
     } catch (/** @type {any} */ err) {
       return fail(err?.status === 403 ? 403 : 400, {
-        error: readableError(err, 'Could not create the invoice.')
+        error: readableError(err, get(_)('invoices.new.error_create_failed'))
       });
     }
 

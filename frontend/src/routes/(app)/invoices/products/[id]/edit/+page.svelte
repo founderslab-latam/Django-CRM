@@ -13,6 +13,7 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { enhance } from '$app/forms';
   import { ChevronRight, Lock, Trash2 } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -22,11 +23,11 @@
   let confirming = $state(false);
 </script>
 
-<PageHeader title="Edit product" record center width="62ch">
+<PageHeader title={$_('invoices.products.edit.title')} record center width="62ch">
   {#snippet crumb()}
-    <a href={resolve('/invoices/products')}>Products</a>
+    <a href={resolve('/invoices/products')}>{$_('invoices.products.edit.crumb_products')}</a>
     <ChevronRight size={12} />
-    <span>{data.product?.name ?? 'Edit'}</span>
+    <span>{data.product?.name ?? $_('invoices.products.edit.crumb_fallback')}</span>
   {/snippet}
 </PageHeader>
 
@@ -36,14 +37,14 @@
       <div class="v2-next" role="note">
         <Lock size={17} style="flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">Admins only</div>
+          <div style="font-weight:600">{$_('invoices.products.edit.admins_only_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">
-            The product catalogue is shared across the org, so only an administrator can change it.
+            {$_('invoices.products.edit.admins_only_body')}
           </div>
         </div>
       </div>
       <a class="v2-btn" href={resolve('/invoices/products')} style="margin-top:16px"
-        >Back to products</a
+        >{$_('invoices.products.edit.back_to_products')}</a
       >
     </div>
   {:else}
@@ -61,13 +62,13 @@
       {/if}
 
       <label class="v2-field">
-        <span class="v2-label">Name</span>
+        <span class="v2-label">{$_('invoices.products.edit.field_name')}</span>
         <input class="v2-input" name="name" required maxlength="255" value={values.name ?? ''} />
       </label>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <label class="v2-field" style="flex:2;min-width:180px">
-          <span class="v2-label">List price</span>
+          <span class="v2-label">{$_('invoices.products.edit.field_price')}</span>
           <input
             class="v2-input"
             name="price"
@@ -79,7 +80,7 @@
           />
         </label>
         <label class="v2-field" style="flex:1;min-width:130px">
-          <span class="v2-label">Currency</span>
+          <span class="v2-label">{$_('invoices.products.edit.field_currency')}</span>
           <select class="v2-input" name="currency" value={values.currency ?? 'USD'}>
             {#each data.currencies as c (c.code)}
               <option value={c.code}>{c.label}</option>
@@ -90,41 +91,46 @@
 
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <label class="v2-field" style="flex:1;min-width:160px">
-          <span class="v2-label">Category</span>
+          <span class="v2-label">{$_('invoices.products.edit.field_category')}</span>
           <input class="v2-input" name="category" maxlength="100" value={values.category ?? ''} />
         </label>
         <label class="v2-field" style="flex:1;min-width:160px">
-          <span class="v2-label">SKU</span>
+          <span class="v2-label">{$_('invoices.products.edit.field_sku')}</span>
           <input class="v2-input" name="sku" maxlength="100" value={values.sku ?? ''} />
         </label>
       </div>
 
       <label class="v2-field">
-        <span class="v2-label">Availability</span>
+        <span class="v2-label">{$_('invoices.products.edit.field_availability')}</span>
         <select
           class="v2-input"
           name="is_active"
           value={values.is_active === false ? 'false' : 'true'}
         >
-          <option value="true">Sellable, appears in the line-item picker</option>
-          <option value="false">Retired, kept for history, hidden from the picker</option>
+          <option value="true">{$_('invoices.products.edit.availability_sellable')}</option>
+          <option value="false">{$_('invoices.products.edit.availability_retired')}</option>
         </select>
         {#if usedOn > 0}
           <span class="v2-sub" style="font-size:11.5px">
-            On <span class="v2-num">{usedOn}</span>
-            {usedOn === 1 ? 'invoice' : 'invoices'} already. Retiring keeps those intact.
+            {$_('invoices.products.edit.used_on_prefix')}
+            <span class="v2-num">{usedOn}</span>
+            {$_('invoices.products.edit.used_on_suffix', { values: { count: usedOn } })}
           </span>
         {/if}
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Description</span>
+        <span class="v2-label">{$_('invoices.products.edit.field_description')}</span>
         <textarea class="v2-input" name="description" rows="3">{values.description ?? ''}</textarea>
       </label>
 
       <div style="display:flex;gap:9px;margin-top:6px;align-items:center">
-        <button class="v2-btn v2-btn-primary" type="submit">Save changes</button>
-        <a class="v2-btn" href={resolve('/invoices/products')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit"
+          >{$_('invoices.products.edit.save')}</button
+        >
+        <a class="v2-btn" href={resolve('/invoices/products')}
+          >{$_('invoices.products.edit.cancel')}</a
+        >
       </div>
     </form>
 
@@ -136,12 +142,13 @@
       <div class="danger">
         {#if !confirming}
           <button class="v2-btn danger-btn" type="button" onclick={() => (confirming = true)}>
-            <Trash2 size={14} /> Delete permanently
+            <Trash2 size={14} />
+            {$_('invoices.products.edit.delete')}
           </button>
           <span class="v2-sub" style="font-size:11.5px">
             {usedOn > 0
-              ? 'This product is on invoices already. Prefer Retire above.'
-              : 'Never invoiced, so it is safe to remove.'}
+              ? $_('invoices.products.edit.delete_hint_used')
+              : $_('invoices.products.edit.delete_hint_unused')}
           </span>
         {:else}
           <form
@@ -150,10 +157,14 @@
             use:enhance
             style="display:flex;gap:8px;align-items:center"
           >
-            <span class="v2-sub" style="font-size:12px">Delete this product for good?</span>
-            <button class="v2-btn danger-btn" type="submit"><Trash2 size={14} /> Delete</button>
+            <span class="v2-sub" style="font-size:12px"
+              >{$_('invoices.products.edit.delete_confirm')}</span
+            >
+            <button class="v2-btn danger-btn" type="submit"
+              ><Trash2 size={14} /> {$_('invoices.products.edit.delete_confirm_yes')}</button
+            >
             <button class="v2-btn" type="button" onclick={() => (confirming = false)}
-              >Keep it</button
+              >{$_('invoices.products.edit.delete_confirm_no')}</button
             >
           </form>
         {/if}

@@ -16,6 +16,7 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { money, count } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { Plus, Package, Pencil } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -43,15 +44,17 @@
   });
 </script>
 
-<PageHeader title="Products">
+<PageHeader title={$_('invoices.products.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.active)}</span> sellable ·
-    <span class="v2-num">{count(totals.count - totals.active)}</span> retired
+    <span class="v2-num">{count(totals.active)}</span>
+    {$_('invoices.products.list.sub_sellable')} ·
+    <span class="v2-num">{count(totals.count - totals.active)}</span>
+    {$_('invoices.products.list.sub_retired')}
   {/snippet}
   {#snippet actions()}
     {#if canManage}
       <a class="v2-btn v2-btn-primary" href={resolve('/invoices/products/new')}
-        ><Plus />New product</a
+        ><Plus />{$_('invoices.products.list.new_button')}</a
       >
     {/if}
   {/snippet}
@@ -63,16 +66,19 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     {#if data.products.length === 0}
       <EmptyState
-        title="Nothing in the catalogue"
-        body="Add the things you sell and their list prices. Line items on invoices and estimates pick from here, so the price is right without anyone remembering it."
+        title={$_('invoices.products.list.empty_title')}
+        body={$_('invoices.products.list.empty_body')}
       >
         {#snippet icon()}<Package size={21} />{/snippet}
         {#snippet actions()}
           {#if canManage}
-            <a class="v2-btn v2-btn-primary" href={resolve('/invoices/products/new')}>New product</a
+            <a class="v2-btn v2-btn-primary" href={resolve('/invoices/products/new')}
+              >{$_('invoices.products.list.new_button')}</a
             >
           {:else}
-            <span class="v2-sub" style="font-size:12px">Ask an admin to add products.</span>
+            <span class="v2-sub" style="font-size:12px"
+              >{$_('invoices.products.list.empty_ask_admin')}</span
+            >
           {/if}
         {/snippet}
       </EmptyState>
@@ -86,13 +92,14 @@
                 <b>{p.name}</b>
                 <span class="v2-sub" style="font-size:11.5px">
                   <span class="v2-num">{p.sku}</span>
-                  · on <span class="v2-num">{p.used_on}</span>
-                  {p.used_on === 1 ? 'invoice' : 'invoices'}
+                  · {$_('invoices.products.list.on_prefix')}
+                  <span class="v2-num">{p.used_on}</span>
+                  {$_('invoices.products.list.invoice_count', { values: { count: p.used_on } })}
                 </span>
               </div>
               {#if !p.is_active}
                 <!-- Retired, not gone. Says why it is still listed. -->
-                <Pill tone="slate">Retired</Pill>
+                <Pill tone="slate">{$_('invoices.products.list.retired_pill')}</Pill>
               {/if}
               <span class="v2-num" style="font-weight:600;font-size:13px">
                 {money(p.price, p.currency)}
@@ -101,7 +108,7 @@
                 <a
                   class="prod-edit"
                   href={resolve(`/invoices/products/${p.id}/edit`)}
-                  title="Edit {p.name}"
+                  title={$_('invoices.products.list.edit_title', { values: { name: p.name } })}
                 >
                   <Pencil size={14} />
                 </a>
@@ -112,8 +119,7 @@
       {/each}
 
       <p class="v2-sub" style="font-size:11.5px">
-        Retired products stay listed because they appear on invoices already issued. Removing one
-        would change what those invoices say was sold.
+        {$_('invoices.products.list.retired_note')}
       </p>
     {/if}
   </div>

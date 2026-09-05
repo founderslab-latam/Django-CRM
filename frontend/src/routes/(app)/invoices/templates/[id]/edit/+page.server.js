@@ -1,4 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getInvoiceTemplateForEdit, updateInvoiceTemplate } from '$lib/server/v2/templates.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -57,7 +59,7 @@ export const actions = {
     const values = readValues(form);
 
     if (!values.name.trim()) {
-      return fail(400, { values, error: 'Give the template a name.' });
+      return fail(400, { values, error: get(_)('invoices.templates.edit.error_no_name') });
     }
 
     try {
@@ -66,11 +68,14 @@ export const actions = {
       if (err?.status === 403) {
         return fail(403, {
           values,
-          error: 'Only an administrator can change invoice templates.'
+          error: get(_)('invoices.templates.edit.error_forbidden')
         });
       }
       if (err?.status === 404) error(404, 'Template not found');
-      return fail(400, { values, error: readableError(err, 'Could not save this template.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('invoices.templates.edit.error_save_failed'))
+      });
     }
 
     redirect(303, '/invoices/templates');

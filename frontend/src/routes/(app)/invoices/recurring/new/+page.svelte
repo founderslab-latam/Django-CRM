@@ -31,6 +31,8 @@
    * guard over a real backend gap, not a mirror of a server rule.
    */
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
+  import { paymentTermsKey, recurringFrequencyKey } from '$lib/invoices/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import PortalLineItems from '$lib/v2/components/PortalLineItems.svelte';
@@ -205,14 +207,15 @@
   }
 </script>
 
-<PageHeader title="New schedule">
+<PageHeader title={$_('invoices.recurring.new_title')}>
   {#snippet sub()}
-    Nothing generates until the first run date arrives. Saving creates the schedule
+    {$_('invoices.recurring.new_sub')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve('/invoices/recurring')}>Cancel</a>
+    <a class="v2-btn" href={resolve('/invoices/recurring')}>{$_('invoices.recurring.new_cancel')}</a
+    >
     <button type="submit" form="recurring-form" class="v2-btn v2-btn-primary" disabled={!ready}>
-      Save schedule
+      {$_('invoices.recurring.new_save')}
     </button>
   {/snippet}
 </PageHeader>
@@ -237,13 +240,15 @@
       <!-- the form -->
       <div>
         <div class="v2-card" style="padding:16px 18px">
-          <div class="v2-label" style="margin-bottom:12px">Who and what</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.recurring.new_section_who')}
+          </div>
 
           <div class="grid2">
             <label class="f">
-              <span>Account</span>
+              <span>{$_('invoices.recurring.new_field_account')}</span>
               <select bind:value={accountId} onchange={() => (contactId = '')}>
-                <option value="">Choose an account</option>
+                <option value="">{$_('invoices.recurring.new_account_placeholder')}</option>
                 {#each data.accounts as a (a.id)}
                   <option value={a.id}>{a.name}</option>
                 {/each}
@@ -251,9 +256,13 @@
             </label>
 
             <label class="f">
-              <span>Contact</span>
+              <span>{$_('invoices.recurring.new_field_contact')}</span>
               <select bind:value={contactId} disabled={!accountId}>
-                <option value="">{accountId ? 'Choose a contact' : 'Pick an account first'}</option>
+                <option value=""
+                  >{accountId
+                    ? $_('invoices.recurring.new_contact_placeholder')
+                    : $_('invoices.recurring.new_contact_placeholder_no_account')}</option
+                >
                 {#each contactOptions as c (c.id)}
                   <option value={c.id}
                     >{c.name}{c.account_name ? ` · ${c.account_name}` : ''}</option
@@ -263,58 +272,67 @@
             </label>
 
             <label class="f" style="grid-column:1/-1">
-              <span>Title</span>
-              <input bind:value={title} placeholder="What this schedule is for" required />
+              <span>{$_('invoices.recurring.new_field_title')}</span>
+              <input
+                bind:value={title}
+                placeholder={$_('invoices.recurring.new_title_placeholder')}
+                required
+              />
             </label>
           </div>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:12px">Cadence</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.recurring.new_section_cadence')}
+          </div>
 
           <div class="grid2">
             <label class="f">
-              <span>Frequency</span>
+              <span>{$_('invoices.recurring.new_field_frequency')}</span>
               <select bind:value={frequency}>
-                {#each Object.entries(RECURRING_FREQUENCY_LABEL) as [value, label] (value)}
-                  <option {value}>{label}</option>
+                {#each Object.keys(RECURRING_FREQUENCY_LABEL) as value (value)}
+                  <option {value}>{$_(recurringFrequencyKey(value))}</option>
                 {/each}
               </select>
             </label>
 
             {#if frequency === 'CUSTOM'}
               <label class="f">
-                <span>Every N days</span>
+                <span>{$_('invoices.recurring.new_field_custom_days')}</span>
                 <input type="number" min="1" step="1" bind:value={customDays} required />
               </label>
             {/if}
 
             <label class="f">
-              <span>Start date</span>
+              <span>{$_('invoices.recurring.new_field_start_date')}</span>
               <input type="date" bind:value={startDate} />
             </label>
 
             <label class="f">
-              <span>Next generation date</span>
+              <span>{$_('invoices.recurring.new_field_next_date')}</span>
               <input type="date" bind:value={nextGenerationDate} />
             </label>
 
             <label class="f">
-              <span>End date <span class="opt">(optional)</span></span>
+              <span
+                >{$_('invoices.recurring.new_field_end_date')}
+                <span class="opt">{$_('invoices.recurring.new_optional')}</span></span
+              >
               <input type="date" bind:value={endDate} />
             </label>
 
             <label class="f">
-              <span>Payment terms</span>
+              <span>{$_('invoices.recurring.new_field_payment_terms')}</span>
               <select bind:value={paymentTerms}>
-                {#each Object.entries(PAYMENT_TERMS_LABEL) as [value, label] (value)}
-                  <option {value}>{label}</option>
+                {#each Object.keys(PAYMENT_TERMS_LABEL) as value (value)}
+                  <option {value}>{$_(paymentTermsKey(value))}</option>
                 {/each}
               </select>
             </label>
 
             <label class="f">
-              <span>Currency</span>
+              <span>{$_('invoices.recurring.new_field_currency')}</span>
               <select bind:value={currency}>
                 {#each CURRENCIES as c (c)}
                   <option value={c}>{c}</option>
@@ -326,15 +344,18 @@
           <label class="check">
             <input type="checkbox" bind:checked={autoSend} />
             <span>
-              Send automatically when generated
-              <span class="hint-inline">off leaves a draft for you to review and send</span>
+              {$_('invoices.recurring.new_auto_send')}
+              <span class="hint-inline">{$_('invoices.recurring.new_auto_send_hint')}</span>
             </span>
           </label>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <div class="v2-label">Lines <span class="opt">(optional)</span></div>
+            <div class="v2-label">
+              {$_('invoices.recurring.new_section_lines')}
+              <span class="opt">{$_('invoices.recurring.new_optional')}</span>
+            </div>
             <select
               class="catalogue"
               value=""
@@ -343,7 +364,7 @@
                 e.currentTarget.value = '';
               }}
             >
-              <option value="">Add from catalogue…</option>
+              <option value="">{$_('invoices.recurring.new_add_from_catalogue')}</option>
               {#each data.products as p (p.id)}
                 <option value={p.id}>{p.name}, {money(p.price, currency)}</option>
               {/each}
@@ -353,19 +374,23 @@
           {#each items as item, i (i)}
             <div class="line">
               <div class="line-main">
-                <input class="line-name" bind:value={item.name} placeholder="Description" />
+                <input
+                  class="line-name"
+                  bind:value={item.name}
+                  placeholder={$_('invoices.recurring.new_line_name_placeholder')}
+                />
                 <input
                   class="line-desc"
                   bind:value={item.description}
-                  placeholder="Detail the customer sees under the name (optional)"
+                  placeholder={$_('invoices.recurring.new_line_desc_placeholder')}
                 />
               </div>
               <label class="line-n">
-                <span>Qty</span>
+                <span>{$_('invoices.recurring.new_line_qty')}</span>
                 <input type="number" min="0" step="1" bind:value={item.quantity} />
               </label>
               <label class="line-n">
-                <span>Unit price</span>
+                <span>{$_('invoices.recurring.new_line_unit_price')}</span>
                 <input type="number" min="0" step="0.01" bind:value={item.unit_price} />
               </label>
               <div class="line-total v2-num">
@@ -374,8 +399,8 @@
               <button
                 class="line-del"
                 onclick={() => removeLine(i)}
-                aria-label="Remove this line"
-                title="Remove this line"
+                aria-label={$_('invoices.recurring.new_remove_line')}
+                title={$_('invoices.recurring.new_remove_line')}
               >
                 <Trash2 size={14} />
               </button>
@@ -383,44 +408,60 @@
           {/each}
 
           <button class="v2-btn v2-btn-sm" style="margin-top:10px" onclick={addLine}>
-            <Plus size={13} />Add a line
+            <Plus size={13} />{$_('invoices.recurring.new_add_line')}
           </button>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:12px">Adjustments</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.recurring.new_section_adjustments')}
+          </div>
           <div class="grid2">
             <label class="f">
-              <span>Discount</span>
+              <span>{$_('invoices.recurring.new_field_discount')}</span>
               <select bind:value={discountType}>
-                <option value="">None</option>
-                <option value="PERCENTAGE">Percentage</option>
-                <option value="FIXED">Fixed amount</option>
+                <option value="">{$_('invoices.recurring.new_discount_none')}</option>
+                <option value="PERCENTAGE"
+                  >{$_('invoices.recurring.new_discount_percentage')}</option
+                >
+                <option value="FIXED">{$_('invoices.recurring.new_discount_fixed')}</option>
               </select>
             </label>
             {#if discountType}
               <label class="f">
-                <span>{discountType === 'PERCENTAGE' ? 'Percent off' : 'Amount off'}</span>
+                <span
+                  >{discountType === 'PERCENTAGE'
+                    ? $_('invoices.recurring.new_discount_percent_off')
+                    : $_('invoices.recurring.new_discount_amount_off')}</span
+                >
                 <input type="number" min="0" step="0.01" bind:value={discountValue} />
               </label>
             {/if}
             <label class="f">
-              <span>Tax rate %</span>
+              <span>{$_('invoices.recurring.new_field_tax_rate')}</span>
               <input type="number" min="0" step="0.01" bind:value={taxRate} />
             </label>
           </div>
           <p class="hint">
-            Tax applies to the subtotal after the discount, on every invoice raised.
+            {$_('invoices.recurring.new_adjustments_hint')}
           </p>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:8px">Notes to the customer</div>
-          <textarea rows="3" bind:value={notes} placeholder="Appears on every invoice raised"
-          ></textarea>
-          <div class="v2-label" style="margin:14px 0 8px">Terms</div>
-          <textarea rows="3" bind:value={terms} placeholder="Payment terms and conditions"
-          ></textarea>
+          <div class="v2-label" style="margin-bottom:8px">
+            {$_('invoices.recurring.new_section_notes')}
+          </div>
+          <textarea
+            rows="3"
+            bind:value={notes}
+            placeholder={$_('invoices.recurring.new_notes_placeholder')}></textarea>
+          <div class="v2-label" style="margin:14px 0 8px">
+            {$_('invoices.recurring.new_section_terms')}
+          </div>
+          <textarea
+            rows="3"
+            bind:value={terms}
+            placeholder={$_('invoices.recurring.new_terms_placeholder')}></textarea>
         </div>
       </div>
 
@@ -428,7 +469,7 @@
       <div>
         <div class="v2-card preview">
           <div class="v2-card-head">
-            <span class="v2-label">Each invoice this schedule raises</span>
+            <span class="v2-label">{$_('invoices.recurring.new_preview_head')}</span>
           </div>
           <div style="padding:14px 16px 16px">
             {#if usableLines.length}
@@ -445,23 +486,22 @@
               />
             {:else}
               <p class="empty">
-                Lines are optional here. Add one to preview what each generated invoice will total,
-                or save the schedule without pricing it yet.
+                {$_('invoices.recurring.new_preview_empty')}
               </p>
             {/if}
           </div>
         </div>
 
         <div class="v2-card" style="padding:15px 16px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:9px">On save</div>
+          <div class="v2-label" style="margin-bottom:9px">
+            {$_('invoices.recurring.new_derived_head')}
+          </div>
           <dl class="derived">
-            <dt>Subtotal, total</dt>
-            <dd>Recalculated by the server on every save and every generated invoice</dd>
-            <dt>Visibility</dt>
+            <dt>{$_('invoices.recurring.new_derived_totals')}</dt>
+            <dd>{$_('invoices.recurring.new_derived_totals_value')}</dd>
+            <dt>{$_('invoices.recurring.new_derived_visibility')}</dt>
             <dd>
-              Any signed-in teammate may create one. After that only the creator, an assignee, or an
-              admin can see or change it, and this form has no way to add an assignee, so only you
-              and an admin will see this schedule
+              {$_('invoices.recurring.new_derived_visibility_value')}
             </dd>
           </dl>
         </div>

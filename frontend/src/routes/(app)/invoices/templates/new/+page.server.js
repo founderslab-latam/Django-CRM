@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { createInvoiceTemplate } from '$lib/server/v2/templates.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -51,8 +53,8 @@ export const actions = {
         values,
         error:
           err?.status === 403
-            ? 'Only an admin can create an invoice template.'
-            : readableError(err, 'Could not create the template.')
+            ? get(_)('invoices.templates.new.error_forbidden')
+            : readableError(err, get(_)('invoices.templates.new.error_create_failed'))
       });
     }
 

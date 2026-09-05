@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getNewProductOptions, createProduct } from '$lib/server/v2/products.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -38,16 +40,20 @@ export const actions = {
     const values = { name, sku, price, currency, category, description, is_active };
 
     // UX-side mirrors of the serializer's rules. The API enforces both again.
-    if (!name) return fail(400, { values, error: 'Give the product a name.' });
-    if (!priceOk(price)) return fail(400, { values, error: 'Enter a list price of 0 or more.' });
+    if (!name) return fail(400, { values, error: get(_)('invoices.products.new.error_no_name') });
+    if (!priceOk(price))
+      return fail(400, { values, error: get(_)('invoices.products.new.error_bad_price') });
 
     try {
       await createProduct(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { values, error: 'Only an administrator can add products.' });
+        return fail(403, { values, error: get(_)('invoices.products.new.error_forbidden') });
       }
-      return fail(400, { values, error: readableError(err, 'Could not create this product.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('invoices.products.new.error_create_failed'))
+      });
     }
 
     redirect(303, '/invoices/products');

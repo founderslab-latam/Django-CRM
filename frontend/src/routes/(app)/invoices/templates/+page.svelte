@@ -26,6 +26,7 @@
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import { count, relativeDays } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { Plus, FileCode, ShieldAlert } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -42,15 +43,18 @@
   let current = $derived(templates.find((t) => t.is_default));
 </script>
 
-<PageHeader title="Invoices">
+<PageHeader title={$_('invoices.templates.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.count)}</span> templates ·
-    {current ? `${current.name} is used for new invoices` : 'no default set'}
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('invoices.templates.list.sub_templates')} ·
+    {current
+      ? $_('invoices.templates.list.sub_default_used', { values: { name: current.name } })
+      : $_('invoices.templates.list.sub_no_default')}
   {/snippet}
   {#snippet actions()}
     {#if canManage}
       <a class="v2-btn v2-btn-primary" href={resolve('/invoices/templates/new')}
-        ><Plus />New template</a
+        ><Plus />{$_('invoices.templates.list.new_button')}</a
       >
     {/if}
   {/snippet}
@@ -68,7 +72,7 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     {#if !current}
       <p class="v2-sub" style="font-size:12.5px;margin:0 0 16px">
-        No template is the default, so new invoices print with the built-in layout.
+        {$_('invoices.templates.list.no_default_note')}
       </p>
     {/if}
 
@@ -86,25 +90,40 @@
           <div style="padding:14px 16px 15px">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <b style="font-size:13.5px">{t.name}</b>
-              {#if t.is_default}<Pill tone="moss" dot>Default</Pill>{/if}
-              {#if t.has_custom_html}<Pill tone="clay">Custom layout</Pill>{/if}
+              {#if t.is_default}<Pill tone="moss" dot
+                  >{$_('invoices.templates.list.pill_default')}</Pill
+                >{/if}
+              {#if t.has_custom_html}<Pill tone="clay"
+                  >{$_('invoices.templates.list.pill_custom_layout')}</Pill
+                >{/if}
             </div>
 
             <div class="v2-sub" style="font-size:11.5px;margin-top:5px">
               {#if t.used_on_invoices}
-                on <span class="v2-num">{count(t.used_on_invoices)}</span> invoices
+                {$_('invoices.templates.list.used_on_prefix')}
+                <span class="v2-num">{count(t.used_on_invoices)}</span>
+                {$_('invoices.templates.list.used_on_suffix', {
+                  values: { count: t.used_on_invoices }
+                })}
               {:else}
-                never used
+                {$_('invoices.templates.list.never_used')}
               {/if}
-              · {t.has_logo ? 'logo set' : 'no logo'} · edited {relativeDays(t.updated_at)} by {t.updated_by}
+              · {t.has_logo
+                ? $_('invoices.templates.list.logo_set')
+                : $_('invoices.templates.list.logo_none')} · {$_(
+                'invoices.templates.list.edited_by',
+                {
+                  values: { when: relativeDays(t.updated_at), who: t.updated_by }
+                }
+              )}
             </div>
 
             <dl class="v2-kv" style="margin-top:12px">
-              <dt>Terms</dt>
+              <dt>{$_('invoices.templates.list.kv_terms')}</dt>
               <dd>{t.default_terms || '—'}</dd>
-              <dt>Notes</dt>
+              <dt>{$_('invoices.templates.list.kv_notes')}</dt>
               <dd>{t.default_notes || '—'}</dd>
-              <dt>Footer</dt>
+              <dt>{$_('invoices.templates.list.kv_footer')}</dt>
               <dd>{t.footer_text || '—'}</dd>
             </dl>
 
@@ -114,10 +133,9 @@
               <div class="v2-tpl-flag">
                 <FileCode size={13} style="flex:none;margin-top:1px" />
                 <span>
-                  Replaces the whole document with
-                  <span class="v2-num">{(t.custom_html_bytes / 1024).toFixed(1)}</span> kB of custom markup,
-                  including the line-item table and the totals. Nothing checks that it still prints an
-                  amount due.
+                  {$_('invoices.templates.list.custom_markup_before')}
+                  <span class="v2-num">{(t.custom_html_bytes / 1024).toFixed(1)}</span>
+                  {$_('invoices.templates.list.custom_markup_after')}
                 </span>
               </div>
             {/if}
@@ -133,7 +151,7 @@
                      blanked it. The editor route serves those two fields on an
                      admin-only path, leaving this page's own fetch unchanged. -->
                 <a class="v2-btn v2-btn-sm" href={resolve(`/invoices/templates/${t.id}/edit`)}
-                  >Edit</a
+                  >{$_('invoices.templates.list.edit_button')}</a
                 >
                 {#if !t.is_default}
                   <!-- Named as the swap it is: one default exists at a time.
@@ -142,7 +160,11 @@
                   <form method="POST" action="?/setDefault" use:enhance>
                     <input type="hidden" name="id" value={t.id} />
                     <button type="submit" class="v2-btn v2-btn-sm">
-                      Use instead of {current?.name ?? 'the built-in'}
+                      {$_('invoices.templates.list.use_instead_of', {
+                        values: {
+                          name: current?.name ?? $_('invoices.templates.list.built_in')
+                        }
+                      })}
                     </button>
                   </form>
                 {/if}
@@ -156,9 +178,7 @@
     {#if totals.unused > 0}
       <p class="v2-sub" style="font-size:11.5px;margin-top:16px">
         <span class="v2-num">{count(totals.unused)}</span>
-        {totals.unused === 1 ? 'template has' : 'templates have'} never been used and
-        {totals.unused === 1 ? 'is' : 'are'} not the default, deleting
-        {totals.unused === 1 ? 'it' : 'them'} changes no existing invoice.
+        {$_('invoices.templates.list.unused_suffix', { values: { count: totals.unused } })}
       </p>
     {/if}
 
@@ -166,11 +186,11 @@
       <div style="display:flex;gap:10px;align-items:flex-start">
         <ShieldAlert size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
         <div>
-          <div style="font-weight:600;font-size:13px">Custom markup is not previewed here</div>
+          <div style="font-weight:600;font-size:13px">
+            {$_('invoices.templates.list.markup_notice_heading')}
+          </div>
           <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-            A template's HTML and CSS are rendered into a PDF on the server, never into this page.
-            The only way to see a custom layout is to generate a document from it, which is also the
-            only way to see what a customer will actually receive.
+            {$_('invoices.templates.list.markup_notice_body')}
           </p>
         </div>
       </div>

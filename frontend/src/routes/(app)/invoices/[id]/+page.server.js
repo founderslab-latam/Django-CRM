@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getInvoice,
   sendInvoice,
@@ -27,8 +29,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This invoice is not yours to send.'
-            : readableError(err, 'Could not send this invoice.')
+            ? get(_)('invoices.detail.error_not_yours_send')
+            : readableError(err, get(_)('invoices.detail.error_send_failed'))
       });
     }
     return { sent: true };
@@ -52,8 +54,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This invoice is not yours to settle.'
-            : readableError(err, 'Could not record that payment.')
+            ? get(_)('invoices.detail.error_not_yours_settle')
+            : readableError(err, get(_)('invoices.detail.error_payment_failed'))
       });
     }
     return { paid: true };
@@ -67,8 +69,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This invoice is not yours to cancel.'
-            : readableError(err, 'Could not cancel this invoice.')
+            ? get(_)('invoices.detail.error_not_yours_cancel')
+            : readableError(err, get(_)('invoices.detail.error_cancel_failed'))
       });
     }
     return { cancelled: true };
@@ -86,8 +88,8 @@ export const actions = {
       return fail(err?.status === 403 ? 403 : 400, {
         error:
           err?.status === 403
-            ? 'This invoice is not yours to duplicate.'
-            : readableError(err, 'Could not duplicate this invoice.')
+            ? get(_)('invoices.detail.error_not_yours_duplicate')
+            : readableError(err, get(_)('invoices.detail.error_duplicate_failed'))
       });
     }
     const newId = created?.invoice?.id;

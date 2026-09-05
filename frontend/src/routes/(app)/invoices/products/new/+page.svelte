@@ -11,6 +11,7 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { enhance } from '$app/forms';
   import { ChevronRight, Lock } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -18,11 +19,11 @@
   let values = $derived(form?.values ?? {});
 </script>
 
-<PageHeader title="New product" record center width="62ch">
+<PageHeader title={$_('invoices.products.new.title')} record center width="62ch">
   {#snippet crumb()}
-    <a href={resolve('/invoices/products')}>Products</a>
+    <a href={resolve('/invoices/products')}>{$_('invoices.products.new.crumb_products')}</a>
     <ChevronRight size={12} />
-    <span>New</span>
+    <span>{$_('invoices.products.new.crumb_new')}</span>
   {/snippet}
 </PageHeader>
 
@@ -32,15 +33,14 @@
       <div class="v2-next" role="note">
         <Lock size={17} style="flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">Admins only</div>
+          <div style="font-weight:600">{$_('invoices.products.new.admins_only_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">
-            The product catalogue is shared across the org, so only an administrator can add to it.
-            You can still use any product on your invoices and estimates.
+            {$_('invoices.products.new.admins_only_body')}
           </div>
         </div>
       </div>
       <a class="v2-btn" href={resolve('/invoices/products')} style="margin-top:16px"
-        >Back to products</a
+        >{$_('invoices.products.new.back_to_products')}</a
       >
     </div>
   {:else}
@@ -58,20 +58,20 @@
       {/if}
 
       <label class="v2-field">
-        <span class="v2-label">Name</span>
+        <span class="v2-label">{$_('invoices.products.new.field_name')}</span>
         <input
           class="v2-input"
           name="name"
           required
           maxlength="255"
           value={values.name ?? ''}
-          placeholder="Platform licence, per seat"
+          placeholder={$_('invoices.products.new.name_placeholder')}
         />
       </label>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <label class="v2-field" style="flex:2;min-width:180px">
-          <span class="v2-label">List price</span>
+          <span class="v2-label">{$_('invoices.products.new.field_price')}</span>
           <input
             class="v2-input"
             name="price"
@@ -84,7 +84,7 @@
           />
         </label>
         <label class="v2-field" style="flex:1;min-width:130px">
-          <span class="v2-label">Currency</span>
+          <span class="v2-label">{$_('invoices.products.new.field_currency')}</span>
           <select class="v2-input" name="currency" value={values.currency ?? 'USD'}>
             {#each data.currencies as c (c.code)}
               <option value={c.code}>{c.label}</option>
@@ -95,17 +95,17 @@
 
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <label class="v2-field" style="flex:1;min-width:160px">
-          <span class="v2-label">Category</span>
+          <span class="v2-label">{$_('invoices.products.new.field_category')}</span>
           <input
             class="v2-input"
             name="category"
             maxlength="100"
             value={values.category ?? ''}
-            placeholder="Licence, Module, Service…"
+            placeholder={$_('invoices.products.new.category_placeholder')}
           />
         </label>
         <label class="v2-field" style="flex:1;min-width:160px">
-          <span class="v2-label">SKU</span>
+          <span class="v2-label">{$_('invoices.products.new.field_sku')}</span>
           <input
             class="v2-input"
             name="sku"
@@ -116,36 +116,39 @@
         </label>
       </div>
       <p class="v2-sub" style="font-size:11.5px;margin:-6px 0 16px">
-        Category groups the catalogue; leave it blank and the product sits under "Uncategorised". A
-        SKU is optional but must be unique here if you set one.
+        {$_('invoices.products.new.hint_category_sku')}
       </p>
 
       <label class="v2-field">
-        <span class="v2-label">Availability</span>
+        <span class="v2-label">{$_('invoices.products.new.field_availability')}</span>
         <select
           class="v2-input"
           name="is_active"
           value={values.is_active === false ? 'false' : 'true'}
         >
-          <option value="true">Sellable, appears in the line-item picker</option>
-          <option value="false">Retired, kept for history, hidden from the picker</option>
+          <option value="true">{$_('invoices.products.new.availability_sellable')}</option>
+          <option value="false">{$_('invoices.products.new.availability_retired')}</option>
         </select>
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Description</span>
+        <span class="v2-label">{$_('invoices.products.new.field_description')}</span>
         <textarea
           class="v2-input"
           name="description"
           rows="3"
-          placeholder="What it is, in the words a client would see on an invoice."
+          placeholder={$_('invoices.products.new.description_placeholder')}
           >{values.description ?? ''}</textarea
         >
       </label>
 
       <div style="display:flex;gap:9px;margin-top:6px">
-        <button class="v2-btn v2-btn-primary" type="submit">Add product</button>
-        <a class="v2-btn" href={resolve('/invoices/products')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit"
+          >{$_('invoices.products.new.submit')}</button
+        >
+        <a class="v2-btn" href={resolve('/invoices/products')}
+          >{$_('invoices.products.new.cancel')}</a
+        >
       </div>
     </form>
   {/if}

@@ -39,14 +39,14 @@ import {
   STAGE_LABEL,
   TASK_PRIORITY,
   TASK_STATUS,
-  industryLabel,
-  invoiceStatusLabel
+  industryLabel
 } from './enums.js';
 import { get } from 'svelte/store';
 import { _ as $i18n } from '$lib/i18n/index.js';
 import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
 import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
 import { taskPriorityKey, taskStatusKey } from '$lib/tasks/labels.js';
+import { invoiceStatusKey } from '$lib/invoices/labels.js';
 
 /**
  * `label` is a plain string, except Leads', which is `() => string` so it
@@ -246,22 +246,44 @@ export const FILTERS = {
     ]
   },
 
+  // Invoices' `label`s are functions resolved through the active locale at
+  // render time, same pattern (and same safety rationale) as the `leads`,
+  // `tickets` and `tasks` entries above — see the comment there. `labelFor` on
+  // the status enum routes the raw value through `$lib/invoices/labels.js` so
+  // the option list translates too. Only this one entry is converted; the
+  // `estimates` and `recurring` entries below still carry string literals.
   invoices: {
     presets: [
-      { key: 'overdue', label: 'Overdue', params: { status: 'Overdue' } },
-      { key: 'draft', label: 'Draft', params: { status: 'Draft' } },
-      { key: 'all', label: 'All invoices', params: {} }
+      {
+        key: 'overdue',
+        label: () => get($i18n)('invoices.filters.preset_overdue'),
+        params: { status: 'Overdue' }
+      },
+      {
+        key: 'draft',
+        label: () => get($i18n)('invoices.filters.preset_draft'),
+        params: { status: 'Draft' }
+      },
+      { key: 'all', label: () => get($i18n)('invoices.filters.preset_all'), params: {} }
     ],
     fields: [
       {
         key: 'status',
-        label: 'Status',
+        label: () => get($i18n)('invoices.filters.field_status'),
         type: 'select',
         options: INVOICE_STATUSES,
-        labelFor: invoiceStatusLabel
+        labelFor: (v) => get($i18n)(invoiceStatusKey(v))
       },
-      { key: 'account', label: 'Account', type: 'account' },
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
+      {
+        key: 'account',
+        label: () => get($i18n)('invoices.filters.field_account'),
+        type: 'account'
+      },
+      {
+        key: 'assigned_to',
+        label: () => get($i18n)('invoices.filters.field_owner'),
+        type: 'person'
+      },
       // Invoices uses a SINGLE underscore (`due_date_gte`/`due_date_lte`,
       // `backend/invoices/api_views.py:149-152`). Every other date-range field
       // in this file uses a DOUBLE underscore. Never build this key by
@@ -269,7 +291,7 @@ export const FILTERS = {
       // unfiltered list here while working everywhere else.
       {
         key: 'due_date',
-        label: 'Due date',
+        label: () => get($i18n)('invoices.filters.field_due_date'),
         type: 'date-range',
         gteKey: 'due_date_gte',
         lteKey: 'due_date_lte'

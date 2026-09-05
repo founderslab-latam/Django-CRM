@@ -24,6 +24,7 @@
   import { enhance } from '$app/forms';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, Lock, FileCode } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -33,11 +34,16 @@
   let values = $derived(form?.values ?? data.template ?? {});
 </script>
 
-<PageHeader title={data.template?.name ?? 'Edit template'} record center width="72ch">
+<PageHeader
+  title={data.template?.name ?? $_('invoices.templates.edit.title_fallback')}
+  record
+  center
+  width="72ch"
+>
   {#snippet crumb()}
-    <a href={resolve('/invoices/templates')}>Templates</a>
+    <a href={resolve('/invoices/templates')}>{$_('invoices.templates.edit.crumb_templates')}</a>
     <ChevronRight size={12} />
-    <span>Edit</span>
+    <span>{$_('invoices.templates.edit.crumb_edit')}</span>
   {/snippet}
 </PageHeader>
 
@@ -47,15 +53,14 @@
       <div class="v2-next" role="note">
         <Lock size={17} style="flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">Admins only</div>
+          <div style="font-weight:600">{$_('invoices.templates.edit.admins_only_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">
-            A template decides how every invoice in the org prints, so only an administrator can
-            change one. You can still see the catalogue on the templates page.
+            {$_('invoices.templates.edit.admins_only_body')}
           </div>
         </div>
       </div>
       <a class="v2-btn" href={resolve('/invoices/templates')} style="margin-top:16px"
-        >Back to templates</a
+        >{$_('invoices.templates.edit.back_to_templates')}</a
       >
     </div>
   {:else}
@@ -74,13 +79,13 @@
       {/if}
 
       <label class="v2-field">
-        <span class="v2-label">Name</span>
+        <span class="v2-label">{$_('invoices.templates.edit.field_name')}</span>
         <input class="v2-input" name="name" required maxlength="100" value={values.name ?? ''} />
       </label>
 
       <div class="color-row">
         <label class="color-field">
-          <span class="v2-label">Primary colour</span>
+          <span class="v2-label">{$_('invoices.templates.edit.field_primary_color')}</span>
           <input
             class="color-swatch"
             type="color"
@@ -89,7 +94,7 @@
           />
         </label>
         <label class="color-field">
-          <span class="v2-label">Secondary colour</span>
+          <span class="v2-label">{$_('invoices.templates.edit.field_secondary_color')}</span>
           <input
             class="color-swatch"
             type="color"
@@ -101,53 +106,69 @@
 
       <label class="v2-field">
         <span class="v2-label">
-          Logo <span class="opt"
-            >{data.template?.has_logo ? '(replaces the current one)' : '(optional)'}</span
+          {$_('invoices.templates.edit.field_logo')}
+          <span class="opt"
+            >{data.template?.has_logo
+              ? $_('invoices.templates.edit.logo_replaces')
+              : $_('invoices.templates.edit.optional')}</span
           >
         </span>
         <input class="v2-input" type="file" name="logo" accept="image/*" />
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Default notes <span class="opt">(optional)</span></span>
+        <span class="v2-label"
+          >{$_('invoices.templates.edit.field_default_notes')}
+          <span class="opt">{$_('invoices.templates.edit.optional')}</span></span
+        >
         <textarea class="v2-input" name="default_notes" rows="3"
           >{values.default_notes ?? ''}</textarea
         >
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Default terms <span class="opt">(optional)</span></span>
+        <span class="v2-label"
+          >{$_('invoices.templates.edit.field_default_terms')}
+          <span class="opt">{$_('invoices.templates.edit.optional')}</span></span
+        >
         <textarea class="v2-input" name="default_terms" rows="3"
           >{values.default_terms ?? ''}</textarea
         >
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Footer text <span class="opt">(optional)</span></span>
+        <span class="v2-label"
+          >{$_('invoices.templates.edit.field_footer_text')}
+          <span class="opt">{$_('invoices.templates.edit.optional')}</span></span
+        >
         <textarea class="v2-input" name="footer_text" rows="2">{values.footer_text ?? ''}</textarea>
       </label>
 
       <div class="markup-note" role="note">
         <FileCode size={14} style="flex:none;margin-top:2px" />
         <div>
-          <strong>Custom layout</strong>
+          <strong>{$_('invoices.templates.edit.custom_layout_heading')}</strong>
           <div class="v2-sub" style="margin-top:2px">
-            Filling these in replaces the whole printed document, the line-item table and the totals
-            included. Nothing checks that what you write still prints an amount due. Leave both
-            empty to use the built-in layout. Emptying a field that has markup in it now clears it.
+            {$_('invoices.templates.edit.custom_layout_body')}
           </div>
         </div>
       </div>
 
       <label class="v2-field">
-        <span class="v2-label">Template HTML <span class="opt">(optional)</span></span>
+        <span class="v2-label"
+          >{$_('invoices.templates.edit.field_template_html')}
+          <span class="opt">{$_('invoices.templates.edit.optional')}</span></span
+        >
         <textarea class="v2-input mono" name="template_html" rows="10" spellcheck="false"
           >{values.template_html ?? ''}</textarea
         >
       </label>
 
       <label class="v2-field">
-        <span class="v2-label">Template CSS <span class="opt">(optional)</span></span>
+        <span class="v2-label"
+          >{$_('invoices.templates.edit.field_template_css')}
+          <span class="opt">{$_('invoices.templates.edit.optional')}</span></span
+        >
         <textarea class="v2-input mono" name="template_css" rows="6" spellcheck="false"
           >{values.template_css ?? ''}</textarea
         >
@@ -155,14 +176,17 @@
 
       {#if data.template?.is_default}
         <p class="v2-sub" style="font-size:11.5px;margin:0 0 16px">
-          This is the org default, so these changes apply to every new invoice. Which template is
-          the default is changed from the templates page, not here.
+          {$_('invoices.templates.edit.is_default_note')}
         </p>
       {/if}
 
       <div style="display:flex;gap:9px;margin-top:6px">
-        <button class="v2-btn v2-btn-primary" type="submit">Save changes</button>
-        <a class="v2-btn" href={resolve('/invoices/templates')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit"
+          >{$_('invoices.templates.edit.save')}</button
+        >
+        <a class="v2-btn" href={resolve('/invoices/templates')}
+          >{$_('invoices.templates.edit.cancel')}</a
+        >
       </div>
     </form>
   {/if}

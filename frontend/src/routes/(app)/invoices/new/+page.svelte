@@ -32,6 +32,8 @@
    * a form that can be edited to claim them.
    */
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
+  import { paymentTermsKey } from '$lib/invoices/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import PortalLineItems from '$lib/v2/components/PortalLineItems.svelte';
@@ -177,14 +179,14 @@
   }
 </script>
 
-<PageHeader title="New invoice">
+<PageHeader title={$_('invoices.new.title')}>
   {#snippet sub()}
-    Nothing is sent until you send it. Saving leaves it as a draft
+    {$_('invoices.new.sub')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve('/invoices')}>Cancel</a>
+    <a class="v2-btn" href={resolve('/invoices')}>{$_('invoices.new.cancel')}</a>
     <button type="submit" form="invoice-form" class="v2-btn v2-btn-primary" disabled={!ready}>
-      Save as draft
+      {$_('invoices.new.save_button')}
     </button>
   {/snippet}
 </PageHeader>
@@ -209,13 +211,13 @@
       <!-- ── the form ─────────────────────────────────────────────────── -->
       <div>
         <div class="v2-card" style="padding:16px 18px">
-          <div class="v2-label" style="margin-bottom:12px">Who and when</div>
+          <div class="v2-label" style="margin-bottom:12px">{$_('invoices.new.section_who')}</div>
 
           <div class="grid2">
             <label class="f">
-              <span>Account</span>
+              <span>{$_('invoices.new.field_account')}</span>
               <select bind:value={accountId} onchange={() => (contactId = '')}>
-                <option value="">Choose an account</option>
+                <option value="">{$_('invoices.new.account_placeholder')}</option>
                 {#each data.accounts as a (a.id)}
                   <option value={a.id}>{a.name}</option>
                 {/each}
@@ -223,9 +225,13 @@
             </label>
 
             <label class="f">
-              <span>Contact</span>
+              <span>{$_('invoices.new.field_contact')}</span>
               <select bind:value={contactId} disabled={!accountId}>
-                <option value="">{accountId ? 'Choose a contact' : 'Pick an account first'}</option>
+                <option value=""
+                  >{accountId
+                    ? $_('invoices.new.contact_placeholder')
+                    : $_('invoices.new.contact_placeholder_no_account')}</option
+                >
                 {#each contactOptions as c (c.id)}
                   <option value={c.id}
                     >{c.name}{c.account_name ? ` · ${c.account_name}` : ''}</option
@@ -235,27 +241,31 @@
             </label>
 
             <label class="f">
-              <span>Title</span>
-              <input bind:value={title} placeholder="What this invoice covers" required />
+              <span>{$_('invoices.new.field_title')}</span>
+              <input
+                bind:value={title}
+                placeholder={$_('invoices.new.title_placeholder')}
+                required
+              />
             </label>
 
             <label class="f">
-              <span>Issue date</span>
+              <span>{$_('invoices.new.field_issue_date')}</span>
               <input type="date" bind:value={issueDate} />
             </label>
 
             <label class="f">
-              <span>Payment terms</span>
+              <span>{$_('invoices.new.field_payment_terms')}</span>
               <select bind:value={paymentTerms}>
-                {#each Object.entries(PAYMENT_TERMS_LABEL) as [value, label] (value)}
-                  <option {value}>{label}</option>
+                {#each Object.keys(PAYMENT_TERMS_LABEL) as value (value)}
+                  <option {value}>{$_(paymentTermsKey(value))}</option>
                 {/each}
               </select>
             </label>
 
             {#if paymentTerms === 'CUSTOM'}
               <label class="f">
-                <span>Due date</span>
+                <span>{$_('invoices.new.field_due_date')}</span>
                 <input type="date" bind:value={customDueDate} />
               </label>
             {/if}
@@ -268,8 +278,9 @@
             <p class="warn">
               <Info size={13} />
               <span>
-                Custom terms with no date set becomes <b>Net 30</b> on save, the server falls back to
-                30 days rather than leaving the date empty.
+                {$_('invoices.new.custom_warn_before')}
+                <b>{$_('invoices.new.custom_warn_bold')}</b>
+                {$_('invoices.new.custom_warn_after')}
               </span>
             </p>
           {/if}
@@ -277,7 +288,7 @@
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <div class="v2-label">Lines</div>
+            <div class="v2-label">{$_('invoices.new.section_lines')}</div>
             <select
               class="catalogue"
               value=""
@@ -286,7 +297,7 @@
                 e.currentTarget.value = '';
               }}
             >
-              <option value="">Add from catalogue…</option>
+              <option value="">{$_('invoices.new.add_from_catalogue')}</option>
               {#each data.products as p (p.id)}
                 <option value={p.id}>{p.name}, {money(p.price, CURRENCY)}</option>
               {/each}
@@ -296,19 +307,23 @@
           {#each items as item, i (i)}
             <div class="line">
               <div class="line-main">
-                <input class="line-name" bind:value={item.name} placeholder="Description" />
+                <input
+                  class="line-name"
+                  bind:value={item.name}
+                  placeholder={$_('invoices.new.line_name_placeholder')}
+                />
                 <input
                   class="line-desc"
                   bind:value={item.description}
-                  placeholder="Detail the customer sees under the name (optional)"
+                  placeholder={$_('invoices.new.line_desc_placeholder')}
                 />
               </div>
               <label class="line-n">
-                <span>Qty</span>
+                <span>{$_('invoices.new.line_qty')}</span>
                 <input type="number" min="0" step="1" bind:value={item.quantity} />
               </label>
               <label class="line-n">
-                <span>Unit price</span>
+                <span>{$_('invoices.new.line_unit_price')}</span>
                 <input type="number" min="0" step="0.01" bind:value={item.unit_price} />
               </label>
               <div class="line-total v2-num">
@@ -317,8 +332,8 @@
               <button
                 class="line-del"
                 onclick={() => removeLine(i)}
-                aria-label="Remove this line"
-                title="Remove this line"
+                aria-label={$_('invoices.new.remove_line')}
+                title={$_('invoices.new.remove_line')}
               >
                 <Trash2 size={14} />
               </button>
@@ -326,45 +341,51 @@
           {/each}
 
           <button class="v2-btn v2-btn-sm" style="margin-top:10px" onclick={addLine}>
-            <Plus size={13} />Add a line
+            <Plus size={13} />{$_('invoices.new.add_line')}
           </button>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:12px">Adjustments</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.new.section_adjustments')}
+          </div>
           <div class="grid2">
             <label class="f">
-              <span>Discount</span>
+              <span>{$_('invoices.new.field_discount')}</span>
               <select bind:value={discountType}>
-                <option value="">None</option>
-                <option value="PERCENTAGE">Percentage</option>
-                <option value="FIXED">Fixed amount</option>
+                <option value="">{$_('invoices.new.discount_none')}</option>
+                <option value="PERCENTAGE">{$_('invoices.new.discount_percentage')}</option>
+                <option value="FIXED">{$_('invoices.new.discount_fixed')}</option>
               </select>
             </label>
             {#if discountType}
               <label class="f">
-                <span>{discountType === 'PERCENTAGE' ? 'Percent off' : 'Amount off'}</span>
+                <span
+                  >{discountType === 'PERCENTAGE'
+                    ? $_('invoices.new.discount_percent_off')
+                    : $_('invoices.new.discount_amount_off')}</span
+                >
                 <input type="number" min="0" step="0.01" bind:value={discountValue} />
               </label>
             {/if}
             <label class="f">
-              <span>Tax rate %</span>
+              <span>{$_('invoices.new.field_tax_rate')}</span>
               <input type="number" min="0" step="0.01" bind:value={taxRate} />
             </label>
             <label class="f">
-              <span>Shipping</span>
+              <span>{$_('invoices.new.field_shipping')}</span>
               <input type="number" min="0" step="0.01" bind:value={shipping} />
             </label>
           </div>
           <p class="hint">
-            Tax applies to the subtotal after the discount. Shipping is added afterwards and is not
-            taxed.
+            {$_('invoices.new.adjustments_hint')}
           </p>
         </div>
 
         <div class="v2-card" style="padding:16px 18px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:8px">Notes to the customer</div>
-          <textarea rows="3" bind:value={notes} placeholder="Appears on the invoice"></textarea>
+          <div class="v2-label" style="margin-bottom:8px">{$_('invoices.new.section_notes')}</div>
+          <textarea rows="3" bind:value={notes} placeholder={$_('invoices.new.notes_placeholder')}
+          ></textarea>
         </div>
       </div>
 
@@ -372,7 +393,7 @@
       <div>
         <div class="v2-card preview">
           <div class="v2-card-head">
-            <span class="v2-label">What the customer will see</span>
+            <span class="v2-label">{$_('invoices.new.preview_head')}</span>
           </div>
           <div style="padding:14px 16px 16px">
             {#if usableLines.length}
@@ -390,39 +411,40 @@
               />
             {:else}
               <p class="empty">
-                Add a line with a description and an amount, and the customer's copy appears here.
+                {$_('invoices.new.preview_empty')}
               </p>
             {/if}
           </div>
         </div>
 
         <div class="v2-card" style="padding:15px 16px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:9px">When it falls due</div>
+          <div class="v2-label" style="margin-bottom:9px">{$_('invoices.new.due_head')}</div>
           {#if derivedDueDate}
             <div class="due">{longDate(derivedDueDate)}</div>
             <p class="hint" style="margin-top:5px">
               {#if paymentTerms === 'CUSTOM'}
-                Set by hand.
+                {$_('invoices.new.due_custom')}
               {:else}
-                {PAYMENT_TERMS_LABEL[paymentTerms]} from the issue date. The server recalculates this
-                on save from the same two fields.
+                {$_('invoices.new.due_computed', {
+                  values: { term: $_(paymentTermsKey(paymentTerms)) }
+                })}
               {/if}
             </p>
           {:else}
-            <p class="hint" style="margin:0">Set an issue date to see the due date.</p>
+            <p class="hint" style="margin:0">{$_('invoices.new.due_no_date')}</p>
           {/if}
         </div>
 
         <div class="v2-card" style="padding:15px 16px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:9px">Assigned on save</div>
+          <div class="v2-label" style="margin-bottom:9px">{$_('invoices.new.derived_head')}</div>
           <dl class="derived">
-            <dt>Invoice number</dt>
+            <dt>{$_('invoices.new.derived_number')}</dt>
             <dd>INV-<span class="v2-num">{issueDate.replace(/-/g, '')}</span>-nnnn</dd>
-            <dt>Customer link</dt>
-            <dd>Generated, and only sent when you send the invoice</dd>
+            <dt>{$_('invoices.new.derived_link')}</dt>
+            <dd>{$_('invoices.new.derived_link_value')}</dd>
           </dl>
           <p class="hint" style="margin-top:9px">
-            Both come from the server so that two people saving at once cannot collide.
+            {$_('invoices.new.derived_hint')}
           </p>
         </div>
       </div>

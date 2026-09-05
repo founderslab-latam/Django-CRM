@@ -10,6 +10,8 @@
    * "has it been billed" are two separate facts and get two separate columns.
    */
   import { page } from '$app/state';
+  import { _ } from '$lib/i18n/index.js';
+  import { estimateStatusKey } from '$lib/invoices/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
@@ -33,30 +35,41 @@
     if (!e.valid_until) return null;
     if (!LIVE.includes(e.status)) return null;
     const n = daysSince(e.valid_until);
-    if (n > 0) return { text: `expired ${n}d ago`, urgent: true };
-    if (n === 0) return { text: 'expires today', urgent: true };
-    return { text: `${Math.abs(n)}d left`, urgent: Math.abs(n) <= 7 };
+    if (n > 0)
+      return {
+        text: $_('invoices.estimates.validity_expired', { values: { count: n } }),
+        urgent: true
+      };
+    if (n === 0) return { text: $_('invoices.estimates.validity_today'), urgent: true };
+    return {
+      text: $_('invoices.estimates.validity_left', { values: { count: Math.abs(n) } }),
+      urgent: Math.abs(n) <= 7
+    };
   }
 
   const needsBilling = (e) => e.status === 'Accepted' && !e.converted_invoice;
 </script>
 
-<PageHeader title="Estimates">
+<PageHeader title={$_('invoices.estimates.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.count)}</span> estimates ·
-    <span class="v2-num">{money(totals.awaiting_reply, data.org.currency)}</span> awaiting a reply
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('invoices.estimates.sub_estimates', { values: { count: totals.count } })} ·
+    <span class="v2-num">{money(totals.awaiting_reply, data.org.currency)}</span>
+    {$_('invoices.estimates.sub_awaiting')}
   {/snippet}
   {#snippet actions()}
     <!-- An estimate is raised from a deal, not typed from scratch here. The
          empty state has always said so. Send the button where estimates are
          born rather than to a form this page does not own. -->
-    <a class="v2-btn v2-btn-primary" href={resolve('/pipeline')}><Plus />New estimate</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/pipeline')}
+      ><Plus />{$_('invoices.estimates.new_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
 {#if page.url.search}
   <p class="v2-sub" style="font-size:11.5px;margin:8px 0 0">
-    These numbers describe the filtered list.
+    {$_('invoices.estimates.filtered_notice')}
   </p>
 {/if}
 
@@ -71,22 +84,26 @@
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Accepted, not billed"
+      label={$_('invoices.estimates.stat_accepted_label')}
       value={money(totals.accepted_unconverted, data.org.currency)}
       tone="clay"
-      detail="Agreed and waiting on an invoice"
+      detail={$_('invoices.estimates.stat_accepted_detail')}
     />
     <StatCard
-      label="Awaiting a reply"
+      label={$_('invoices.estimates.stat_awaiting_label')}
       value={money(totals.awaiting_reply, data.org.currency)}
       tone="ink"
     />
     <StatCard
-      label="Expiring within 7 days"
+      label={$_('invoices.estimates.stat_expiring_label')}
       value={count(totals.expiring_within_7d)}
       tone={totals.expiring_within_7d ? 'clay' : 'slate'}
     />
-    <StatCard label="Estimates" value={count(totals.count)} tone="slate" />
+    <StatCard
+      label={$_('invoices.estimates.stat_count_label')}
+      value={count(totals.count)}
+      tone="slate"
+    />
   </div>
 </div>
 
@@ -94,18 +111,20 @@
   page="estimates"
   url={page.url}
   accounts={data.accounts}
-  meta="Accepted but unbilled first, then most recently sent"
+  meta={$_('invoices.estimates.filter_meta')}
 />
 
 <div class="v2-scroll">
   {#if data.estimates.length === 0}
     <EmptyState
-      title="No estimates yet"
-      body="An estimate is a priced proposal you can turn into an invoice once the customer accepts it. Most start from a deal that already has the amount and the account."
+      title={$_('invoices.estimates.empty_title')}
+      body={$_('invoices.estimates.empty_body')}
     >
       {#snippet icon()}<FileText size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/pipeline')}>Start from a deal</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/pipeline')}
+          >{$_('invoices.estimates.empty_button')}</a
+        >
       {/snippet}
     </EmptyState>
   {:else}
@@ -113,12 +132,12 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Estimate</th>
-            <th>Account</th>
-            <th>Status</th>
-            <th>Billed</th>
-            <th class="v2-r">Amount</th>
-            <th class="v2-r">Valid</th>
+            <th>{$_('invoices.estimates.col_estimate')}</th>
+            <th>{$_('invoices.estimates.col_account')}</th>
+            <th>{$_('invoices.estimates.col_status')}</th>
+            <th>{$_('invoices.estimates.col_billed')}</th>
+            <th class="v2-r">{$_('invoices.estimates.col_amount')}</th>
+            <th class="v2-r">{$_('invoices.estimates.col_valid')}</th>
           </tr>
         </thead>
         <tbody>
@@ -139,7 +158,10 @@
                   <span class="v2-table-secondary" style="display:block">{e.opportunity.name}</span>
                 {/if}
               </td>
-              <td><Pill tone={ESTIMATE_STATUS_TONE[e.status]}>{e.status}</Pill></td>
+              <td
+                ><Pill tone={ESTIMATE_STATUS_TONE[e.status]}>{$_(estimateStatusKey(e.status))}</Pill
+                ></td
+              >
               <td>
                 {#if e.converted_invoice}
                   <a
@@ -156,7 +178,7 @@
                   <form method="POST" action="?/convert" use:enhance>
                     <input type="hidden" name="id" value={e.id} />
                     <button class="v2-btn v2-btn-sm v2-btn-primary" type="submit">
-                      Raise invoice
+                      {$_('invoices.estimates.raise_invoice')}
                     </button>
                   </form>
                 {:else}
@@ -179,7 +201,9 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{data.estimates.length}</span> of
+      {$_('invoices.estimates.showing_prefix')}
+      <span class="v2-num">{data.estimates.length}</span>
+      {$_('invoices.estimates.of_connector')}
       <span class="v2-num">{count(totals.count)}</span>
     </p>
   {/if}

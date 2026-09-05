@@ -21,6 +21,7 @@
   import SectionTabs from '$lib/v2/components/SectionTabs.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import { money, count } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any }} */
   let { data } = $props();
@@ -32,33 +33,22 @@
   let peak = $derived(Math.max(...data.revenue.flatMap((r) => [r.invoiced, r.paid])));
   let agingPeak = $derived(Math.max(...aging.buckets.map((b) => b.amount)));
 
-  /** "2026-07" → "Jul". The year only appears where it changes. */
-  const MONTH = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec'
-  ];
-  const monthLabel = (period) => MONTH[Number(period.slice(5, 7)) - 1];
+  /** "2026-07" → "Jul", localised from the catalogue. */
+  const monthLabel = (period) => $_(`invoices.reports.month.${Number(period.slice(5, 7))}`);
 
   let collected = $derived(Math.round((d.total_paid / d.total_invoiced) * 100));
 </script>
 
-<PageHeader title="Invoices">
+<PageHeader title={$_('invoices.reports.title')}>
   {#snippet sub()}
     {#if canView}
-      Last <span class="v2-num">{d.window_months}</span> months ·
-      <span class="v2-num">{count(d.invoice_count)}</span> invoices
+      {$_('invoices.reports.sub_before')}
+      <span class="v2-num">{d.window_months}</span>
+      {$_('invoices.reports.sub_middle')}
+      <span class="v2-num">{count(d.invoice_count)}</span>
+      {$_('invoices.reports.sub_after')}
     {:else}
-      Financial reports
+      {$_('invoices.reports.sub_locked')}
     {/if}
   {/snippet}
 </PageHeader>
@@ -68,36 +58,45 @@
 {#if !canView}
   <div class="v2-pad" style="padding-top:40px">
     <div class="v2-card rep-locked">
-      <strong>These reports are for administrators.</strong>
+      <strong>{$_('invoices.reports.locked_heading')}</strong>
       <p>
-        Invoiced and collected totals, revenue by month and accounts-receivable aging cover the
-        whole organisation's money, so they are limited to admins. Your own invoices and estimates
-        are on the <a href={resolve('/invoices')}>Invoices</a> and
-        <a href={resolve('/invoices/estimates')}>Estimates</a> tabs.
+        {$_('invoices.reports.locked_body_before')}
+        <a href={resolve('/invoices')}>{$_('invoices.reports.locked_link_invoices')}</a>
+        {$_('invoices.reports.locked_body_and')}
+        <a href={resolve('/invoices/estimates')}>{$_('invoices.reports.locked_link_estimates')}</a
+        >{$_('invoices.reports.locked_body_after')}
       </p>
     </div>
   </div>
 {:else}
   <div class="v2-pad" style="padding-top:16px;flex:none">
     <div class="v2-stats">
-      <StatCard label="Invoiced" value={money(d.total_invoiced, data.org.currency)} tone="ink" />
       <StatCard
-        label="Collected"
+        label={$_('invoices.reports.stat_invoiced')}
+        value={money(d.total_invoiced, data.org.currency)}
+        tone="ink"
+      />
+      <StatCard
+        label={$_('invoices.reports.stat_collected')}
         value={money(d.total_paid, data.org.currency)}
         tone="moss"
-        detail="{collected}% of invoiced"
+        detail={$_('invoices.reports.stat_collected_detail', { values: { percent: collected } })}
       />
       <StatCard
-        label="Overdue"
+        label={$_('invoices.reports.stat_overdue')}
         value={money(d.overdue_amount, data.org.currency)}
         tone={d.overdue_amount > 0 ? 'rust' : 'slate'}
-        detail="{count(aging.overdue_count)} invoices past their due date"
+        detail={$_('invoices.reports.stat_overdue_detail', {
+          values: { count: aging.overdue_count }
+        })}
       />
       <StatCard
-        label="Average time to pay"
-        value={`${d.average_days_to_pay}d`}
+        label={$_('invoices.reports.stat_avg_pay')}
+        value={$_('invoices.reports.stat_avg_pay_value', {
+          values: { days: d.average_days_to_pay }
+        })}
         tone="slate"
-        detail="From issue to payment"
+        detail={$_('invoices.reports.stat_avg_pay_detail')}
       />
     </div>
   </div>
@@ -106,7 +105,9 @@
     <div class="v2-pad" style="padding-bottom:32px">
       <div class="v2-split-wide">
         <div>
-          <div class="v2-label" style="margin-bottom:12px">Invoiced and collected, by month</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.reports.chart_revenue_heading')}
+          </div>
           <div class="v2-card" style="padding:16px 18px 14px">
             <!-- Side by side, never stacked: a stacked column's height would
                read as invoiced + paid, which is not a quantity anyone has. -->
@@ -114,10 +115,13 @@
               {#each data.revenue as r (r.period)}
                 <div
                   class="v2-col"
-                  title="{monthLabel(r.period)}: {money(
-                    r.invoiced,
-                    data.org.currency
-                  )} invoiced, {money(r.paid, data.org.currency)} collected"
+                  title={$_('invoices.reports.chart_col_title', {
+                    values: {
+                      month: monthLabel(r.period),
+                      invoiced: money(r.invoiced, data.org.currency),
+                      collected: money(r.paid, data.org.currency)
+                    }
+                  })}
                 >
                   <i class="in" style="height:{(r.invoiced / peak) * 100}%"></i>
                   <i class="out" style="height:{(r.paid / peak) * 100}%"></i>
@@ -131,29 +135,34 @@
             </div>
 
             <div class="v2-sub" style="font-size:11.5px;margin-top:12px">
-              <i class="v2-swatch v2-swatch-in"></i>invoiced
-              <i class="v2-swatch" style="margin-left:10px"></i>collected
+              <i class="v2-swatch v2-swatch-in"></i>{$_('invoices.reports.legend_invoiced')}
+              <i class="v2-swatch" style="margin-left:10px"></i>{$_(
+                'invoices.reports.legend_collected'
+              )}
             </div>
 
             <!-- Said once, here, rather than left to be misread every month. -->
             <p class="v2-sub" style="font-size:11.5px;margin:11px 0 0;line-height:1.5">
-              Each is counted in the month it happened, so they do not line up: the gap in the most
-              recent month is earlier invoices still being paid, not a drop in sales.
+              {$_('invoices.reports.chart_revenue_note')}
             </p>
           </div>
         </div>
 
         <div>
-          <div class="v2-label" style="margin-bottom:12px">How late the overdue money is</div>
+          <div class="v2-label" style="margin-bottom:12px">
+            {$_('invoices.reports.chart_aging_heading')}
+          </div>
           <div class="v2-card" style="padding:16px 18px">
             <div style="display:flex;flex-direction:column;gap:13px">
               {#each aging.buckets as b (b.key)}
                 <div>
                   <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px">
-                    <span style="font-size:12.5px">{b.label}</span>
+                    <span style="font-size:12.5px"
+                      >{$_(`invoices.reports.aging_bucket.${b.key}`)}</span
+                    >
                     <span class="v2-sub" style="font-size:11px">
                       <span class="v2-num">{count(b.count)}</span>
-                      {b.count === 1 ? 'invoice' : 'invoices'}
+                      {$_('invoices.reports.invoice_count_suffix', { values: { count: b.count } })}
                     </span>
                     <span class="v2-num" style="margin-left:auto;font-size:13px;font-weight:600">
                       {money(b.amount, data.org.currency)}
@@ -176,12 +185,14 @@
             one it dwarfs the rest and makes late money look small.
           -->
             <div class="v2-aging-note">
-              <span class="v2-sub">Not yet due</span>
+              <span class="v2-sub">{$_('invoices.reports.not_yet_due')}</span>
               <span class="v2-num" style="font-size:13px"
                 >{money(aging.not_yet_due.amount, data.org.currency)}</span
               >
               <span class="v2-sub" style="font-size:11px">
-                across {count(aging.not_yet_due.count)} invoices, not late, not shown above
+                {$_('invoices.reports.not_yet_due_full', {
+                  values: { count: aging.not_yet_due.count }
+                })}
               </span>
             </div>
           </div>
@@ -192,15 +203,17 @@
          enough in height to sit side by side; adding the table to either
          column left the other one blank for a third of the page. -->
       <div>
-        <div class="v2-label" style="margin:22px 0 10px">Who owes it</div>
+        <div class="v2-label" style="margin:22px 0 10px">
+          {$_('invoices.reports.table_heading')}
+        </div>
         <div class="v2-table-wrap">
           <table class="v2-table">
             <thead>
               <tr>
-                <th>Account</th>
-                <th style="text-align:right">Invoices</th>
-                <th style="text-align:right">Oldest</th>
-                <th style="text-align:right">Overdue</th>
+                <th>{$_('invoices.reports.col_account')}</th>
+                <th style="text-align:right">{$_('invoices.reports.col_invoices')}</th>
+                <th style="text-align:right">{$_('invoices.reports.col_oldest')}</th>
+                <th style="text-align:right">{$_('invoices.reports.col_overdue')}</th>
               </tr>
             </thead>
             <tbody>
@@ -219,7 +232,7 @@
                     class="v2-num"
                     style="text-align:right;{a.oldest_days > 90 ? 'color:var(--v2-rust)' : ''}"
                   >
-                    {a.oldest_days}d
+                    {$_('invoices.reports.days_value', { values: { days: a.oldest_days } })}
                   </td>
                   <td class="v2-num" style="text-align:right;font-weight:600"
                     >{money(a.amount, data.org.currency)}</td
@@ -230,8 +243,9 @@
           </table>
         </div>
         <p class="v2-sub" style="font-size:11.5px;margin-top:10px">
-          These {data.overdueByAccount.length} accounts are the whole overdue balance, not the top few
-          of a longer list.
+          {$_('invoices.reports.table_note', {
+            values: { count: data.overdueByAccount.length }
+          })}
         </p>
       </div>
     </div>
