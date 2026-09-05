@@ -8,6 +8,7 @@
   import imgGoogle from '$lib/assets/images/google.svg';
   import imgLogo from '$lib/assets/images/logo.png';
   import { Mail, Check } from '@lucide/svelte';
+  import LanguageSwitcher from '$lib/v2/components/LanguageSwitcher.svelte';
 
   let { data = {} } = $props();
 
@@ -133,6 +134,12 @@
       <a href="https://github.com/django-crm/Django-CRM" target="_blank" rel="noopener"
         >{$_('auth.login.footer_github')}</a
       >
+    </div>
+
+    <!-- i18n pilot: the Sidebar's switcher only reaches signed-in users, and
+         this is a signed-out screen, so it needs its own copy. -->
+    <div style="text-align:center;margin:12px auto 0">
+      <LanguageSwitcher />
     </div>
   </div>
 </div>

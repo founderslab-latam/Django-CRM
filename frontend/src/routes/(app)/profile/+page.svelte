@@ -21,6 +21,7 @@
   import { relativeDays, shortDate, count } from '$lib/v2/format.js';
   import { ROLE_LABEL, ROLE_TONE } from '$lib/v2/enums.js';
   import { KeyRound, Lock, ArrowLeftRight } from '@lucide/svelte';
+  import LanguageSwitcher from '$lib/v2/components/LanguageSwitcher.svelte';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -215,6 +216,25 @@
                 change.
               </span>
             </div>
+          </div>
+        </div>
+
+        <!-- i18n pilot: this was in the Sidebar (reaches every screen, not
+             just this one) as an infra placeholder; a per-user preference
+             belongs on the page that owns "your own account" settings, not
+             in the global nav. Cookie-based today (see LanguageSwitcher.svelte),
+             not yet a real column on Profile — see PLAN.md's roadmap for
+             persisting it server-side. -->
+        <div class="v2-label" style="margin-bottom:10px">Preferences</div>
+        <div class="v2-card" style="overflow:hidden;margin-bottom:20px">
+          <div class="v2-setting">
+            <div class="v2-setting-body">
+              <b>Language</b>
+              <span class="v2-sub" style="font-size:11.5px">
+                Changes what this browser shows you. Not yet shared across devices.
+              </span>
+            </div>
+            <LanguageSwitcher />
           </div>
         </div>
 

@@ -26,7 +26,6 @@
   } from '@lucide/svelte';
   import { t } from '$lib/terminology.js';
   import { _ } from '$lib/i18n/index.js';
-  import LanguageSwitcher from './LanguageSwitcher.svelte';
 
   /**
    * One flat tree, grouped by what the person is doing rather than by which
@@ -240,9 +239,6 @@
       <CircleHelp />
       {$_('common.sidebar.nav.help')}
     </a>
-    <!-- i18n pilot infra (Developer A): cookie-based language switcher, see
-         LanguageSwitcher.svelte. -->
-    <LanguageSwitcher />
     <!-- The phone app for people on the hosted service. No pulsing dot. A
          download link is not something that needs you right now, and v2 keeps
          attention for the things that do. -->
