@@ -43,6 +43,7 @@
     Sparkles,
     X
   } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -114,7 +115,7 @@
    */
   function metaFor(e) {
     const parts = [];
-    if (e.type === 'file') parts.push('Attached');
+    if (e.type === 'file') parts.push($_('contacts.detail.meta_attached'));
     if (e.by) parts.push(e.by);
     parts.push(relativeDays(e.at));
     return parts.join(' · ');
@@ -123,8 +124,8 @@
   /** @param {string} iso */
   function dayGroup(iso) {
     const n = daysSince(iso);
-    if (n === 0) return 'Today';
-    if (n === 1) return 'Yesterday';
+    if (n === 0) return $_('contacts.detail.day_today');
+    if (n === 1) return $_('contacts.detail.day_yesterday');
     return shortDate(iso);
   }
 
@@ -154,13 +155,45 @@
    */
   let headline = $derived(
     !contact.is_active
-      ? `${contact.first_name} is marked inactive${contact.account ? ` at ${contact.account.name}` : ''}. Find out who replaced them before the next conversation.`
+      ? contact.account
+        ? $_('contacts.detail.headline_inactive_with_account', {
+            values: { name: contact.first_name, account: contact.account.name }
+          })
+        : $_('contacts.detail.headline_inactive_no_account', {
+            values: { name: contact.first_name }
+          })
       : !contact.email && (!contact.phone || contact.do_not_call)
-        ? `There is no way to reach ${contact.first_name} on this record: no email${contact.do_not_call ? ', and they asked not to be called' : ' and no phone'}.`
+        ? contact.do_not_call
+          ? $_('contacts.detail.headline_unreachable_dnc', {
+              values: { name: contact.first_name }
+            })
+          : $_('contacts.detail.headline_unreachable_no_phone', {
+              values: { name: contact.first_name }
+            })
         : openDeals.length && !contact.owner
-          ? `${contact.first_name} is on ${openDeals.length === 1 ? openDeals[0].name : `${openDeals.length} open deals`} worth ${money(openPipeline, data.org.currency)}, and nobody owns this record.`
+          ? openDeals.length === 1
+            ? $_('contacts.detail.headline_no_owner_single', {
+                values: {
+                  name: contact.first_name,
+                  deal: openDeals[0].name,
+                  amount: money(openPipeline, data.org.currency)
+                }
+              })
+            : $_('contacts.detail.headline_no_owner_multiple', {
+                values: {
+                  name: contact.first_name,
+                  count: openDeals.length,
+                  amount: money(openPipeline, data.org.currency)
+                }
+              })
           : overdueTasks.length
-            ? `${overdueTasks.length === 1 ? 'A task' : `${overdueTasks.length} tasks`} naming ${contact.first_name} ${overdueTasks.length === 1 ? 'is' : 'are'} past due.`
+            ? overdueTasks.length === 1
+              ? $_('contacts.detail.headline_overdue_single', {
+                  values: { name: contact.first_name }
+                })
+              : $_('contacts.detail.headline_overdue_multiple', {
+                  values: { name: contact.first_name, count: overdueTasks.length }
+                })
             : null
   );
 </script>
@@ -170,37 +203,45 @@
     <Avatar name={contact.name} size={42} />
   {/snippet}
   {#snippet crumb()}
-    <a href={resolve('/contacts')}>Contacts</a>
+    <a href={resolve('/contacts')}>{$_('contacts.detail.breadcrumb_contacts')}</a>
     <ChevronRight size={12} />
     {#if contact.account}
       <a href={resolve(`/accounts/${contact.account.id}`)}>{contact.account.name}</a>
     {:else if contact.organization}
       <span>{contact.organization}</span>
     {:else}
-      <span>No account</span>
+      <span>{$_('contacts.detail.no_account')}</span>
     {/if}
   {/snippet}
   {#snippet sub()}
-    {[contact.title, contact.department].filter(Boolean).join(' · ') || 'No title recorded'}
+    {[contact.title, contact.department].filter(Boolean).join(' · ') ||
+      $_('contacts.detail.no_title_recorded')}
     {#if contact.updated_at}
-      · updated {relativeDays(contact.updated_at)}
+      · {$_('contacts.detail.updated_prefix')} {relativeDays(contact.updated_at)}
     {/if}
   {/snippet}
   {#snippet actions()}
     {#if contact.email}
-      <a class="v2-btn" href="mailto:{contact.email}"><Mail />Email</a>
+      <a class="v2-btn" href="mailto:{contact.email}"
+        ><Mail />{$_('contacts.detail.email_button')}</a
+      >
     {/if}
     {#if contact.do_not_call}
       <!-- Disabled rather than removed: the reason has to stay visible, or
            somebody just looks up the number somewhere else. -->
-      <button class="v2-btn" type="button" disabled title="This person asked not to be called">
-        <PhoneOff />Do not call
+      <button
+        class="v2-btn"
+        type="button"
+        disabled
+        title={$_('contacts.detail.do_not_call_tooltip')}
+      >
+        <PhoneOff />{$_('contacts.detail.do_not_call_label')}
       </button>
     {:else if contact.phone}
-      <a class="v2-btn" href="tel:{contact.phone}"><Phone />Call</a>
+      <a class="v2-btn" href="tel:{contact.phone}"><Phone />{$_('contacts.detail.call_button')}</a>
     {/if}
     <a class="v2-btn v2-btn-primary" href={resolve(`/contacts/${contact.id}/edit`)}
-      ><Pencil />Edit</a
+      ><Pencil />{$_('contacts.detail.edit_button')}</a
     >
   {/snippet}
 </PageHeader>
@@ -212,9 +253,11 @@
         {#if headline}
           <div style="margin-bottom:20px">
             <NextAction
-              label={contact.is_active ? 'Needs you' : 'Out of date'}
+              label={contact.is_active
+                ? $_('contacts.detail.needs_you_label')
+                : $_('contacts.detail.out_of_date_label')}
               text={headline}
-              action="Edit this contact"
+              action={$_('contacts.detail.edit_this_contact_action')}
               href="/contacts/{contact.id}/edit"
               tone={contact.is_active ? 'ember' : 'rust'}
             />
@@ -222,11 +265,12 @@
         {/if}
 
         <div class="v2-label" style="margin-bottom:10px">
-          Deals they are named on
+          {$_('contacts.detail.deals_heading')}
           {#if openDeals.length}
             <span class="v2-num" style="margin-left:6px"
               >{money(openPipeline, data.org.currency)}</span
-            > open
+            >
+            {$_('contacts.detail.open_suffix')}
           {/if}
         </div>
         <div class="v2-card" style="overflow:hidden;margin-bottom:22px">
@@ -254,17 +298,16 @@
             </a>
           {:else}
             <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
-              No deals name this person. Add them to the deal they are actually involved in. The
-              account having deals is a different fact.
+              {$_('contacts.detail.no_deals_body')}
             </p>
           {/each}
         </div>
 
         <div class="v2-label" style="margin-bottom:10px">
-          Tasks
+          {$_('contacts.detail.tasks_heading')}
           {#if overdueTasks.length}
             <span style="margin-left:6px;color:var(--v2-rust);font-weight:600"
-              >· {overdueTasks.length} overdue</span
+              >· {overdueTasks.length} {$_('contacts.detail.overdue_suffix')}</span
             >
           {/if}
         </div>
@@ -290,25 +333,26 @@
                   : 'font-size:11.5px;white-space:nowrap'}
               >
                 {t.status === 'Completed'
-                  ? 'done'
+                  ? $_('contacts.detail.task_status_done')
                   : late
-                    ? `${late}d late`
+                    ? $_('contacts.detail.task_status_late', { values: { days: late } })
                     : t.due_date
                       ? relativeDays(t.due_date)
-                      : 'no due date'}
+                      : $_('contacts.detail.task_status_no_due_date')}
               </span>
             </a>
           {:else}
             <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
-              Nothing outstanding that names this person.
+              {$_('contacts.detail.no_tasks_body')}
             </p>
           {/each}
         </div>
 
         <div class="v2-label" style="margin-bottom:10px">
-          Tickets
+          {$_('contacts.detail.tickets_heading')}
           {#if openTickets.length}
-            <span class="v2-num" style="margin-left:6px">{openTickets.length}</span> open
+            <span class="v2-num" style="margin-left:6px">{openTickets.length}</span>
+            {$_('contacts.detail.tickets_open_suffix')}
           {/if}
         </div>
         <div class="v2-card" style="overflow:hidden;margin-bottom:22px">
@@ -324,25 +368,31 @@
               <Pill tone={PRIORITY_TONE[t.priority]}>{t.priority}</Pill>
             </a>
           {:else}
-            <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">No tickets.</p>
+            <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
+              {$_('contacts.detail.no_tickets_body')}
+            </p>
           {/each}
         </div>
 
         {#if contact.description}
-          <div class="v2-label" style="margin:0 0 10px">About</div>
+          <div class="v2-label" style="margin:0 0 10px">{$_('contacts.detail.about_heading')}</div>
           <div class="v2-card about">{contact.description}</div>
         {/if}
 
         <div class="act-head">
-          <div class="v2-label">Activity</div>
+          <div class="v2-label">{$_('contacts.detail.activity_heading')}</div>
           {#if hasFiles}
             <!-- Only real kinds. There is no calls/emails/meetings split because
                  there are no such records to split on. -->
-            <div class="seg" role="tablist" aria-label="Filter activity">
-              <button class:on={filter === 'all'} onclick={() => (filter = 'all')}>All</button>
-              <button class:on={filter === 'notes'} onclick={() => (filter = 'notes')}>Notes</button
+            <div class="seg" role="tablist" aria-label={$_('contacts.detail.filter_activity_aria')}>
+              <button class:on={filter === 'all'} onclick={() => (filter = 'all')}
+                >{$_('contacts.detail.filter_all')}</button
               >
-              <button class:on={filter === 'files'} onclick={() => (filter = 'files')}>Files</button
+              <button class:on={filter === 'notes'} onclick={() => (filter = 'notes')}
+                >{$_('contacts.detail.filter_notes')}</button
+              >
+              <button class:on={filter === 'files'} onclick={() => (filter = 'files')}
+                >{$_('contacts.detail.filter_files')}</button
               >
             </div>
           {/if}
@@ -373,20 +423,22 @@
             rows="2"
             bind:value={note}
             class="note-input"
-            placeholder="Log a call, a reply, what they said…"></textarea>
+            placeholder={$_('contacts.detail.note_placeholder')}></textarea>
           <div class="note-actions">
             <button class="v2-btn v2-btn-primary" type="submit" disabled={saving || !canSubmit}>
               {saving
-                ? 'Saving…'
+                ? $_('contacts.detail.saving_button')
                 : note.trim()
-                  ? 'Add note'
+                  ? $_('contacts.detail.add_note_button')
                   : fileName
-                    ? 'Attach file'
-                    : 'Add note'}
+                    ? $_('contacts.detail.attach_file_button')
+                    : $_('contacts.detail.add_note_button')}
             </button>
             <label class="v2-btn" class:has-file={fileName}>
               <Paperclip size={14} />
-              <span class="attach-label">{fileName || 'Attach file'}</span>
+              <span class="attach-label"
+                >{fileName || $_('contacts.detail.attach_file_button')}</span
+              >
               <input
                 bind:this={fileInput}
                 type="file"
@@ -400,7 +452,7 @@
                 type="button"
                 class="v2-btn-quiet clear-file"
                 onclick={clearFile}
-                title="Remove file"
+                title={$_('contacts.detail.remove_file_tooltip')}
               >
                 <X size={13} />
               </button>
@@ -442,7 +494,7 @@
             {/if}
           {:else}
             <p class="v2-sub" style="font-size:12.5px">
-              Nothing logged yet. The first note you add shows up here.
+              {$_('contacts.detail.no_activity_body')}
             </p>
           {/each}
         </div>
@@ -451,13 +503,13 @@
   </div>
 
   <aside class="v2-rail">
-    <div class="v2-label v2-rail-head">Contact</div>
+    <div class="v2-label v2-rail-head">{$_('contacts.detail.rail_contact_heading')}</div>
     <dl class="v2-kv">
-      <dt>Title</dt>
+      <dt>{$_('contacts.detail.field_title')}</dt>
       <dd>{contact.title || '—'}</dd>
-      <dt>Department</dt>
+      <dt>{$_('contacts.detail.field_department')}</dt>
       <dd>{contact.department || '—'}</dd>
-      <dt>Account</dt>
+      <dt>{$_('contacts.detail.field_account')}</dt>
       <dd>
         {#if contact.account}
           <a href={resolve(`/accounts/${contact.account.id}`)} style="color:inherit"
@@ -467,7 +519,7 @@
         {/if}
       </dd>
       {#if contact.other_accounts.length}
-        <dt>Also at</dt>
+        <dt>{$_('contacts.detail.field_also_at')}</dt>
         <dd>
           {#each contact.other_accounts as other, i (other.id)}
             {i > 0 ? ', ' : ''}<a href={resolve(`/accounts/${other.id}`)} style="color:inherit"
@@ -480,53 +532,57 @@
         <!-- Typed into the contact rather than linked, and often a different
              company from the account. Shown as what it is instead of being
              quietly presented as the account. -->
-        <dt>Company typed in</dt>
+        <dt>{$_('contacts.detail.field_company_typed_in')}</dt>
         <dd>{contact.organization}</dd>
       {/if}
-      <dt>Email</dt>
+      <dt>{$_('contacts.detail.field_email')}</dt>
       <dd style="font-size:12px;word-break:break-all">
         {#if contact.email}<a href="mailto:{contact.email}" style="color:inherit">{contact.email}</a
           >{:else},
         {/if}
       </dd>
-      <dt>Phone</dt>
+      <dt>{$_('contacts.detail.field_phone')}</dt>
       <dd class="v2-num" style="font-size:12px">
         {#if contact.phone}<a href="tel:{contact.phone}" style="color:inherit">{contact.phone}</a
           >{:else},
         {/if}
       </dd>
       {#if contact.linkedin_url}
-        <dt>LinkedIn</dt>
+        <dt>{$_('contacts.detail.field_linkedin')}</dt>
         <dd style="font-size:12px;word-break:break-all">
           <a href={contact.linkedin_url} rel="external noreferrer noopener" target="_blank"
-            >Profile</a
+            >{$_('contacts.detail.linkedin_profile_link')}</a
           >
         </dd>
       {/if}
-      <dt>Owner</dt>
+      <dt>{$_('contacts.detail.field_owner')}</dt>
       <dd>
-        {owners.length ? owners.join(', ') : 'Unassigned'}
+        {owners.length ? owners.join(', ') : $_('contacts.detail.unassigned')}
       </dd>
-      <dt>Status</dt>
+      <dt>{$_('contacts.detail.field_status')}</dt>
       <dd>
         <span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">
           <Pill tone={contact.is_active ? 'moss' : 'slate'}>
-            {contact.is_active ? 'Active' : 'Inactive'}
+            {contact.is_active
+              ? $_('contacts.detail.status_active')
+              : $_('contacts.detail.status_inactive')}
           </Pill>
           {#if contact.do_not_call}
-            <Pill tone="rust"><PhoneOff size={11} />Do not call</Pill>
+            <Pill tone="rust"><PhoneOff size={11} />{$_('contacts.detail.do_not_call_label')}</Pill>
           {/if}
         </span>
       </dd>
-      <dt>Added</dt>
+      <dt>{$_('contacts.detail.field_added')}</dt>
       <dd>{shortDate(contact.created_at)}</dd>
-      <dt>Updated</dt>
+      <dt>{$_('contacts.detail.field_updated')}</dt>
       <dd>{contact.updated_at ? relativeDays(contact.updated_at) : '—'}</dd>
     </dl>
 
     {#if colleagues.length}
       <div class="v2-label v2-rail-head">
-        Also at {contact.account?.name ?? 'this account'}
+        {$_('contacts.detail.also_at_heading', {
+          values: { account: contact.account?.name ?? $_('contacts.detail.this_account_fallback') }
+        })}
       </div>
       {#each colleagues as c (c.id)}
         <a
@@ -537,7 +593,9 @@
           <Avatar name={c.name} size={27} />
           <div style="min-width:0">
             <div style="font-size:12.5px;font-weight:550">{c.name}</div>
-            <div class="v2-sub" style="font-size:11.5px">{c.title || 'No title recorded'}</div>
+            <div class="v2-sub" style="font-size:11.5px">
+              {c.title || $_('contacts.detail.no_title_recorded')}
+            </div>
           </div>
         </a>
       {/each}

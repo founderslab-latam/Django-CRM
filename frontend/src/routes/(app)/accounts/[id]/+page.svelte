@@ -11,6 +11,7 @@
    * All four panels come from the single detail response, the API already
    * returned them, so this costs no extra round trips.
    */
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
@@ -41,37 +42,50 @@
       fact on this page: a stalled deal, or an invoice past its due date. */
   let headline = $derived(
     stalled.length && pastDue.length
-      ? `${stalled[0].name} is stalled and ${pastDue[0].invoice_number} is past due, same account, two problems.`
+      ? $_('accounts.detail.headline_both', {
+          values: { dealName: stalled[0].name, invoiceNumber: pastDue[0].invoice_number }
+        })
       : stalled.length
-        ? `${stalled[0].name} has not moved in ${stalled[0].days_in_current_stage} days.`
+        ? $_('accounts.detail.headline_stalled', {
+            values: { dealName: stalled[0].name, days: stalled[0].days_in_current_stage }
+          })
         : pastDue.length
-          ? `${pastDue[0].invoice_number} is past due, ${money(pastDue[0].amount_due, pastDue[0].currency)}.`
+          ? $_('accounts.detail.headline_pastdue', {
+              values: {
+                invoiceNumber: pastDue[0].invoice_number,
+                amount: money(pastDue[0].amount_due, pastDue[0].currency)
+              }
+            })
           : null
   );
 </script>
 
 <PageHeader title={account.name} record>
   {#snippet crumb()}
-    <a href={resolve('/accounts')}>Accounts</a>
+    <a href={resolve('/accounts')}>{$_('accounts.detail.breadcrumb_accounts')}</a>
     <ChevronRight size={12} />
-    <span>{account.industry || 'No industry'}</span>
+    <span>{account.industry || $_('accounts.detail.no_industry_fallback')}</span>
   {/snippet}
   {#snippet sub()}
     {[
       account.industry,
-      account.number_of_employees ? `${account.number_of_employees} staff` : null,
+      account.number_of_employees
+        ? $_('accounts.detail.staff_count', { values: { count: account.number_of_employees } })
+        : null,
       /* Derived: the close date of the first deal won here. There is no
          contract model, so this is what "customer since" can honestly mean. */
       account.first_won_on
-        ? `customer since ${longDate(account.first_won_on)}`
-        : 'No deals won yet',
-      owners.length ? `owned by ${owners[0]}` : null
+        ? `${$_('accounts.detail.customer_since_prefix')} ${longDate(account.first_won_on)}`
+        : $_('accounts.detail.no_deals_won_yet_sub'),
+      owners.length ? $_('accounts.detail.owned_by_prefix', { values: { name: owners[0] } }) : null
     ]
       .filter(Boolean)
       .join(' · ')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve(`/accounts/${account.id}/edit`)}>Edit</a>
+    <a class="v2-btn" href={resolve(`/accounts/${account.id}/edit`)}
+      >{$_('accounts.detail.edit_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
@@ -79,33 +93,35 @@
   <div class="v2-pad" style="padding-bottom:32px">
     <div class="v2-stats" style="margin-bottom:16px">
       <StatCard
-        label="Revenue won"
+        label={$_('accounts.detail.stat_revenue_won')}
         value={account.won_amount ? money(account.won_amount, data.org.currency) : '—'}
         tone={account.won_amount ? 'moss' : 'slate'}
         detail={account.won_count
-          ? `${account.won_count} deal${account.won_count === 1 ? '' : 's'} won`
-          : 'Nothing won yet'}
+          ? $_('accounts.detail.deals_won_detail', { values: { count: account.won_count } })
+          : $_('accounts.detail.nothing_won_yet')}
       />
       <StatCard
-        label="Open pipeline"
+        label={$_('accounts.detail.stat_open_pipeline')}
         value={account.open_pipeline ? money(account.open_pipeline, data.org.currency) : '—'}
         detail={account.open_deal_count
-          ? `${account.open_deal_count} open deal${account.open_deal_count === 1 ? '' : 's'}`
-          : 'No open deals'}
+          ? $_('accounts.detail.open_deals_detail', { values: { count: account.open_deal_count } })
+          : $_('accounts.detail.no_open_deals')}
       />
       <StatCard
-        label="Past due"
+        label={$_('accounts.detail.stat_past_due')}
         value={account.overdue_amount ? money(account.overdue_amount, data.org.currency) : '—'}
         tone={account.overdue_amount ? 'rust' : 'slate'}
         detail={pastDue.length
           ? pastDue.map((/** @type {any} */ i) => i.invoice_number).join(', ')
-          : 'Nothing past due'}
+          : $_('accounts.detail.nothing_past_due')}
       />
       <StatCard
-        label="Open tickets"
+        label={$_('accounts.detail.stat_open_tickets')}
         value={String(account.open_tickets ?? 0)}
         tone={tickets.some((/** @type {any} */ t) => t.priority === 'Urgent') ? 'rust' : 'slate'}
-        detail={tickets.length ? `${tickets[0].name} · ${tickets[0].priority}` : 'None open'}
+        detail={tickets.length
+          ? `${tickets[0].name} · ${tickets[0].priority}`
+          : $_('accounts.detail.none_open')}
       />
     </div>
 
@@ -124,9 +140,9 @@
           own. It comes back when invoices is.
         -->
         <NextAction
-          label="Needs you"
+          label={$_('accounts.detail.next_action_label')}
           text={headline}
-          action={stalled.length ? 'Open the deal' : null}
+          action={stalled.length ? $_('accounts.detail.open_deal_action') : null}
           href={stalled.length ? `/pipeline/${stalled[0].id}` : null}
           tone="rust"
         />
@@ -143,8 +159,8 @@
       <!-- Deals -->
       <section class="v2-card" style="overflow:hidden">
         <div class="v2-card-head">
-          <span class="v2-label">Deals</span>
-          <a href={resolve('/pipeline')}>View all</a>
+          <span class="v2-label">{$_('accounts.detail.section_deals')}</span>
+          <a href={resolve('/pipeline')}>{$_('accounts.detail.view_all')}</a>
         </div>
         {#each deals as d (d.id)}
           <a
@@ -159,8 +175,8 @@
               <div class="v2-sub" style="font-size:11.5px">
                 {STAGE_LABEL[d.stage]}{d.closed_on
                   ? d.stage.startsWith('CLOSED_')
-                    ? ` · closed ${shortDate(d.closed_on)}`
-                    : ` · due ${shortDate(d.closed_on)}`
+                    ? ` · ${$_('accounts.detail.deal_closed_prefix')} ${shortDate(d.closed_on)}`
+                    : ` · ${$_('accounts.detail.deal_due_prefix')} ${shortDate(d.closed_on)}`
                   : ''}
               </div>
             </div>
@@ -173,7 +189,7 @@
           </a>
         {:else}
           <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
-            No deals yet. Create one when there is something real to sell.
+            {$_('accounts.detail.no_deals_yet')}
           </p>
         {/each}
       </section>
@@ -181,8 +197,8 @@
       <!-- People -->
       <section class="v2-card" style="overflow:hidden">
         <div class="v2-card-head">
-          <span class="v2-label">People</span>
-          <a href={resolve('/contacts')}>View all</a>
+          <span class="v2-label">{$_('accounts.detail.section_people')}</span>
+          <a href={resolve('/contacts')}>{$_('accounts.detail.view_all')}</a>
         </div>
         {#each contacts as c (c.id)}
           <div
@@ -200,25 +216,40 @@
               <!-- title and department. The mock showed a "relationship"
                    (Champion / Blocker); Contact has no such field. -->
               <div class="v2-sub" style="font-size:11.5px">
-                {[c.title, c.department].filter(Boolean).join(' · ') || 'No title recorded'}
+                {[c.title, c.department].filter(Boolean).join(' · ') ||
+                  $_('accounts.detail.no_title_recorded')}
               </div>
             </a>
             {#if c.email}
-              <a class="v2-btn v2-btn-sm" href="mailto:{c.email}" aria-label="Email {c.first_name}">
+              <a
+                class="v2-btn v2-btn-sm"
+                href="mailto:{c.email}"
+                aria-label={$_('accounts.detail.email_aria_label', {
+                  values: { name: c.first_name }
+                })}
+              >
                 <Mail size={13} />
               </a>
             {/if}
             {#if c.phone && !c.do_not_call}
-              <a class="v2-btn v2-btn-sm" href="tel:{c.phone}" aria-label="Call {c.first_name}">
+              <a
+                class="v2-btn v2-btn-sm"
+                href="tel:{c.phone}"
+                aria-label={$_('accounts.detail.call_aria_label', {
+                  values: { name: c.first_name }
+                })}
+              >
                 <Phone size={13} />
               </a>
             {/if}
           </div>
         {:else}
           <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
-            Nobody here yet. <a href={resolve(`/contacts/new?account=${account.id}`)}
-              >Add the person</a
-            > you actually talk to.
+            {$_('accounts.detail.people_empty_prefix')}
+            <a href={resolve(`/contacts/new?account=${account.id}`)}
+              >{$_('accounts.detail.people_empty_link')}</a
+            >
+            {$_('accounts.detail.people_empty_suffix')}
           </p>
         {/each}
       </section>
@@ -226,8 +257,8 @@
       <!-- Tickets -->
       <section class="v2-card" style="overflow:hidden">
         <div class="v2-card-head">
-          <span class="v2-label">Tickets</span>
-          <a href={resolve('/tickets')}>View all</a>
+          <span class="v2-label">{$_('accounts.detail.section_tickets')}</span>
+          <a href={resolve('/tickets')}>{$_('accounts.detail.view_all')}</a>
         </div>
         {#each tickets as t (t.id)}
           <!-- A link again: tickets is wired, so a real id sent to
@@ -242,8 +273,11 @@
           </a>
         {:else}
           <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
-            No tickets. <a href={resolve(`/tickets/new?account=${account.id}`)}>Raise one</a> if something
-            is wrong.
+            {$_('accounts.detail.tickets_empty_prefix')}
+            <a href={resolve(`/tickets/new?account=${account.id}`)}
+              >{$_('accounts.detail.tickets_empty_link')}</a
+            >
+            {$_('accounts.detail.tickets_empty_suffix')}
           </p>
         {/each}
       </section>
@@ -251,8 +285,8 @@
       <!-- Invoices -->
       <section class="v2-card" style="overflow:hidden">
         <div class="v2-card-head">
-          <span class="v2-label">Invoices</span>
-          <a href={resolve('/invoices')}>View all</a>
+          <span class="v2-label">{$_('accounts.detail.section_invoices')}</span>
+          <a href={resolve('/invoices')}>{$_('accounts.detail.view_all')}</a>
         </div>
         {#each invoices as inv (inv.id)}
           <!-- A link now: invoices is wired, so a real id sent to
@@ -263,14 +297,18 @@
           >
             <span class="v2-num" style="font-size:12.5px">{inv.invoice_number}</span>
             <Pill tone={inv.past_due ? 'rust' : INVOICE_STATUS_TONE[inv.status]}>
-              {inv.past_due ? 'Past due' : invoiceStatusLabel(inv.status)}
+              {inv.past_due
+                ? $_('accounts.detail.invoice_past_due_label')
+                : invoiceStatusLabel(inv.status)}
             </Pill>
             <span class="v2-num" style="margin-left:auto;font-weight:600;font-size:13px">
               {money(inv.past_due ? inv.amount_due : inv.total_amount, inv.currency)}
             </span>
           </a>
         {:else}
-          <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">Nothing billed yet.</p>
+          <p class="v2-sub" style="padding:14px 15px;font-size:12.5px">
+            {$_('accounts.detail.nothing_billed_yet')}
+          </p>
         {/each}
       </section>
     </div>

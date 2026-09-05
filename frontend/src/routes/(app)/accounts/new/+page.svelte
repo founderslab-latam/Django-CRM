@@ -15,6 +15,7 @@
    */
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -46,23 +47,24 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!form.name.trim()) e.name = 'Give the account the name you would search for.';
+    if (!form.name.trim()) e.name = $_('accounts.new.error_name_required');
 
     if (form.annual_revenue !== '') {
       const n = Number(form.annual_revenue);
-      if (!Number.isFinite(n)) e.annual_revenue = 'Annual revenue has to be a number.';
-      else if (n < 0) e.annual_revenue = 'Annual revenue cannot be negative.';
+      if (!Number.isFinite(n)) e.annual_revenue = $_('accounts.new.error_revenue_not_number');
+      else if (n < 0) e.annual_revenue = $_('accounts.new.error_revenue_negative');
     }
     if (form.number_of_employees !== '') {
       const n = Number(form.number_of_employees);
-      if (!Number.isInteger(n)) e.number_of_employees = 'Headcount is a whole number.';
-      else if (n < 0) e.number_of_employees = 'Headcount cannot be negative.';
+      if (!Number.isInteger(n))
+        e.number_of_employees = $_('accounts.new.error_headcount_not_integer');
+      else if (n < 0) e.number_of_employees = $_('accounts.new.error_headcount_negative');
     }
     if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
-      e.email = 'That does not look like an email address.';
+      e.email = $_('accounts.new.error_email_invalid');
     // The exact regex from `flexible_phone_validator`.
     if (form.phone && !/^[\d\s\-()+.]{7,25}$/.test(form.phone))
-      e.phone = '7 to 25 characters: digits, spaces, brackets, dots, dashes. No extensions.';
+      e.phone = $_('accounts.new.error_phone_invalid');
 
     return e;
   });
@@ -93,14 +95,14 @@
   };
 </script>
 
-<PageHeader title="New account" center>
+<PageHeader title={$_('accounts.new.title')} center>
   {#snippet crumb()}
-    <a href={resolve('/accounts')}>Accounts</a>
+    <a href={resolve('/accounts')}>{$_('accounts.new.breadcrumb_accounts')}</a>
     <ChevronRight size={12} />
-    <span>New</span>
+    <span>{$_('accounts.new.breadcrumb_new')}</span>
   {/snippet}
   {#snippet sub()}
-    A company you sell to. Everything else attaches to it later.
+    {$_('accounts.new.subheading')}
   {/snippet}
 </PageHeader>
 
@@ -114,14 +116,14 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this</div>
+          <div style="font-weight:600">{$_('accounts.new.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-name">Account name</label>
+      <label for="f-name">{$_('accounts.new.label_name')}</label>
       <input
         id="f-name"
         name="name"
@@ -133,24 +135,24 @@
       {#if show('name')}
         <p class="v2-error">{errors.name}</p>
       {:else}
-        <p class="v2-hint">Has to be unique in this organisation, ignoring capitals.</p>
+        <p class="v2-hint">{$_('accounts.new.hint_name_unique')}</p>
       {/if}
     </div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-industry">Industry</label>
+        <label for="f-industry">{$_('accounts.new.label_industry')}</label>
         <select id="f-industry" name="industry" class="v2-input" bind:value={form.industry}>
-          <option value="">Not recorded</option>
+          <option value="">{$_('accounts.new.option_not_recorded')}</option>
           {#each data.industries as i (i.value)}
             <option value={i.value}>{i.label}</option>
           {/each}
         </select>
       </div>
       <div class="v2-field">
-        <label for="f-owner">Owner</label>
+        <label for="f-owner">{$_('accounts.new.label_owner')}</label>
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('accounts.new.option_nobody')}</option>
           {#each data.owners as o (o.id)}
             <!-- The value is the Profile id, not the display name. -->
             <option value={o.id}>{o.name}</option>
@@ -161,7 +163,7 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-email">Email</label>
+        <label for="f-email">{$_('accounts.new.label_email')}</label>
         <input
           id="f-email"
           name="email"
@@ -174,7 +176,7 @@
         {#if show('email')}<p class="v2-error">{errors.email}</p>{/if}
       </div>
       <div class="v2-field">
-        <label for="f-phone">Phone</label>
+        <label for="f-phone">{$_('accounts.new.label_phone')}</label>
         <input
           id="f-phone"
           name="phone"
@@ -188,13 +190,13 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-website">Website</label>
+      <label for="f-website">{$_('accounts.new.label_website')}</label>
       <input id="f-website" name="website" class="v2-input" type="url" bind:value={form.website} />
     </div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-staff">Headcount</label>
+        <label for="f-staff">{$_('accounts.new.label_headcount')}</label>
         <input
           id="f-staff"
           name="number_of_employees"
@@ -208,7 +210,7 @@
         {#if show('number_of_employees')}<p class="v2-error">{errors.number_of_employees}</p>{/if}
       </div>
       <div class="v2-field">
-        <label for="f-revenue">Annual revenue</label>
+        <label for="f-revenue">{$_('accounts.new.label_annual_revenue')}</label>
         <input
           id="f-revenue"
           name="annual_revenue"
@@ -225,13 +227,13 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-city">City</label>
+        <label for="f-city">{$_('accounts.new.label_city')}</label>
         <input id="f-city" name="city" class="v2-input" bind:value={form.city} />
       </div>
       <div class="v2-field">
-        <label for="f-country">Country</label>
+        <label for="f-country">{$_('accounts.new.label_country')}</label>
         <select id="f-country" name="country" class="v2-input" bind:value={form.country}>
-          <option value="">Not recorded</option>
+          <option value="">{$_('accounts.new.option_not_recorded')}</option>
           {#each data.countries as c (c.value)}
             <option value={c.value}>{c.label}</option>
           {/each}
@@ -240,7 +242,7 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-notes">Notes</label>
+      <label for="f-notes">{$_('accounts.new.label_notes')}</label>
       <textarea
         id="f-notes"
         name="description"
@@ -250,8 +252,9 @@
     </div>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit">Create account</button>
-      <a class="v2-btn" href={resolve('/accounts')}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit">{$_('accounts.new.submit_button')}</button
+      >
+      <a class="v2-btn" href={resolve('/accounts')}>{$_('accounts.new.cancel_button')}</a>
     </div>
   </form>
 </div>

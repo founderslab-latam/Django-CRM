@@ -8,6 +8,7 @@
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { count, relativeDays } from '$lib/v2/format.js';
   import { Users, PhoneOff, Plus } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any }} */
   let { data } = $props();
@@ -16,23 +17,30 @@
   let totals = $derived(data.totals);
 </script>
 
-<PageHeader title="Contacts">
+<PageHeader title={$_('contacts.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.count)}</span> people
+    <span class="v2-num">{count(totals.count)}</span>
+    {$_('contacts.list.people_suffix')}
     {#if !data.includeInactive && totals.inactive}
-      · <span class="v2-num">{count(totals.inactive)}</span> inactive hidden
+      · <span class="v2-num">{count(totals.inactive)}</span>
+      {$_('contacts.list.inactive_hidden_suffix')}
     {/if}
     {#if totals.do_not_call}
-      · <span class="v2-num">{count(totals.do_not_call)}</span> do not call
+      · <span class="v2-num">{count(totals.do_not_call)}</span>
+      {$_('contacts.list.do_not_call_suffix')}
     {/if}
   {/snippet}
   {#snippet actions()}
     {#if data.includeInactive}
-      <a class="v2-btn" href={resolve('/contacts')}>Hide inactive</a>
+      <a class="v2-btn" href={resolve('/contacts')}>{$_('contacts.list.hide_inactive_button')}</a>
     {:else}
-      <a class="v2-btn" href={resolve('/contacts?inactive=1')}>Show inactive</a>
+      <a class="v2-btn" href={resolve('/contacts?inactive=1')}
+        >{$_('contacts.list.show_inactive_button')}</a
+      >
     {/if}
-    <a class="v2-btn v2-btn-primary" href={resolve('/contacts/new')}><Plus />New contact</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/contacts/new')}
+      ><Plus />{$_('contacts.list.new_contact_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
@@ -42,19 +50,18 @@
   people={data.people}
   tags={data.tags}
   meId={data.meId}
-  meta="Most recently added first"
+  meta={$_('contacts.list.filter_meta')}
 />
 
 <div class="v2-scroll">
   {#if contacts.length === 0}
-    <EmptyState
-      title="No contacts yet"
-      body="A contact is a person at an account. Convert a lead, or add one directly and attach them to the account they work for."
-    >
+    <EmptyState title={$_('contacts.list.empty_title')} body={$_('contacts.list.empty_body')}>
       {#snippet icon()}<Users size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/contacts/new')}>New contact</a>
-        <a class="v2-btn" href={resolve('/leads')}>Go to leads</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/contacts/new')}
+          >{$_('contacts.list.new_contact_button')}</a
+        >
+        <a class="v2-btn" href={resolve('/leads')}>{$_('contacts.list.go_to_leads_button')}</a>
       {/snippet}
     </EmptyState>
   {:else}
@@ -62,12 +69,12 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Account</th>
-            <th>Reachable on</th>
-            <th>Email</th>
-            <th data-m="hide">Owner</th>
-            <th class="v2-r">Updated</th>
+            <th>{$_('contacts.list.col_name')}</th>
+            <th>{$_('contacts.list.col_account')}</th>
+            <th>{$_('contacts.list.col_reachable_on')}</th>
+            <th>{$_('contacts.list.col_email')}</th>
+            <th data-m="hide">{$_('contacts.list.col_owner')}</th>
+            <th class="v2-r">{$_('contacts.list.col_updated')}</th>
           </tr>
         </thead>
         <tbody>
@@ -83,7 +90,7 @@
                   <span>
                     <span class="v2-table-primary">{c.name}</span>
                     <span class="v2-table-secondary" style="display:block">
-                      {c.title || 'No title recorded'}
+                      {c.title || $_('contacts.list.no_title_recorded')}
                     </span>
                   </span>
                 </a>
@@ -103,7 +110,7 @@
                     <span class="v2-sub" style="font-size:11px">+{c.other_accounts.length}</span>
                   {/if}
                 {:else if c.organization}
-                  <span class="v2-muted" title="Typed in, not linked to an account">
+                  <span class="v2-muted" title={$_('contacts.list.organization_typed_tooltip')}>
                     {c.organization}
                   </span>
                 {:else}
@@ -118,14 +125,16 @@
                 -->
                 <span style="display:inline-flex;gap:6px;align-items:center">
                   {#if c.do_not_call}
-                    <Pill tone="rust"><PhoneOff size={11} />Do not call</Pill>
+                    <Pill tone="rust"
+                      ><PhoneOff size={11} />{$_('contacts.list.do_not_call_pill')}</Pill
+                    >
                   {:else if c.phone}
                     <span class="v2-num" style="font-size:12px">{c.phone}</span>
                   {:else}
-                    <span class="v2-muted">No phone</span>
+                    <span class="v2-muted">{$_('contacts.list.no_phone')}</span>
                   {/if}
                   {#if !c.is_active}
-                    <Pill tone="slate">Inactive</Pill>
+                    <Pill tone="slate">{$_('contacts.list.inactive_pill')}</Pill>
                   {/if}
                 </span>
               </td>
@@ -133,10 +142,10 @@
                 {#if c.email}
                   <a href="mailto:{c.email}" style="color:inherit">{c.email}</a>
                 {:else}
-                  <span class="v2-muted">No email</span>
+                  <span class="v2-muted">{$_('contacts.list.no_email')}</span>
                 {/if}
               </td>
-              <td data-m="hide">{c.owner ?? 'Unassigned'}</td>
+              <td data-m="hide">{c.owner ?? $_('contacts.list.unassigned')}</td>
               <td class="v2-r v2-muted">
                 <!--
                   When the record was last edited, which is all the CRM knows.
@@ -151,7 +160,8 @@
       </table>
     </div>
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{contacts.length}</span> of
+      {$_('contacts.list.showing_prefix')} <span class="v2-num">{contacts.length}</span>
+      {$_('contacts.list.showing_of')}
       <span class="v2-num">{count(totals.count)}</span>
     </p>
   {/if}

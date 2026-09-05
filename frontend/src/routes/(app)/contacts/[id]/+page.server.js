@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { addContactNote, getContact } from '$lib/server/v2/contacts.js';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -28,13 +30,15 @@ export const actions = {
       picked && typeof picked === 'object' && 'size' in picked && picked.size > 0 ? picked : null;
 
     if (!comment && !file) {
-      return fail(400, { message: 'Write a note or attach a file before you save.' });
+      return fail(400, { message: get(_)('contacts.detail.note_required_error') });
     }
 
     try {
       await addContactNote({ cookies }, params.id, comment, file);
     } catch (/** @type {any} */ err) {
-      return fail(400, { message: String(err?.message ?? 'Could not save that note.') });
+      return fail(400, {
+        message: String(err?.message ?? get(_)('contacts.detail.note_save_error'))
+      });
     }
 
     return { noted: true };

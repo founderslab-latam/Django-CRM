@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { EDITABLE_FIELDS, createAccount, getAccountFormOptions } from '$lib/server/v2/accounts.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies }) {
@@ -26,7 +28,13 @@ export const actions = {
     try {
       created = await createAccount({ cookies }, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { values, error: readableError(err, 'Could not create this account.') });
+      // See the equivalent comment in `[id]/edit/+page.server.js`: the
+      // request's locale is already resolved on the shared `locale` store by
+      // `hooks.server.js` before this action runs.
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('accounts.new.error_fallback'))
+      });
     }
 
     // The API returns the new id. Landing on the account is the point of

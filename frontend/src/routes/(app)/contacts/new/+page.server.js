@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { EDITABLE_FIELDS, createContact, getContactFormOptions } from '$lib/server/v2/contacts.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -35,7 +37,10 @@ export const actions = {
     try {
       created = await createContact({ cookies }, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { values, error: readableError(err, 'Could not create this contact.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('contacts.new.create_error'))
+      });
     }
 
     // The API returns the new id. Landing on the person is the point of adding

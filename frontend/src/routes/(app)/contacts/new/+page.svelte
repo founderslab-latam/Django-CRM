@@ -15,6 +15,7 @@
   import { enhance } from '$app/forms';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form: result } = $props();
@@ -42,17 +43,17 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!form.first_name.trim()) e.first_name = 'A person needs a first name.';
-    if (!form.last_name.trim()) e.last_name = 'A person needs a last name.';
+    if (!form.first_name.trim()) e.first_name = $_('contacts.new.error_first_name_required');
+    if (!form.last_name.trim()) e.last_name = $_('contacts.new.error_last_name_required');
 
     if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
-      e.email = 'That does not look like an email address.';
+      e.email = $_('contacts.new.error_email_invalid');
 
     // The exact regex from `flexible_phone_validator`. Extensions like "x123"
     // are rejected by the model, so they are caught at the field rather than
     // as an opaque whole-form refusal after the save.
     if (form.phone && !/^[\d\s\-()+.]{7,25}$/.test(form.phone))
-      e.phone = '7 to 25 characters: digits, spaces, brackets, dots, dashes. No extensions.';
+      e.phone = $_('contacts.new.error_phone_invalid');
 
     return e;
   });
@@ -77,14 +78,14 @@
   );
 </script>
 
-<PageHeader title="New contact" center>
+<PageHeader title={$_('contacts.new.heading')} center>
   {#snippet crumb()}
-    <a href={resolve('/contacts')}>Contacts</a>
+    <a href={resolve('/contacts')}>{$_('contacts.new.breadcrumb_contacts')}</a>
     <ChevronRight size={12} />
-    <span>New</span>
+    <span>{$_('contacts.new.breadcrumb_new')}</span>
   {/snippet}
   {#snippet sub()}
-    A person at an account. Everything optional can wait until they exist.
+    {$_('contacts.new.subheading')}
   {/snippet}
 </PageHeader>
 
@@ -98,7 +99,7 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this contact</div>
+          <div style="font-weight:600">{$_('contacts.new.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
@@ -113,20 +114,16 @@
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
           <div style="font-weight:600">
-            {Object.keys(errors).length} field{Object.keys(errors).length === 1 ? '' : 's'} still need{Object.keys(
-              errors
-            ).length === 1
-              ? 's'
-              : ''} you
+            {$_('contacts.new.fields_need_you', { values: { count: Object.keys(errors).length } })}
           </div>
-          <div class="v2-sub" style="margin-top:2px">Nothing has been created.</div>
+          <div class="v2-sub" style="margin-top:2px">{$_('contacts.new.nothing_created')}</div>
         </div>
       </div>
     {/if}
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-first">First name</label>
+        <label for="f-first">{$_('contacts.new.label_first_name')}</label>
         <input
           id="f-first"
           name="first_name"
@@ -138,7 +135,7 @@
         {#if show('first_name')}<p class="v2-error">{errors.first_name}</p>{/if}
       </div>
       <div class="v2-field">
-        <label for="f-last">Last name</label>
+        <label for="f-last">{$_('contacts.new.label_last_name')}</label>
         <input
           id="f-last"
           name="last_name"
@@ -153,7 +150,7 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-email">Email</label>
+        <label for="f-email">{$_('contacts.new.label_email')}</label>
         <input
           id="f-email"
           name="email"
@@ -166,11 +163,11 @@
         {#if show('email')}
           <p class="v2-error">{errors.email}</p>
         {:else}
-          <p class="v2-hint">Has to be unique in this organisation, ignoring capitals.</p>
+          <p class="v2-hint">{$_('contacts.new.hint_email_unique')}</p>
         {/if}
       </div>
       <div class="v2-field">
-        <label for="f-phone">Phone</label>
+        <label for="f-phone">{$_('contacts.new.label_phone')}</label>
         <input
           id="f-phone"
           name="phone"
@@ -185,39 +182,44 @@
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-title">Job title</label>
+        <label for="f-title">{$_('contacts.new.label_job_title')}</label>
         <input id="f-title" name="title" class="v2-input" bind:value={form.title} />
       </div>
       <div class="v2-field">
-        <label for="f-dept">Department</label>
+        <label for="f-dept">{$_('contacts.new.label_department')}</label>
         <input id="f-dept" name="department" class="v2-input" bind:value={form.department} />
       </div>
     </div>
 
     <div class="pair">
       <div class="v2-field">
-        <label for="f-account">Account</label>
+        <label for="f-account">{$_('contacts.new.label_account')}</label>
         <select id="f-account" name="account" class="v2-input" bind:value={form.account}>
-          <option value="">Not linked</option>
+          <option value="">{$_('contacts.new.option_not_linked')}</option>
           {#each data.accounts as a (a.id)}
             <option value={a.id}>{a.name}</option>
           {/each}
         </select>
         {#if chosenAccount}
-          <p class="v2-hint">Also adds them to {chosenAccount.name}'s people.</p>
+          <p class="v2-hint">
+            {$_('contacts.new.hint_account_chosen', { values: { name: chosenAccount.name } })}
+          </p>
         {:else if data.account_total > data.accounts.length}
           <p class="v2-hint">
-            Showing <span class="v2-num">{data.accounts.length}</span> of
-            <span class="v2-num">{data.account_total}</span> accounts.
+            {$_('contacts.new.hint_showing_accounts_prefix')}
+            <span class="v2-num">{data.accounts.length}</span>
+            {$_('contacts.new.hint_showing_accounts_middle')}
+            <span class="v2-num">{data.account_total}</span>
+            {$_('contacts.new.hint_showing_accounts_suffix')}
           </p>
         {:else}
-          <p class="v2-hint">Can be left empty and set later.</p>
+          <p class="v2-hint">{$_('contacts.new.hint_account_optional')}</p>
         {/if}
       </div>
       <div class="v2-field">
-        <label for="f-owner">Owner</label>
+        <label for="f-owner">{$_('contacts.new.label_owner')}</label>
         <select id="f-owner" name="assigned_to" class="v2-input" bind:value={form.assigned_to}>
-          <option value="">Nobody</option>
+          <option value="">{$_('contacts.new.option_nobody')}</option>
           {#each data.owners as o (o.id)}
             <option value={o.id}>{o.name}</option>
           {/each}
@@ -226,25 +228,25 @@
     </div>
 
     <div class="v2-field">
-      <label for="f-org">Company typed in</label>
+      <label for="f-org">{$_('contacts.new.label_company_typed_in')}</label>
       <input id="f-org" name="organization" class="v2-input" bind:value={form.organization} />
       <p class="v2-hint">
-        Only needed when there is no account to link, an imported record, or a company nobody has
-        created yet.
+        {$_('contacts.new.hint_company_typed_in')}
       </p>
     </div>
 
     <label class="flag">
       <input type="checkbox" name="do_not_call" bind:checked={form.do_not_call} />
       <span>
-        <strong>Do not call</strong>
-        <span class="v2-sub">Tick if they have already asked not to be phoned.</span>
+        <strong>{$_('contacts.new.flag_do_not_call_label')}</strong>
+        <span class="v2-sub">{$_('contacts.new.flag_do_not_call_hint')}</span>
       </span>
     </label>
 
     <div class="actions">
-      <button class="v2-btn v2-btn-primary" type="submit">Create contact</button>
-      <a class="v2-btn" href={resolve('/contacts')}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit">{$_('contacts.new.create_button')}</button
+      >
+      <a class="v2-btn" href={resolve('/contacts')}>{$_('contacts.new.cancel_button')}</a>
     </div>
   </form>
 </div>
