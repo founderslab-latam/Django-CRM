@@ -1,4 +1,4 @@
-{% comment %}
+{% load i18n %}{% comment %}
 Sent to a form's notification recipients when a submission is accepted.
 
 Every value in `submission.payload` is submitter-controlled. Django autoescapes
@@ -9,14 +9,14 @@ not switch the table to `{% autoescape off %}`.
 <html>
   <body style="font-family: system-ui, sans-serif; color: #111827; margin: 0; padding: 24px;">
     <p style="margin: 0 0 16px;">
-      A new submission arrived through <strong>{{ form.name }}</strong>.
+      {% blocktrans with form_name=form.name %}A new submission arrived through <strong>{{ form_name }}</strong>.{% endblocktrans %}
     </p>
 
     {% if is_duplicate %}
       <p style="margin: 0 0 16px; padding: 12px; background: #fffbeb; border-radius: 6px; color: #92400e;">
-        This address already had a lead, so the details were merged into it
+        {% blocktrans trimmed %}This address already had a lead, so the details were merged into it
         rather than creating a second record. Any field that was already filled
-        in was left as it was.
+        in was left as it was.{% endblocktrans %}
       </p>
     {% endif %}
 
@@ -37,7 +37,7 @@ not switch the table to `{% autoescape off %}`.
       <p style="margin: 0;">
         <a href="{{ lead_url }}"
            style="display: inline-block; padding: 10px 16px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none;">
-          Open the lead
+          {% trans "Open the lead" %}
         </a>
       </p>
     {% endif %}

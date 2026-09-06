@@ -1,4 +1,5 @@
 {% extends 'root_email_template_new.html' %}
+{% load i18n %}
 
 {% comment %}
 The rating is answered here, in the mail client, not on the page. Each star is
@@ -11,20 +12,20 @@ recorded until the page POSTs. Making a star link record the rating directly
 would let any scanner in the delivery path answer the survey.
 {% endcomment %}
 
-{% block preheader %}How did we do on "{{ case.name }}"?{% endblock preheader %}
+{% block preheader %}{% blocktrans with case_name=case.name %}How did we do on "{{ case_name }}"?{% endblocktrans %}{% endblock preheader %}
 
-{% block heading %}How did we do?{% endblock heading %}
+{% block heading %}{% trans "How did we do?" %}{% endblock heading %}
 
 {% block content_body %}
-<p style="margin:0 0 8px 0;">Hi {{ contact.first_name|default:"there" }},</p>
-<p style="margin:0 0 8px 0;">Your case with {{ org.name }} is closed. Tap a star to rate it, and we will only ask you this once.</p>
+<p style="margin:0 0 8px 0;">{% blocktrans with name=contact.first_name|default:"there" %}Hi {{ name }},{% endblocktrans %}</p>
+<p style="margin:0 0 8px 0;">{% blocktrans with org_name=org.name %}Your case with {{ org_name }} is closed. Tap a star to rate it, and we will only ask you this once.{% endblocktrans %}</p>
 {% endblock content_body %}
 
 {% block metadata %}
 <table class="metadata-table" role="presentation" cellpadding="0" cellspacing="0" border="0"
   style="width:100%;background-color:#FAFAFA;border-radius:6px;margin-bottom:24px;">
   <tr>
-    <td class="metadata-label" style="padding:12px 16px 4px 16px;font-size:13px;color:#757575;font-weight:500;">Case</td>
+    <td class="metadata-label" style="padding:12px 16px 4px 16px;font-size:13px;color:#757575;font-weight:500;">{% trans "Case" %}</td>
   </tr>
   <tr>
     <td class="metadata-value" style="padding:0 16px 12px 16px;font-size:15px;color:#212121;">{{ case.name }}</td>
@@ -59,6 +60,6 @@ would let any scanner in the delivery path answer the survey.
 
 {% block extra_content %}
 <p style="margin:0;font-size:13px;color:#757575;line-height:1.5;">
-  Or <a href="{{ link }}" style="color:#EA580C;">open the survey</a> to leave a comment as well.
+  {% blocktrans %}Or <a href="{{ link }}" style="color:#EA580C;">open the survey</a> to leave a comment as well.{% endblocktrans %}
 </p>
 {% endblock extra_content %}

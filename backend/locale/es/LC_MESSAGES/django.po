@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 07:30+0000\n"
+"POT-Creation-Date: 2026-09-06 07:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -438,6 +438,47 @@ msgstr "Corrige las filas inválidas antes de importar."
 msgid "Only approved solutions can be published. Please approve it first."
 msgstr "Solo se pueden publicar soluciones aprobadas. Apruébala primero."
 
+#, python-format
+msgid "How did we do on \"%(case_name)s\"?"
+msgstr "¿Qué te pareció nuestra atención en \"%(case_name)s\"?"
+
+msgid "How did we do?"
+msgstr "¿Qué te pareció nuestra atención?"
+
+#, python-format
+msgid "Hi %(name)s,"
+msgstr "Hola %(name)s,"
+
+#, python-format
+msgid "Your case with %(org_name)s is closed. Tap a star to rate it, and we will only ask you this once."
+msgstr "Tu caso con %(org_name)s está cerrado. Toca una estrella para calificarlo; solo te lo preguntaremos esta vez."
+
+msgid "Case"
+msgstr "Caso"
+
+#, python-format
+msgid "Or <a href=\"%(link)s\" style=\"color:#EA580C;\">open the survey</a> to leave a comment as well."
+msgstr "O <a href=\"%(link)s\" style=\"color:#EA580C;\">abre la encuesta</a> para dejar también un comentario."
+
+#, python-format
+msgid "Hello %(contact_name)s,"
+msgstr "Hola %(contact_name)s,"
+
+#, python-format
+msgid "Support has replied to your request \"%(case_name)s\"."
+msgstr "El equipo de soporte respondió a tu solicitud \"%(case_name)s\"."
+
+#, python-format
+msgid "Your request \"%(case_name)s\" is now <strong>%(case_status)s</strong>."
+msgstr "Tu solicitud \"%(case_name)s\" ahora está <strong>%(case_status)s</strong>."
+
+#, python-format
+msgid "Open it in the %(org_name)s support portal"
+msgstr "Ábrela en el portal de soporte de %(org_name)s"
+
+msgid "You will be asked to sign in, and we will email you a six digit code to do that."
+msgstr "Se te pedirá que inicies sesión y te enviaremos por correo un código de seis dígitos para hacerlo."
+
 msgid "You already have a running timer."
 msgstr "Ya tienes un cronómetro en marcha."
 
@@ -573,6 +614,178 @@ msgstr "Demasiados scopes (máximo 32)."
 
 msgid "expires_at must be in the future."
 msgstr "expires_at debe ser una fecha futura."
+
+msgid "An account has been assigned to you in BottleCRM"
+msgstr "Se te asignó una cuenta en BottleCRM"
+
+#, python-format
+msgid "%(created_by)s assigned an account to you."
+msgstr "%(created_by)s te asignó una cuenta."
+
+msgid "Account"
+msgstr "Cuenta"
+
+msgid "Assigned by"
+msgstr "Asignado por"
+
+msgid "View Account"
+msgstr "Ver cuenta"
+
+msgid "A case has been assigned to you in BottleCRM"
+msgstr "Se te asignó un caso en BottleCRM"
+
+#, python-format
+msgid "%(created_by)s assigned a case to you."
+msgstr "%(created_by)s te asignó un caso."
+
+msgid "View Case"
+msgstr "Ver caso"
+
+msgid "A contact has been assigned to you in BottleCRM"
+msgstr "Se te asignó un contacto en BottleCRM"
+
+#, python-format
+msgid "%(created_by)s assigned a contact to you."
+msgstr "%(created_by)s te asignó un contacto."
+
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "View Contact"
+msgstr "Ver contacto"
+
+msgid "A lead has been assigned to you in BottleCRM"
+msgstr "Se te asignó un prospecto en BottleCRM"
+
+#, python-format
+msgid "%(created_by)s assigned a lead to you."
+msgstr "%(created_by)s te asignó un prospecto."
+
+msgid "A lead has been assigned to you."
+msgstr "Se te asignó un prospecto."
+
+msgid "Lead"
+msgstr "Prospecto"
+
+msgctxt "email metadata label"
+msgid "Source"
+msgstr "Origen"
+
+msgid "View Lead"
+msgstr "Ver prospecto"
+
+msgid "An opportunity has been assigned to you in BottleCRM"
+msgstr "Se te asignó una oportunidad en BottleCRM"
+
+#, python-format
+msgid "%(created_by)s assigned an opportunity to you."
+msgstr "%(created_by)s te asignó una oportunidad."
+
+msgid "Opportunity"
+msgstr "Oportunidad"
+
+msgid "View Opportunity"
+msgstr "Ver oportunidad"
+
+msgid "Your BottleCRM sign-in code"
+msgstr "Tu código de acceso a BottleCRM"
+
+msgid "Sign in to BottleCRM"
+msgstr "Inicia sesión en BottleCRM"
+
+msgid "Enter this code in the BottleCRM mobile app to sign in. The code expires in 10 minutes."
+msgstr "Ingresa este código en la app móvil de BottleCRM para iniciar sesión. El código vence en 10 minutos."
+
+msgid "If you didn't request this code, you can safely ignore this email."
+msgstr "Si no solicitaste este código, puedes ignorar este correo sin problema."
+
+msgid "Your sign-in link for BottleCRM"
+msgstr "Tu enlace de acceso a BottleCRM"
+
+msgid "Click the button below to sign in to your account. This link expires in 10 minutes."
+msgstr "Haz clic en el botón de abajo para iniciar sesión en tu cuenta. Este enlace vence en 10 minutos."
+
+msgid "If you didn't request this link, you can safely ignore this email."
+msgstr "Si no solicitaste este enlace, puedes ignorar este correo sin problema."
+
+#, python-format
+msgid "Your sign-in code for %(org_name)s support is:"
+msgstr "Tu código de acceso al soporte de %(org_name)s es:"
+
+msgid "It expires in 10 minutes and can be used once."
+msgstr "Vence en 10 minutos y solo se puede usar una vez."
+
+msgid "If you did not ask to sign in, you can ignore this email and nothing will happen."
+msgstr "Si no pediste iniciar sesión, puedes ignorar este correo y no pasará nada."
+
+msgid "Sent by BottleCRM"
+msgstr "Enviado por BottleCRM"
+
+msgid "Your BottleCRM account has been deleted"
+msgstr "Tu cuenta de BottleCRM se eliminó"
+
+msgid "Account Deleted"
+msgstr "Cuenta eliminada"
+
+#, python-format
+msgid "Your account has been deleted by %(deleted_by)s. You are no longer able to access your account."
+msgstr "Tu cuenta fue eliminada por %(deleted_by)s. Ya no puedes acceder a ella."
+
+msgid "If you believe this was a mistake, please contact your organization administrator."
+msgstr "Si crees que esto fue un error, comunícate con el administrador de tu organización."
+
+msgid "Your BottleCRM account has been activated"
+msgstr "Tu cuenta de BottleCRM se activó"
+
+msgid "Account Activated"
+msgstr "Cuenta activada"
+
+#, python-format
+msgid "Your account has been activated by %(status_changed_user)s. You can now log in and access all BottleCRM features."
+msgstr "Tu cuenta fue activada por %(status_changed_user)s. Ya puedes iniciar sesión y acceder a todas las funciones de BottleCRM."
+
+msgid "Log In"
+msgstr "Iniciar sesión"
+
+msgid "Your BottleCRM account has been deactivated"
+msgstr "Tu cuenta de BottleCRM se desactivó"
+
+msgid "Account Deactivated"
+msgstr "Cuenta desactivada"
+
+#, python-format
+msgid "Your account has been deactivated by %(status_changed_user)s. You'll receive an email if your account is reactivated."
+msgstr "Tu cuenta fue desactivada por %(status_changed_user)s. Recibirás un correo si se vuelve a activar."
+
+msgid "Please contact your admin if you have any questions."
+msgstr "Si tienes alguna duda, comunícate con tu administrador."
+
+msgid "Activate your BottleCRM account"
+msgstr "Activa tu cuenta de BottleCRM"
+
+msgid "Welcome to BottleCRM"
+msgstr "Te damos la bienvenida a BottleCRM"
+
+msgid "Thanks for creating an account. Click the button below to verify your email and activate your account."
+msgstr "Gracias por crear una cuenta. Haz clic en el botón de abajo para verificar tu correo y activar tu cuenta."
+
+msgid "Link expires in"
+msgstr "El enlace vence en"
+
+msgid "2 hours"
+msgstr "2 horas"
+
+msgid "Verify Your Email"
+msgstr "Verifica tu correo"
+
+msgid "Once activated, you'll have access to all BottleCRM features."
+msgstr "Una vez activada, tendrás acceso a todas las funciones de BottleCRM."
+
+msgid "Your account has been created. You can now set up your organization and start managing your contacts, deals, and more."
+msgstr "Tu cuenta se creó correctamente. Ya puedes configurar tu organización y empezar a gestionar tus contactos, negocios y mucho más."
+
+msgid "Get Started"
+msgstr "Comenzar"
 
 msgid "United Kingdom"
 msgstr ""
@@ -2189,6 +2402,110 @@ msgstr "No se encontró la oportunidad o no pertenece a tu organización."
 msgid "Template not found or does not belong to your organization"
 msgstr "No se encontró la plantilla o no pertenece a tu organización."
 
+#, python-format
+msgid "Invoice #%(invoice_number)s has been assigned to you"
+msgstr "Se te asignó la factura n.º %(invoice_number)s"
+
+#, python-format
+msgid "An invoice has been assigned to you by %(first)s %(last)s."
+msgstr "%(first)s %(last)s te asignó una factura."
+
+msgid "An invoice has been assigned to you."
+msgstr "Se te asignó una factura."
+
+msgid "Invoice"
+msgstr "Factura"
+
+msgid "View Invoice"
+msgstr "Ver factura"
+
+#, python-format
+msgid "Estimate from %(org_name)s"
+msgstr "Estimación de %(org_name)s"
+
+#, python-format
+msgid "Dear %(client_name)s,"
+msgstr "Estimado/a %(client_name)s,"
+
+#, python-format
+msgid "Please find attached your estimate <strong>#%(estimate_number)s</strong>."
+msgstr "Adjuntamos tu estimación <strong>n.º %(estimate_number)s</strong>."
+
+msgid "Estimate Number:"
+msgstr "Número de estimación:"
+
+msgid "Description:"
+msgstr "Descripción:"
+
+msgid "Date:"
+msgstr "Fecha:"
+
+msgid "Valid Until:"
+msgstr "Válido hasta:"
+
+msgid "Total:"
+msgstr "Total:"
+
+msgid "View Estimate Online"
+msgstr "Ver estimación en línea"
+
+msgid "If you have any questions or would like to proceed with this estimate, please don't hesitate to contact us."
+msgstr "Si tienes alguna pregunta o quieres continuar con esta estimación, no dudes en contactarnos."
+
+msgid "Thank you for considering our services!"
+msgstr "¡Gracias por considerar nuestros servicios!"
+
+#, python-format
+msgid "Invoice from %(org_name)s"
+msgstr "Factura de %(org_name)s"
+
+#, python-format
+msgid "Please find attached your invoice <strong>#%(invoice_number)s</strong>."
+msgstr "Adjuntamos tu factura <strong>n.º %(invoice_number)s</strong>."
+
+msgid "Invoice Number:"
+msgstr "Número de factura:"
+
+msgid "Issue Date:"
+msgstr "Fecha de emisión:"
+
+msgid "Due Date:"
+msgstr "Fecha de vencimiento:"
+
+msgid "Amount Due:"
+msgstr "Importe adeudado:"
+
+msgid "View Invoice Online"
+msgstr "Ver factura en línea"
+
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Si tienes alguna pregunta, no dudes en contactarnos."
+
+msgid "Thank you for your business!"
+msgstr "¡Gracias por tu confianza!"
+
+msgid "Payment Reminder"
+msgstr "Recordatorio de pago"
+
+#, python-format
+msgid "This is a friendly reminder that invoice <strong>#%(number)s</strong> is now <span class=\"overdue\">%(days)s day overdue</span>."
+msgid_plural "This is a friendly reminder that invoice <strong>#%(number)s</strong> is now <span class=\"overdue\">%(days)s days overdue</span>."
+msgstr[0] "Te recordamos que la factura <strong>n.º %(number)s</strong> tiene <span class=\"overdue\">%(days)s día de atraso</span>."
+msgstr[1] "Te recordamos que la factura <strong>n.º %(number)s</strong> tiene <span class=\"overdue\">%(days)s días de atraso</span>."
+
+#, python-format
+msgid "This is a friendly reminder that invoice <strong>#%(number)s</strong> is due soon."
+msgstr "Te recordamos que la factura <strong>n.º %(number)s</strong> vence pronto."
+
+msgid "View & Pay Invoice"
+msgstr "Ver y pagar la factura"
+
+msgid "If you have already made payment, please disregard this reminder. If you have any questions about this invoice, please don't hesitate to contact us."
+msgstr "Si ya realizaste el pago, ignora este recordatorio. Si tienes alguna pregunta sobre esta factura, no dudes en contactarnos."
+
+msgid "Thank you!"
+msgstr "¡Gracias!"
+
 msgid "Not a valid CSV file"
 msgstr "No es un archivo CSV válido."
 
@@ -2324,6 +2641,69 @@ msgstr ""
 msgid "Deal Type Weights"
 msgstr ""
 
+#, python-format
+msgid "Congratulations, %(username)s!"
+msgstr "¡Felicitaciones, %(username)s!"
+
+#, python-format
+msgid "Your sales goal <strong>\"%(name)s\"</strong> has reached the <strong>%(milestone)s</strong> milestone!"
+msgstr "¡Tu meta de ventas <strong>\"%(name)s\"</strong> alcanzó el hito de <strong>%(milestone)s</strong>!"
+
+msgid "Goal"
+msgstr "Meta"
+
+msgctxt "goal email label"
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Milestone"
+msgstr "Hito"
+
+msgid "Progress"
+msgstr "Progreso"
+
+msgid "Achieved"
+msgstr "Logrado"
+
+msgid "Target"
+msgstr "Objetivo"
+
+msgid "Period"
+msgstr "Período"
+
+#, python-format
+msgid "%(start)s to %(end)s"
+msgstr "%(start)s a %(end)s"
+
+msgid "View Goals"
+msgstr "Ver metas"
+
+#, python-format
+msgid "Hello %(username)s"
+msgstr "Hola %(username)s"
+
+#, python-format
+msgid "You have <strong>%(counter)s</strong> stale deal that needs attention:"
+msgid_plural "You have <strong>%(counter)s</strong> stale deals that need attention:"
+msgstr[0] "Tienes <strong>%(counter)s</strong> negocio estancado que necesita atención:"
+msgstr[1] "Tienes <strong>%(counter)s</strong> negocios estancados que necesitan atención:"
+
+msgid "Deal"
+msgstr "Negocio"
+
+msgctxt "deal email label"
+msgid "Stage"
+msgstr "Etapa"
+
+msgid "Days in Stage"
+msgstr "Días en la etapa"
+
+msgid "Expected"
+msgstr "Esperado"
+
+msgid "View Stale Deals"
+msgstr "Ver negocios estancados"
+
 msgid "Only admins can update aging config"
 msgstr "Solo los administradores pueden actualizar la configuración de antigüedad."
 
@@ -2429,6 +2809,19 @@ msgstr ""
 msgid "A task can only be linked to one parent entity (Account, Opportunity, Case, or Lead). "
 msgstr ""
 
+msgid "A task has been assigned to you in BottleCRM"
+msgstr "Se te asignó una tarea en BottleCRM"
+
+#, python-format
+msgid "%(task_created_by)s assigned a task to you."
+msgstr "%(task_created_by)s te asignó una tarea."
+
+msgid "Task"
+msgstr "Tarea"
+
+msgid "View Task"
+msgstr "Ver tarea"
+
 msgid "Board not found or access denied"
 msgstr "No se encontró el tablero o se denegó el acceso."
 
@@ -2469,6 +2862,16 @@ msgstr "Este formulario no se puede enviar desde este sitio."
 
 msgid "Could not verify that you are human. Please try again."
 msgstr "No se pudo verificar que eres una persona. Inténtalo de nuevo."
+
+#, python-format
+msgid "A new submission arrived through <strong>%(form_name)s</strong>."
+msgstr "Llegó un nuevo envío a través de <strong>%(form_name)s</strong>."
+
+msgid "This address already had a lead, so the details were merged into it rather than creating a second record. Any field that was already filled in was left as it was."
+msgstr "Esta dirección ya tenía un prospecto, así que los datos se combinaron con él en lugar de crear un segundo registro. Los campos que ya estaban completos se dejaron como estaban."
+
+msgid "Open the lead"
+msgstr "Abrir el prospecto"
 
 msgid "This form is already published."
 msgstr "Este formulario ya está publicado."
