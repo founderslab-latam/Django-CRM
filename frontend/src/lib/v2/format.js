@@ -1,6 +1,48 @@
 /** Formatting helpers for v2. Every number rendered goes through one of these. */
 
-/** @param {number|string|null|undefined} n */
+import { get } from 'svelte/store';
+
+import { locale } from '$lib/i18n/index.js';
+
+/**
+ * The active locale, as a plain BCP-47 string these helpers can hand to
+ * `Intl`. Read at call time (never at import time) so it tracks the value
+ * `hooks.server.js` sets per request and the client store after that. When
+ * i18n has not been initialised at all — the unit tests, a bare script —
+ * `get(locale)` is `null`/`undefined` and every function below falls back to
+ * exactly the English formatting it used before this file learned about
+ * locales.
+ *
+ * Dates use `en-GB` for English (day before month, "8 Aug"), which is the
+ * order this app has always rendered; only the language switches, not the
+ * field order.
+ */
+function activeLocale() {
+  const l = get(locale);
+  return typeof l === 'string' && l.length ? l : null;
+}
+
+/** @returns {string} a locale tag for date/relative formatting */
+function dateLocale() {
+  const l = activeLocale();
+  return l && l.startsWith('es') ? 'es' : 'en-GB';
+}
+
+/** @returns {string} a locale tag for plain number grouping */
+function numberLocale() {
+  const l = activeLocale();
+  return l && l.startsWith('es') ? 'es' : 'en-US';
+}
+
+/**
+ * @param {number|string|null|undefined} n
+ *
+ * Currency formatting stays pinned to `en-US` on purpose for now: switching
+ * the locale here moves the currency symbol and the grouping/decimal marks
+ * ("1.234,50 US$"), which is a larger visual change than the rest of this
+ * file and wants its own decision. Tracked in the i18n plan's
+ * shared-component notes.
+ */
 export function money(n, currency = 'USD') {
   const v = Number(n ?? 0);
   if (!Number.isFinite(v)) return '—';
@@ -14,7 +56,7 @@ export function money(n, currency = 'USD') {
 /** @param {number|string|null|undefined} n */
 export function count(n) {
   const v = Number(n ?? 0);
-  return Number.isFinite(v) ? v.toLocaleString('en-US') : '—';
+  return Number.isFinite(v) ? v.toLocaleString(numberLocale()) : '—';
 }
 
 /** @param {string|null|undefined} name */
@@ -57,7 +99,7 @@ export function shortDate(iso, now = new Date()) {
   const d = parseIso(iso);
   if (!d) return '—';
   const sameYear = d.getFullYear() === now.getFullYear();
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric',
     month: 'short',
     ...(sameYear ? {} : { year: 'numeric' })
@@ -68,7 +110,7 @@ export function shortDate(iso, now = new Date()) {
 export function longDate(iso) {
   const d = parseIso(iso);
   if (!d) return '—';
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -82,15 +124,17 @@ export function daysSince(iso, now = new Date()) {
   return Math.floor((now.getTime() - d.getTime()) / 86400000);
 }
 
-/** "12 days ago" / "today" / "in 4 days", for a person, not a machine. */
+/**
+ * "12 days ago" / "today" / "in 4 days", for a person, not a machine.
+ *
+ * `Intl.RelativeTimeFormat` with `numeric: 'auto'` gives exactly the English
+ * this used to hand-roll ("today", "yesterday", "N days ago", "tomorrow",
+ * "in N days") and the natural Spanish equivalent, plurals included, for free.
+ */
 export function relativeDays(iso, now = new Date()) {
   const n = daysSince(iso, now);
   if (n === null) return '—';
-  if (n === 0) return 'today';
-  if (n === 1) return 'yesterday';
-  if (n > 1) return `${n} days ago`;
-  if (n === -1) return 'tomorrow';
-  return `in ${Math.abs(n)} days`;
+  return new Intl.RelativeTimeFormat(dateLocale(), { numeric: 'auto' }).format(-n, 'day');
 }
 
 /**
@@ -107,10 +151,14 @@ export function relativeTime(iso, now = new Date()) {
   if (!d) return '—';
   const mins = Math.floor((now.getTime() - d.getTime()) / 60000);
   if (mins < 0) return relativeDays(iso, now);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+  // `Intl.RelativeTimeFormat` has no "just now"; its zero case is "this
+  // minute" / "este minuto", which reads wrong in a feed. The two literals
+  // are the only text this file states directly.
+  if (mins < 1) return dateLocale() === 'es' ? 'ahora mismo' : 'just now';
+  const rtf = new Intl.RelativeTimeFormat(dateLocale(), { numeric: 'always' });
+  if (mins < 60) return rtf.format(-mins, 'minute');
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+  if (hrs < 24) return rtf.format(-hrs, 'hour');
   return relativeDays(iso, now);
 }
 
@@ -120,6 +168,7 @@ export function relativeTime(iso, now = new Date()) {
  * Logged time is read in hours: "108m" makes the reader do the division, and
  * two of them on the same screen makes them do it twice. Minutes below the
  * hour keep their own suffix so a short entry does not render as "0h 12m".
+ * The h/m/d marks are unit symbols, not words, so they do not translate.
  *
  * @param {number|string|null|undefined} mins
  */
@@ -131,7 +180,7 @@ export function hoursMinutes(mins) {
   return h ? `${h}h ${m % 60}m` : `${m}m`;
 }
 
-/** Compact age for a table cell: "12d", "3h". */
+/** Compact age for a table cell: "12d", "3h". Unit symbols, not words. */
 export function shortAge(iso, now = new Date()) {
   const d = parseIso(iso);
   if (!d) return '—';
