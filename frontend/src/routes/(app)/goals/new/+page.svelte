@@ -5,8 +5,9 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import DealTypeWeights from '$lib/v2/components/DealTypeWeights.svelte';
-  import { GOAL_TYPE_LABEL, PERIOD_TYPE_LABEL } from '$lib/v2/enums.js';
   import { money, count } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { goalTypeKey, periodTypeKey } from '$lib/goals/labels.js';
   import { TriangleAlert } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -49,17 +50,17 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!form.name.trim()) e.name = 'Give the goal a name you would recognise in a list.';
+    if (!form.name.trim()) e.name = $_('goals.form.error_name');
 
     const target = Number(form.target_value);
-    if (form.target_value === '') e.target_value = 'What is the target?';
+    if (form.target_value === '') e.target_value = $_('goals.form.error_target_required');
     else if (!Number.isFinite(target) || target <= 0)
-      e.target_value = 'Target has to be a number greater than zero.';
+      e.target_value = $_('goals.form.error_target_number');
 
-    if (!form.period_start) e.period_start = 'When does the period start?';
-    if (!form.period_end) e.period_end = 'When does the period end?';
+    if (!form.period_start) e.period_start = $_('goals.form.error_start_required');
+    if (!form.period_end) e.period_end = $_('goals.form.error_end_required');
     else if (form.period_start && form.period_end <= form.period_start)
-      e.period_end = 'The end has to be after the start.';
+      e.period_end = $_('goals.form.error_end_after_start');
 
     return e;
   });
@@ -83,20 +84,20 @@
 </script>
 
 {#if !data.can_edit}
-  <PageHeader title="New goal">
-    {#snippet crumb()}<a href={resolve('/goals')}>Goals</a> ›{/snippet}
+  <PageHeader title={$_('goals.new.title')}>
+    {#snippet crumb()}<a href={resolve('/goals')}>{$_('goals.form.crumb_goals')}</a> ›{/snippet}
   </PageHeader>
   <div class="v2-pad" style="padding-top:40px">
     <NextAction
-      label="Admins only"
-      text="Setting goals is limited to admins. Ask an admin on your team to add a quota or target."
+      label={$_('goals.new.admins_only_label')}
+      text={$_('goals.new.admins_only_text')}
     />
   </div>
 {:else}
-  <PageHeader title="New goal" center>
-    {#snippet crumb()}<a href={resolve('/goals')}>Goals</a> ›{/snippet}
+  <PageHeader title={$_('goals.new.title')} center>
+    {#snippet crumb()}<a href={resolve('/goals')}>{$_('goals.form.crumb_goals')}</a> ›{/snippet}
     {#snippet sub()}
-      A target and a period. Closed-won deals count towards it automatically.
+      {$_('goals.new.sub')}
     {/snippet}
   </PageHeader>
 
@@ -110,14 +111,14 @@
         >
           <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
           <div class="v2-next-body">
-            <div style="font-weight:600">The server refused this goal</div>
+            <div style="font-weight:600">{$_('goals.new.server_error_heading')}</div>
             <div class="v2-sub" style="margin-top:2px">{result.error}</div>
           </div>
         </div>
       {/if}
 
       <div class="v2-field">
-        <label for="f-name">Goal name</label>
+        <label for="f-name">{$_('goals.form.label_name')}</label>
         <input
           id="f-name"
           name="name"
@@ -126,33 +127,32 @@
           onblur={() => (touched.name = true)}
           aria-invalid={show('name') ? 'true' : undefined}
           aria-describedby={show('name') ? 'e-name' : 'h-name'}
-          placeholder="Q3 revenue. Priya"
+          placeholder={$_('goals.form.placeholder_name')}
         />
         {#if show('name')}
           <p class="v2-error" id="e-name">{errors.name}</p>
         {:else}
           <p class="v2-hint" id="h-name">
-            What you would say out loud, “Q3 revenue, Priya”, not “Goal 14”.
+            {$_('goals.form.hint_name')}
           </p>
         {/if}
       </div>
 
       <div class="v2-pair">
         <div class="v2-field">
-          <label for="f-type">Measured in</label>
+          <label for="f-type">{$_('goals.form.label_type')}</label>
           <select id="f-type" name="goal_type" class="v2-input" bind:value={form.goal_type}>
-            {#each Object.entries(GOAL_TYPE_LABEL) as [key, label] (key)}
-              <option value={key}>{label}</option>
+            {#each ['REVENUE', 'DEALS_CLOSED', 'ACTIVITIES'] as key (key)}
+              <option value={key}>{$_(goalTypeKey(key))}</option>
             {/each}
           </select>
           <p class="v2-hint">
-            Revenue counts closed-won amounts, deals counts closed-won deals, and activities counts
-            the records this person touched.
+            {$_('goals.form.hint_type')}
           </p>
         </div>
 
         <div class="v2-field">
-          <label for="f-target">Target</label>
+          <label for="f-target">{$_('goals.form.label_target')}</label>
           <input
             id="f-target"
             name="target_value"
@@ -176,20 +176,20 @@
       </div>
 
       <div class="v2-field">
-        <label for="f-period">Period</label>
+        <label for="f-period">{$_('goals.form.label_period')}</label>
         <select id="f-period" name="period_type" class="v2-input" bind:value={form.period_type}>
-          {#each Object.entries(PERIOD_TYPE_LABEL) as [key, label] (key)}
-            <option value={key}>{label}</option>
+          {#each ['MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'] as key (key)}
+            <option value={key}>{$_(periodTypeKey(key))}</option>
           {/each}
         </select>
-        <p class="v2-hint">A label for the window below. The dates are what actually scope it.</p>
+        <p class="v2-hint">{$_('goals.form.hint_period')}</p>
       </div>
 
       <DealTypeWeights weights={{}} goalType={form.goal_type} />
 
       <div class="v2-pair">
         <div class="v2-field">
-          <label for="f-start">Period start</label>
+          <label for="f-start">{$_('goals.form.label_start')}</label>
           <input
             id="f-start"
             name="period_start"
@@ -204,7 +204,7 @@
         </div>
 
         <div class="v2-field">
-          <label for="f-end">Period end</label>
+          <label for="f-end">{$_('goals.form.label_end')}</label>
           <input
             id="f-end"
             name="period_end"
@@ -220,18 +220,18 @@
       </div>
 
       <div class="v2-field">
-        <label for="f-owner">Whose goal</label>
+        <label for="f-owner">{$_('goals.form.label_owner')}</label>
         <select id="f-owner" name="target" class="v2-input" bind:value={form.target}>
-          <option value="org">Whole org</option>
+          <option value="org">{$_('goals.form.owner_whole_org')}</option>
           {#if data.people?.length}
-            <optgroup label="Person">
+            <optgroup label={$_('goals.form.owner_group_person')}>
               {#each data.people as p (p.id)}
                 <option value="profile:{p.id}">{p.name}</option>
               {/each}
             </optgroup>
           {/if}
           {#if data.teams?.length}
-            <optgroup label="Team">
+            <optgroup label={$_('goals.form.owner_group_team')}>
               {#each data.teams as t (t.id)}
                 <option value="team:{t.id}">{t.name}</option>
               {/each}
@@ -239,17 +239,18 @@
           {/if}
         </select>
         <p class="v2-hint">
-          Progress is scoped to whoever this is aimed at. Only people and teams in your org appear
-          here, the server refuses any other.
+          {$_('goals.form.hint_owner')}
         </p>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;margin-top:22px">
-        <button class="v2-btn v2-btn-primary" type="submit">Create goal</button>
-        <a class="v2-btn" href={resolve('/goals')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit">{$_('goals.new.submit_button')}</button>
+        <a class="v2-btn" href={resolve('/goals')}>{$_('goals.form.cancel')}</a>
         <span class="v2-sub" style="margin-left:auto;font-size:12px">
           <span class="v2-num">{REQUIRED.filter((f) => !errors[f]).length}</span>
-          of <span class="v2-num">{REQUIRED.length}</span> required fields done
+          {$_('goals.form.progress_of_connector')}
+          <span class="v2-num">{REQUIRED.length}</span>
+          {$_('goals.form.progress_suffix')}
         </span>
       </div>
     </form>

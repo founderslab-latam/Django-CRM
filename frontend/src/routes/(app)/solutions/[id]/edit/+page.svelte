@@ -11,7 +11,9 @@
    * an admin.
    */
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
-  import { SOLUTION_STATUS, SOLUTION_STATUS_LABEL } from '$lib/v2/enums.js';
+  import { SOLUTION_STATUS } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { solutionStatusKey } from '$lib/solutions/labels.js';
   import { enhance } from '$app/forms';
   import { untrack } from 'svelte';
   import { ChevronLeft } from '@lucide/svelte';
@@ -47,25 +49,27 @@
   let locked = $derived(data.article.is_published);
 </script>
 
-<PageHeader title="Edit article" record center width="760px">
+<PageHeader title={$_('solutions.edit.title')} record center width="760px">
   {#snippet crumb()}
     <a href={resolve(`/solutions/${data.article.id}`)}
       ><ChevronLeft size={13} />{data.article.title}</a
     >
   {/snippet}
   {#snippet sub()}
-    {data.article.author || 'Unknown author'} · used on
-    <span class="v2-num">{data.article.use_count}</span> tickets
+    {data.article.author || $_('solutions.detail.unknown_author')}
+    · {$_('solutions.edit.sub_used_on')}
+    <span class="v2-num">{data.article.use_count}</span>
+    {$_('solutions.edit.sub_tickets_suffix', { values: { count: data.article.use_count } })}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve(`/solutions/${data.article.id}`)}>Cancel</a>
+    <a class="v2-btn" href={resolve(`/solutions/${data.article.id}`)}>{$_('solutions.form.cancel')}</a>
     <button
       class="v2-btn v2-btn-primary"
       type="submit"
       form="article-form"
       disabled={!ready || saving}
     >
-      {saving ? 'Saving…' : 'Save changes'}
+      {saving ? $_('solutions.form.saving') : $_('solutions.edit.save_button')}
     </button>
   {/snippet}
 </PageHeader>
@@ -93,34 +97,32 @@
 
       {#if data.article.is_published}
         <p class="notice">
-          This article is published, so anything saved here is what customers read in the portal and
-          what agents are offered on tickets.
+          {$_('solutions.edit.published_notice')}
         </p>
       {/if}
 
       <div class="v2-card" style="padding:18px 20px">
         <label class="f">
-          <span>Title</span>
+          <span>{$_('solutions.form.label_title')}</span>
           <input name="title" bind:value={title} />
-          <em>Say the symptom the way a customer would report it, not the fix.</em>
+          <em>{$_('solutions.form.hint_title')}</em>
         </label>
 
         <label class="f" style="margin-top:18px">
-          <span>Answer</span>
+          <span>{$_('solutions.form.label_answer')}</span>
           <textarea name="description" rows="12" bind:value={description}></textarea>
-          <em>This is pasted into replies as-is.</em>
+          <em>{$_('solutions.edit.hint_answer')}</em>
         </label>
       </div>
 
       {#if data.tags.length > 0}
         <div class="v2-card" style="padding:18px 20px;margin-top:14px">
-          <div class="v2-label" style="margin-bottom:4px">Tags</div>
+          <div class="v2-label" style="margin-bottom:4px">{$_('solutions.form.label_tags')}</div>
           <!-- Internal filing only. The portal uses these to pick related
                articles and never prints the names, which read like "At Risk"
                and "VIP" because the vocabulary is shared with deals. -->
           <p class="lead">
-            Customers never see these names, but articles sharing one are shown to each other in the
-            portal.
+            {$_('solutions.edit.tags_lead')}
           </p>
           <div class="tags">
             {#each data.tags as tag (tag.id)}
@@ -141,19 +143,19 @@
 
       <div class="v2-card" style="padding:18px 20px;margin-top:14px">
         <label class="f" style="max-width:240px">
-          <span>Review status</span>
+          <span>{$_('solutions.form.label_review_status')}</span>
           <select name="status" bind:value={status} disabled={locked}>
             {#each statuses as s (s)}
-              <option value={s}>{SOLUTION_STATUS_LABEL[s]}</option>
+              <option value={s}>{$_(solutionStatusKey(s))}</option>
             {/each}
           </select>
           <em>
             {#if locked}
-              A published article cannot move back down the workflow. Unpublish it first.
+              {$_('solutions.edit.hint_locked')}
             {:else if !data.canRelease}
-              Approving is an admin's call. It is what lets an article be published.
+              {$_('solutions.form.hint_approve_admin')}
             {:else}
-              Approving does not publish it. That is a separate button on the article.
+              {$_('solutions.edit.hint_approve_separate')}
             {/if}
           </em>
         </label>

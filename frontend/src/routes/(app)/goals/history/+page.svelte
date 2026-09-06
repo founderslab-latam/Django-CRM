@@ -19,7 +19,8 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { money, count, shortDate } from '$lib/v2/format.js';
-  import { GOAL_TYPE_LABEL, PERIOD_TYPE_LABEL } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { goalTypeKey, periodTypeKey } from '$lib/goals/labels.js';
   import { History } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -45,14 +46,17 @@
 
   /** The owner of a goal, in the words the list page uses. */
   const owner = (g) =>
-    g.assigned_to ? g.assigned_to.name : g.team ? `${g.team.name} (team)` : 'Whole org';
+    g.assigned_to
+      ? g.assigned_to.name
+      : g.team
+        ? $_('goals.list.team_suffix', { values: { name: g.team.name } })
+        : $_('goals.list.whole_org');
 </script>
 
-<PageHeader title="Goal history">
-  {#snippet crumb()}<a href={resolve('/goals')}>Goals</a> ›{/snippet}
+<PageHeader title={$_('goals.history.title')}>
+  {#snippet crumb()}<a href={resolve('/goals')}>{$_('goals.form.crumb_goals')}</a> ›{/snippet}
   {#snippet sub()}
-    Finished periods, newest first. A closed period is settled, so these are results rather than
-    pace.
+    {$_('goals.history.sub')}
   {/snippet}
 </PageHeader>
 
@@ -63,12 +67,12 @@
            goals and their teams', so "nothing has finished yet" would be a
            claim about the org that a member cannot actually see. -->
       <EmptyState
-        title="No finished periods yet"
-        body="Once a goal's period ends it moves here with what it attained. Goals still running are on the goals page."
+        title={$_('goals.history.empty_title')}
+        body={$_('goals.history.empty_body')}
       >
         {#snippet icon()}<History size={21} />{/snippet}
         {#snippet actions()}
-          <a class="v2-btn" href={resolve('/goals')}>Back to goals</a>
+          <a class="v2-btn" href={resolve('/goals')}>{$_('goals.history.back_button')}</a>
         {/snippet}
       </EmptyState>
     {:else}
@@ -81,13 +85,16 @@
                   {shortDate(period.period_start)} - {shortDate(period.period_end)}
                 </div>
                 <div class="v2-sub" style="font-size:11.5px;margin-top:2px">
-                  {PERIOD_TYPE_LABEL[period.period_type]} · {GOAL_TYPE_LABEL[period.goal_type]} ·
+                  {$_(periodTypeKey(period.period_type))} · {$_(goalTypeKey(period.goal_type))} ·
                   <span class="v2-num">{period.attained_count}</span>
-                  of <span class="v2-num">{period.goals_count}</span>
-                  {period.goals_count === 1 ? 'goal' : 'goals'} met
+                  {$_('goals.history.of')}
+                  <span class="v2-num">{period.goals_count}</span>
+                  {$_('goals.history.goals_met_suffix', { values: { count: period.goals_count } })}
                 </div>
               </div>
-              <Pill tone={tone(period.percent)}>{period.percent}% of target</Pill>
+              <Pill tone={tone(period.percent)}
+                >{$_('goals.history.percent_of_target', { values: { percent: period.percent } })}</Pill
+              >
             </header>
 
             <div class="v2-bar" style="margin-top:11px">
@@ -100,18 +107,23 @@
             </div>
             <div class="v2-bar-legend">
               <span class="v2-num">{unit(period.goal_type, period.achieved)}</span>
-              <span>of <span class="v2-num">{unit(period.goal_type, period.target)}</span></span>
+              <span
+                >{$_('goals.history.of')}
+                <span class="v2-num">{unit(period.goal_type, period.target)}</span></span
+              >
             </div>
 
             <ul class="goals">
               {#each period.goals as g (g.id)}
                 <li>
                   <span class="name">{g.name}</span>
-                  <span class="v2-sub who">{owner(g)} · {GOAL_TYPE_LABEL[g.goal_type]}</span>
+                  <span class="v2-sub who">{owner(g)} · {$_(goalTypeKey(g.goal_type))}</span>
                   <span class="v2-num figures">
                     {value(g, g.progress_value)} / {value(g, g.target_value)}
                   </span>
-                  <Pill tone={met(g) ? 'moss' : 'slate'}>{met(g) ? 'Met' : 'Missed'}</Pill>
+                  <Pill tone={met(g) ? 'moss' : 'slate'}
+                    >{met(g) ? $_('goals.history.met') : $_('goals.history.missed')}</Pill
+                  >
                 </li>
               {/each}
             </ul>
@@ -120,8 +132,7 @@
       </div>
 
       <p class="v2-sub" style="font-size:11.5px;margin-top:14px">
-        The twelve most recent periods you can see. Attainment is recomputed from the closed-won
-        deals of each period, so it matches what the goals page showed while the period was running.
+        {$_('goals.history.footer_note')}
       </p>
     {/if}
   </div>

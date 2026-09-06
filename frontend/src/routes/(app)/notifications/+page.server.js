@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getNotifications,
   markNotificationRead,
@@ -20,12 +22,14 @@ export const actions = {
   read: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString() ?? '';
-    if (!id) return fail(400, { error: 'Missing notification id.' });
+    if (!id) return fail(400, { error: get(_)('notifications.list.error_missing_id') });
 
     try {
       await markNotificationRead({ cookies }, id);
     } catch (/** @type {any} */ err) {
-      return fail(err?.status === 404 ? 404 : 500, { error: 'Could not mark that read.' });
+      return fail(err?.status === 404 ? 404 : 500, {
+        error: get(_)('notifications.list.error_mark_read')
+      });
     }
     return { ok: true };
   },
@@ -35,7 +39,7 @@ export const actions = {
     try {
       await markAllNotificationsRead({ cookies });
     } catch {
-      return fail(500, { error: 'Could not mark everything read.' });
+      return fail(500, { error: get(_)('notifications.list.error_mark_all_read') });
     }
     return { ok: true };
   }

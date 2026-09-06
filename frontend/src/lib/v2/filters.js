@@ -34,7 +34,6 @@ import {
   LEAD_SOURCES,
   LEAD_SOURCE_LABEL,
   SOLUTION_STATUS,
-  SOLUTION_STATUS_LABEL,
   STAGES,
   STAGE_LABEL,
   TASK_PRIORITY,
@@ -47,6 +46,7 @@ import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js
 import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
 import { taskPriorityKey, taskStatusKey } from '$lib/tasks/labels.js';
 import { invoiceStatusKey } from '$lib/invoices/labels.js';
+import { solutionStatusKey } from '$lib/solutions/labels.js';
 
 /**
  * `label` is a plain string, except Leads', which is `() => string` so it
@@ -315,19 +315,27 @@ export const FILTERS = {
 
   solutions: {
     presets: [
-      { key: 'published', label: 'Published', params: { visibility: 'published' } },
-      { key: 'drafts', label: 'Drafts', params: { status: 'draft' } },
-      { key: 'all', label: 'All articles, last edited first', params: {} }
+      {
+        key: 'published',
+        label: () => get($i18n)('solutions.filters.preset_published'),
+        params: { visibility: 'published' }
+      },
+      {
+        key: 'drafts',
+        label: () => get($i18n)('solutions.filters.preset_drafts'),
+        params: { status: 'draft' }
+      },
+      { key: 'all', label: () => get($i18n)('solutions.filters.preset_all'), params: {} }
     ],
     fields: [
       {
         key: 'status',
-        label: 'Status',
+        label: () => get($i18n)('solutions.filters.field_status'),
         type: 'select',
         options: SOLUTION_STATUS,
-        labelFor: (v) => SOLUTION_STATUS_LABEL[v] ?? v
+        labelFor: (v) => get($i18n)(solutionStatusKey(v))
       },
-      { key: 'tags', label: 'Tag', type: 'tag' }
+      { key: 'tags', label: () => get($i18n)('solutions.filters.field_tag'), type: 'tag' }
     ]
   },
 

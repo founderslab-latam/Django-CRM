@@ -32,6 +32,7 @@
    */
   import { untrack } from 'svelte';
   import { deserialize } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
@@ -63,10 +64,10 @@
    * "sla breached" and not `case.sla_breached`.
    */
   function verbPhrase(n) {
-    if (n.verb === 'case.mentioned') return 'mentioned you on';
-    if (n.verb === 'case.commented') return 'commented on';
-    if (n.verb === 'support.replied') return 'replied to';
-    if (n.verb === 'support.status_changed') return 'updated';
+    if (n.verb === 'case.mentioned') return $_('notifications.list.verb_mentioned');
+    if (n.verb === 'case.commented') return $_('notifications.list.verb_commented');
+    if (n.verb === 'support.replied') return $_('notifications.list.verb_replied');
+    if (n.verb === 'support.status_changed') return $_('notifications.list.verb_updated');
     return `${n.verb.replace(/^[^.]+\./, '').replace(/_/g, ' ')}, `;
   }
 
@@ -112,12 +113,13 @@
   }
 </script>
 
-<PageHeader title="Notifications">
+<PageHeader title={$_('notifications.list.title')}>
   {#snippet sub()}
     {#if unread.length}
-      <span class="v2-num">{unread.length}</span> unread
+      <span class="v2-num">{unread.length}</span>
+      {$_('notifications.list.sub_unread_suffix')}
     {:else}
-      Nothing unread
+      {$_('notifications.list.sub_nothing_unread')}
     {/if}
   {/snippet}
   {#snippet actions()}
@@ -126,10 +128,12 @@
       type="button"
       onclick={() => (filter = filter === 'unread' ? 'all' : 'unread')}
     >
-      {filter === 'unread' ? 'Show read too' : 'Unread only'}
+      {filter === 'unread'
+        ? $_('notifications.list.toggle_show_read')
+        : $_('notifications.list.toggle_unread_only')}
     </button>
     <button class="v2-btn" type="button" disabled={!unread.length} onclick={markAllRead}>
-      <Check />Mark all read
+      <Check />{$_('notifications.list.mark_all_read')}
     </button>
   {/snippet}
 </PageHeader>
@@ -138,20 +142,22 @@
   <div class="v2-pad" style="padding-top:16px;padding-bottom:32px">
     {#if visible.length === 0}
       <EmptyState
-        title={filter === 'unread' ? 'Nothing unread' : 'No notifications'}
+        title={filter === 'unread'
+          ? $_('notifications.list.empty_unread_title')
+          : $_('notifications.list.empty_all_title')}
         body={filter === 'unread'
-          ? 'Everything here has been read. Notifications arrive for CRM ticket activity and updates from BottleCRM Support.'
-          : 'Notifications arrive for CRM ticket activity and updates from BottleCRM Support.'}
+          ? $_('notifications.list.empty_unread_body')
+          : $_('notifications.list.empty_all_body')}
       >
         {#snippet icon()}<BellOff size={21} />{/snippet}
         {#snippet actions()}
           {#if filter === 'unread' && rows.length}
             <button class="v2-btn" type="button" onclick={() => (filter = 'all')}>
-              Show read too
+              {$_('notifications.list.toggle_show_read')}
             </button>
           {/if}
-          <a class="v2-btn" href={resolve('/tickets')}>Go to tickets</a>
-          <a class="v2-btn" href={resolve('/help')}>Get help</a>
+          <a class="v2-btn" href={resolve('/tickets')}>{$_('notifications.list.go_to_tickets')}</a>
+          <a class="v2-btn" href={resolve('/help')}>{$_('notifications.list.get_help')}</a>
         {/snippet}
       </EmptyState>
     {:else}
@@ -173,7 +179,7 @@
                   <Avatar name={n.actor.name} size={17} />
                   <b>{n.actor.name}</b>
                 {:else}
-                  <b class="system">The system</b>
+                  <b class="system">{$_('notifications.list.actor_system')}</b>
                 {/if}
                 {verbPhrase(n)}
                 {#if n.entity_name}
@@ -185,7 +191,7 @@
                     <span class="entity">{n.entity_name}</span>
                   {/if}
                 {:else}
-                  <span class="entity v2-muted">a ticket that no longer has a name</span>
+                  <span class="entity v2-muted">{$_('notifications.list.entity_no_name')}</span>
                 {/if}
               </p>
 
@@ -205,14 +211,16 @@
                        The broken link is NOT flagged per row: it is true of
                        every row, so a badge on each one is a badge that says
                        nothing. It is counted once, below the list. -->
-                  <span class="tag"><code>{n.verb}</code> has no producer</span>
+                  <span class="tag"
+                    ><code>{n.verb}</code> {$_('notifications.list.no_producer_suffix')}</span
+                  >
                 {/if}
               </p>
             </div>
 
             {#if n.read_at === null}
               <button class="v2-btn v2-btn-sm read-btn" type="button" onclick={() => markRead(n)}>
-                Mark read
+                {$_('notifications.list.mark_read')}
               </button>
             {/if}
           </li>
@@ -225,9 +233,10 @@
           become the loudest thing on a page about other people's messages.
         -->
         <p class="footnote">
-          <span class="v2-num">{data.totals.broken_links}</span> of these were written before the
-          producer was fixed and still carry a <code>/cases/…</code> link, which no client serves.
-          They open as <code>/v2/tickets/…</code> here. New ones are written correctly at source by
+          <span class="v2-num">{data.totals.broken_links}</span>
+          {$_('notifications.list.footnote_1')} <code>/cases/…</code>
+          {$_('notifications.list.footnote_2')} <code>/v2/tickets/…</code>
+          {$_('notifications.list.footnote_3')}
           <code>cases/notifications.py</code>.
         </p>
       {/if}

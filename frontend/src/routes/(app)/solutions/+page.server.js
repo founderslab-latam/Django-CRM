@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { listArticles, setPublished, FILTER_FIELDS } from '$lib/server/v2/solutions.js';
 import { readFilters, buildFilterQuery } from '$lib/server/v2/filter-params.js';
 import { getTags } from '$lib/server/v2/tags.js';
@@ -54,12 +56,14 @@ export const actions = {
   publish: async ({ cookies, request }) => {
     const form = await request.formData();
     const id = form.get('id')?.toString();
-    if (!id) return fail(400, { error: 'No article to publish.' });
+    if (!id) return fail(400, { error: get(_)('solutions.list.error_no_article') });
 
     try {
       await setPublished({ cookies }, id, true);
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not publish this article.') });
+      return fail(400, {
+        error: readableError(err, get(_)('solutions.list.error_publish_fallback'))
+      });
     }
     return { published: true };
   }

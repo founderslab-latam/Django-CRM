@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getArticle, setPublished, updateArticle } from '$lib/server/v2/solutions.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -24,12 +26,14 @@ export const actions = {
   setStatus: async ({ cookies, params, request }) => {
     const form = await request.formData();
     const status = form.get('status')?.toString() ?? '';
-    if (!status) return fail(400, { error: 'No status to set.' });
+    if (!status) return fail(400, { error: get(_)('solutions.detail.error_no_status') });
 
     try {
       await updateArticle({ cookies }, params.id, { status });
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not change the status.') });
+      return fail(400, {
+        error: readableError(err, get(_)('solutions.detail.error_status_fallback'))
+      });
     }
     return { status };
   },
@@ -51,7 +55,9 @@ export const actions = {
       return fail(400, {
         error: readableError(
           err,
-          published ? 'Could not publish this article.' : 'Could not unpublish this article.'
+          published
+            ? get(_)('solutions.detail.error_publish_fallback')
+            : get(_)('solutions.detail.error_unpublish_fallback')
         )
       });
     }

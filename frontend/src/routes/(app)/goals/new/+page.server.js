@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getGoalFormOptions,
   createGoal,
@@ -42,11 +44,11 @@ export const actions = {
       await createGoal(event, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { values, error: 'Only an admin can create goals.' });
+        return fail(403, { values, error: get(_)('goals.new.error_forbidden') });
       }
       return fail(400, {
         values,
-        error: readableError(err, 'Could not create this goal.')
+        error: readableError(err, get(_)('goals.new.error_fallback'))
       });
     }
 

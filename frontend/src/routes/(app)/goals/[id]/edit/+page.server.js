@@ -1,4 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getGoalForEdit,
   updateGoal,
@@ -23,7 +25,7 @@ export async function load(event) {
     return await getGoalForEdit(event, event.params.id);
   } catch (/** @type {any} */ err) {
     if (err?.status === 404) {
-      error(404, 'That goal does not exist, or it belongs to another org.');
+      error(404, get(_)('goals.edit.error_not_found'));
     }
     throw err;
   }
@@ -51,11 +53,11 @@ export const actions = {
       await updateGoal(event, event.params.id, values);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { values, error: 'Only an admin can change goals.' });
+        return fail(403, { values, error: get(_)('goals.edit.error_forbidden_save') });
       }
       return fail(400, {
         values,
-        error: readableError(err, 'Could not save this goal.')
+        error: readableError(err, get(_)('goals.edit.error_save_fallback'))
       });
     }
 
@@ -67,11 +69,11 @@ export const actions = {
       await deleteGoal(event, event.params.id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { error: 'Only an admin can delete goals.' });
+        return fail(403, { error: get(_)('goals.edit.error_forbidden_delete') });
       }
       // Already gone is the outcome the caller wanted; treat 404 as done.
       if (err?.status === 404) redirect(303, '/goals');
-      return fail(400, { error: readableError(err, 'Could not delete this goal.') });
+      return fail(400, { error: readableError(err, get(_)('goals.edit.error_delete_fallback')) });
     }
 
     redirect(303, '/goals');

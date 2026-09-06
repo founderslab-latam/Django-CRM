@@ -5,8 +5,9 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import DealTypeWeights from '$lib/v2/components/DealTypeWeights.svelte';
-  import { GOAL_TYPE_LABEL, PERIOD_TYPE_LABEL } from '$lib/v2/enums.js';
   import { money, count } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { goalTypeKey, periodTypeKey } from '$lib/goals/labels.js';
   import { TriangleAlert } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -44,18 +45,18 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!String(form.name).trim()) e.name = 'Give the goal a name you would recognise in a list.';
+    if (!String(form.name).trim()) e.name = $_('goals.form.error_name');
 
     const target = Number(form.target_value);
     if (form.target_value === '' || form.target_value === null)
-      e.target_value = 'What is the target?';
+      e.target_value = $_('goals.form.error_target_required');
     else if (!Number.isFinite(target) || target <= 0)
-      e.target_value = 'Target has to be a number greater than zero.';
+      e.target_value = $_('goals.form.error_target_number');
 
-    if (!form.period_start) e.period_start = 'When does the period start?';
-    if (!form.period_end) e.period_end = 'When does the period end?';
+    if (!form.period_start) e.period_start = $_('goals.form.error_start_required');
+    if (!form.period_end) e.period_end = $_('goals.form.error_end_required');
     else if (form.period_start && form.period_end <= form.period_start)
-      e.period_end = 'The end has to be after the start.';
+      e.period_end = $_('goals.form.error_end_after_start');
 
     return e;
   });
@@ -79,18 +80,18 @@
 </script>
 
 {#if !data.can_edit}
-  <PageHeader title="Edit goal">
-    {#snippet crumb()}<a href={resolve('/goals')}>Goals</a> ›{/snippet}
+  <PageHeader title={$_('goals.edit.title')}>
+    {#snippet crumb()}<a href={resolve('/goals')}>{$_('goals.form.crumb_goals')}</a> ›{/snippet}
   </PageHeader>
   <div class="v2-pad" style="padding-top:40px">
     <NextAction
-      label="Admins only"
-      text="Changing goals is limited to admins. Ask an admin on your team to adjust a quota or target."
+      label={$_('goals.edit.admins_only_label')}
+      text={$_('goals.edit.admins_only_text')}
     />
   </div>
 {:else}
-  <PageHeader title="Edit goal" center>
-    {#snippet crumb()}<a href={resolve('/goals')}>Goals</a> ›{/snippet}
+  <PageHeader title={$_('goals.edit.title')} center>
+    {#snippet crumb()}<a href={resolve('/goals')}>{$_('goals.form.crumb_goals')}</a> ›{/snippet}
     {#snippet sub()}{data.goal.name}{/snippet}
   </PageHeader>
 
@@ -104,14 +105,14 @@
         >
           <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
           <div class="v2-next-body">
-            <div style="font-weight:600">The server refused this change</div>
+            <div style="font-weight:600">{$_('goals.edit.server_error_heading')}</div>
             <div class="v2-sub" style="margin-top:2px">{result.error}</div>
           </div>
         </div>
       {/if}
 
       <div class="v2-field">
-        <label for="f-name">Goal name</label>
+        <label for="f-name">{$_('goals.form.label_name')}</label>
         <input
           id="f-name"
           name="name"
@@ -126,16 +127,16 @@
 
       <div class="v2-pair">
         <div class="v2-field">
-          <label for="f-type">Measured in</label>
+          <label for="f-type">{$_('goals.form.label_type')}</label>
           <select id="f-type" name="goal_type" class="v2-input" bind:value={form.goal_type}>
-            {#each Object.entries(GOAL_TYPE_LABEL) as [key, label] (key)}
-              <option value={key}>{label}</option>
+            {#each ['REVENUE', 'DEALS_CLOSED', 'ACTIVITIES'] as key (key)}
+              <option value={key}>{$_(goalTypeKey(key))}</option>
             {/each}
           </select>
         </div>
 
         <div class="v2-field">
-          <label for="f-target">Target</label>
+          <label for="f-target">{$_('goals.form.label_target')}</label>
           <input
             id="f-target"
             name="target_value"
@@ -158,10 +159,10 @@
       </div>
 
       <div class="v2-field">
-        <label for="f-period">Period</label>
+        <label for="f-period">{$_('goals.form.label_period')}</label>
         <select id="f-period" name="period_type" class="v2-input" bind:value={form.period_type}>
-          {#each Object.entries(PERIOD_TYPE_LABEL) as [key, label] (key)}
-            <option value={key}>{label}</option>
+          {#each ['MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'] as key (key)}
+            <option value={key}>{$_(periodTypeKey(key))}</option>
           {/each}
         </select>
       </div>
@@ -170,7 +171,7 @@
 
       <div class="v2-pair">
         <div class="v2-field">
-          <label for="f-start">Period start</label>
+          <label for="f-start">{$_('goals.form.label_start')}</label>
           <input
             id="f-start"
             name="period_start"
@@ -184,7 +185,7 @@
         </div>
 
         <div class="v2-field">
-          <label for="f-end">Period end</label>
+          <label for="f-end">{$_('goals.form.label_end')}</label>
           <input
             id="f-end"
             name="period_end"
@@ -200,18 +201,18 @@
 
       <div class="v2-pair">
         <div class="v2-field">
-          <label for="f-owner">Whose goal</label>
+          <label for="f-owner">{$_('goals.form.label_owner')}</label>
           <select id="f-owner" name="target" class="v2-input" bind:value={form.target}>
-            <option value="org">Whole org</option>
+            <option value="org">{$_('goals.form.owner_whole_org')}</option>
             {#if data.people?.length}
-              <optgroup label="Person">
+              <optgroup label={$_('goals.form.owner_group_person')}>
                 {#each data.people as p (p.id)}
                   <option value="profile:{p.id}">{p.name}</option>
                 {/each}
               </optgroup>
             {/if}
             {#if data.teams?.length}
-              <optgroup label="Team">
+              <optgroup label={$_('goals.form.owner_group_team')}>
                 {#each data.teams as t (t.id)}
                   <option value="team:{t.id}">{t.name}</option>
                 {/each}
@@ -221,20 +222,22 @@
         </div>
 
         <div class="v2-field">
-          <label for="f-active">Status</label>
+          <label for="f-active">{$_('goals.edit.label_status')}</label>
           <select id="f-active" name="is_active" class="v2-input" bind:value={form.is_active}>
-            <option value="true">Active. Counts towards totals</option>
-            <option value="false">Paused, kept, but not counted</option>
+            <option value="true">{$_('goals.edit.status_active')}</option>
+            <option value="false">{$_('goals.edit.status_paused')}</option>
           </select>
         </div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;margin-top:22px">
-        <button class="v2-btn v2-btn-primary" type="submit">Save goal</button>
-        <a class="v2-btn" href={resolve('/goals')}>Cancel</a>
+        <button class="v2-btn v2-btn-primary" type="submit">{$_('goals.edit.submit_button')}</button>
+        <a class="v2-btn" href={resolve('/goals')}>{$_('goals.form.cancel')}</a>
         <span class="v2-sub" style="margin-left:auto;font-size:12px">
           <span class="v2-num">{REQUIRED.filter((f) => !errors[f]).length}</span>
-          of <span class="v2-num">{REQUIRED.length}</span> required fields done
+          {$_('goals.form.progress_of_connector')}
+          <span class="v2-num">{REQUIRED.length}</span>
+          {$_('goals.form.progress_suffix')}
         </span>
       </div>
     </form>
@@ -250,21 +253,22 @@
           class="v2-btn"
           type="button"
           style="color:var(--v2-rust)"
-          onclick={() => (confirmingDelete = true)}>Delete this goal</button
+          onclick={() => (confirmingDelete = true)}>{$_('goals.edit.delete_button')}</button
         >
         <p class="v2-sub" style="font-size:12px;margin-top:8px">
-          A finished goal is usually better paused than deleted. Paused keeps its history. Delete
-          only when it was created by mistake.
+          {$_('goals.edit.delete_hint')}
         </p>
       {:else}
         <form method="POST" action="?/delete" use:enhance>
           <div style="display:flex;gap:8px;align-items:center">
-            <span class="v2-sub" style="font-size:13px">Delete “{data.goal.name}” for good?</span>
+            <span class="v2-sub" style="font-size:13px"
+              >{$_('goals.edit.delete_confirm', { values: { name: data.goal.name } })}</span
+            >
             <button class="v2-btn v2-btn-primary" type="submit" style="background:var(--v2-rust)"
-              >Yes, delete</button
+              >{$_('goals.edit.delete_confirm_yes')}</button
             >
             <button class="v2-btn" type="button" onclick={() => (confirmingDelete = false)}
-              >Keep it</button
+              >{$_('goals.edit.delete_confirm_no')}</button
             >
           </div>
         </form>

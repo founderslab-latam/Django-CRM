@@ -22,12 +22,9 @@
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { money, count, shortDate, daysSince } from '$lib/v2/format.js';
-  import {
-    GOAL_TYPE_LABEL,
-    GOAL_STATUS_LABEL,
-    GOAL_STATUS_TONE,
-    PERIOD_TYPE_LABEL
-  } from '$lib/v2/enums.js';
+  import { GOAL_STATUS_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { goalTypeKey, periodTypeKey, goalStatusKey } from '$lib/goals/labels.js';
   import { Plus, Target, Trophy, History } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -66,7 +63,11 @@
    * finished period is reported as met or missed instead.
    */
   const statusLabel = (g) =>
-    isOver(g) ? (g.progress_percent >= 100 ? 'Target met' : 'Missed') : GOAL_STATUS_LABEL[g.status];
+    isOver(g)
+      ? g.progress_percent >= 100
+        ? $_('goals.list.status_target_met')
+        : $_('goals.list.status_missed')
+      : $_(goalStatusKey(g.status));
 
   const statusTone = (g) =>
     isOver(g) ? (g.progress_percent >= 100 ? 'moss' : 'slate') : GOAL_STATUS_TONE[g.status];
@@ -86,16 +87,21 @@
   const value = (g, n) => (g.goal_type === 'REVENUE' ? money(n, data.org.currency) : count(n));
 </script>
 
-<PageHeader title="Goals">
+<PageHeader title={$_('goals.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{money(totals.achieved, data.org.currency)}</span> of
-    <span class="v2-num">{money(totals.target, data.org.currency)}</span> across
-    <span class="v2-num">{count(totals.active)}</span> active goals
+    <span class="v2-num">{money(totals.achieved, data.org.currency)}</span>
+    {$_('goals.list.sub_of')}
+    <span class="v2-num">{money(totals.target, data.org.currency)}</span>
+    {$_('goals.list.sub_across')}
+    <span class="v2-num">{count(totals.active)}</span>
+    {$_('goals.list.sub_active_suffix', { values: { count: totals.active } })}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn" href={resolve('/goals/history')}><History />History</a>
+    <a class="v2-btn" href={resolve('/goals/history')}><History />{$_('goals.list.history_button')}</a>
     {#if data.can_edit}
-      <a class="v2-btn v2-btn-primary" href={resolve('/goals/new')}><Plus />New goal</a>
+      <a class="v2-btn v2-btn-primary" href={resolve('/goals/new')}
+        ><Plus />{$_('goals.list.new_button')}</a
+      >
     {/if}
   {/snippet}
 </PageHeader>
@@ -103,24 +109,26 @@
 <div class="v2-pad" style="padding-top:16px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Committed"
+      label={$_('goals.list.stat_committed')}
       value={money(totals.target, data.org.currency)}
       tone="ink"
-      detail="Active goals only"
+      detail={$_('goals.list.stat_committed_detail')}
     />
     <StatCard
-      label="Booked"
+      label={$_('goals.list.stat_booked')}
       value={money(totals.achieved, data.org.currency)}
       tone="moss"
-      detail="Closed-won in period"
+      detail={$_('goals.list.stat_booked_detail')}
     />
     <StatCard
-      label="Behind pace"
+      label={$_('goals.list.stat_behind')}
       value={count(totals.behind)}
       tone={totals.behind ? 'rust' : 'slate'}
-      detail={totals.behind ? 'Slower than the calendar' : 'Everyone is on pace'}
+      detail={totals.behind
+        ? $_('goals.list.stat_behind_detail')
+        : $_('goals.list.stat_behind_none')}
     />
-    <StatCard label="Active goals" value={count(totals.active)} tone="slate" />
+    <StatCard label={$_('goals.list.stat_active')} value={count(totals.active)} tone="slate" />
   </div>
 
   <form class="filters" method="GET" data-sveltekit-keepfocus data-sveltekit-replacestate>
@@ -129,23 +137,27 @@
       type="search"
       name="q"
       value={filters.q}
-      placeholder="Search goals by name"
-      aria-label="Search goals by name"
+      placeholder={$_('goals.list.search_placeholder')}
+      aria-label={$_('goals.list.search_placeholder')}
     />
-    <select class="v2-input" name="period_type" aria-label="Filter by period">
-      <option value="">Any period</option>
-      {#each Object.entries(PERIOD_TYPE_LABEL) as [key, label] (key)}
-        <option value={key} selected={filters.period_type === key}>{label}</option>
+    <select class="v2-input" name="period_type" aria-label={$_('goals.list.filter_period_label')}>
+      <option value="">{$_('goals.list.filter_any_period')}</option>
+      {#each ['MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM'] as key (key)}
+        <option value={key} selected={filters.period_type === key}>{$_(periodTypeKey(key))}</option>
       {/each}
     </select>
-    <select class="v2-input" name="window" aria-label="Filter by window">
-      <option value="">All goals</option>
-      <option value="current" selected={filters.window === 'current'}>Running today</option>
-      <option value="active" selected={filters.window === 'active'}>Not paused</option>
+    <select class="v2-input" name="window" aria-label={$_('goals.list.filter_window_label')}>
+      <option value="">{$_('goals.list.filter_window_all')}</option>
+      <option value="current" selected={filters.window === 'current'}
+        >{$_('goals.list.filter_window_current')}</option
+      >
+      <option value="active" selected={filters.window === 'active'}
+        >{$_('goals.list.filter_window_active')}</option
+      >
     </select>
-    <button class="v2-btn" type="submit">Filter</button>
+    <button class="v2-btn" type="submit">{$_('goals.list.filter_button')}</button>
     {#if filtered}
-      <a class="v2-btn" href={resolve('/goals')}>Clear</a>
+      <a class="v2-btn" href={resolve('/goals')}>{$_('goals.list.filter_clear')}</a>
     {/if}
   </form>
 </div>
@@ -162,25 +174,29 @@
            of one they already have. -->
       {#if filtered}
         <EmptyState
-          title="No goals match this filter"
-          body="Nothing here matches the search and period you picked. Clearing the filter shows everything you can see."
+          title={$_('goals.list.empty_filtered_title')}
+          body={$_('goals.list.empty_filtered_body')}
         >
           {#snippet icon()}<Target size={21} />{/snippet}
           {#snippet actions()}
-            <a class="v2-btn" href={resolve('/goals')}>Clear filter</a>
+            <a class="v2-btn" href={resolve('/goals')}>{$_('goals.list.empty_filtered_clear')}</a>
           {/snippet}
         </EmptyState>
       {:else}
         <EmptyState
-          title={data.can_edit ? 'No goals set' : 'Nothing assigned to you'}
+          title={data.can_edit
+            ? $_('goals.list.empty_title_admin')
+            : $_('goals.list.empty_title_member')}
           body={data.can_edit
-            ? 'A goal is a target and a period. Once one exists, closed-won deals count towards it automatically. Nobody has to update a number.'
-            : 'Nothing is assigned to you or your teams. An administrator sets these, and closed-won deals count towards them automatically once one exists.'}
+            ? $_('goals.list.empty_body_admin')
+            : $_('goals.list.empty_body_member')}
         >
           {#snippet icon()}<Target size={21} />{/snippet}
           {#snippet actions()}
             {#if data.can_edit}
-              <a class="v2-btn v2-btn-primary" href={resolve('/goals/new')}>New goal</a>
+              <a class="v2-btn v2-btn-primary" href={resolve('/goals/new')}
+                >{$_('goals.list.new_button')}</a
+              >
             {/if}
           {/snippet}
         </EmptyState>
@@ -188,7 +204,7 @@
     {:else}
       <div class="v2-split v2-split-wide">
         <div>
-          <div class="v2-label" style="margin-bottom:10px">This period</div>
+          <div class="v2-label" style="margin-bottom:10px">{$_('goals.list.section_this_period')}</div>
           <div style="display:flex;flex-direction:column;gap:10px">
             {#each data.goals as g (g.id)}
               {@const elapsed = elapsedPercent(g)}
@@ -198,15 +214,17 @@
                   <div style="flex:1;min-width:0">
                     <div style="font-weight:600;font-size:13.5px">{g.name}</div>
                     <div class="v2-sub" style="font-size:11.5px;margin-top:2px">
-                      {GOAL_TYPE_LABEL[g.goal_type]} · {PERIOD_TYPE_LABEL[g.period_type]} ·
+                      {$_(goalTypeKey(g.goal_type))} · {$_(periodTypeKey(g.period_type))} ·
                       {shortDate(g.period_start)} - {shortDate(g.period_end)}
                       <!-- Named on the card because a weighted goal's progress
                            does not add up to the deals behind it, and someone
                            checking the arithmetic against the pipeline needs to
                            know that before they file a bug. -->
                       {#if weightedTypes(g)}
-                        · <span title="Some deal types count at an adjusted value"
-                          >weighted ({weightedTypes(g)})</span
+                        · <span title={$_('goals.list.weighted_title')}
+                          >{$_('goals.list.weighted_badge', {
+                            values: { count: weightedTypes(g) }
+                          })}</span
                         >
                       {/if}
                     </div>
@@ -216,7 +234,8 @@
                     {#if data.can_edit}
                       <a
                         href={resolve(`/goals/${g.id}/edit`)}
-                        style="font-size:11px;color:var(--v2-slate);text-decoration:none">Edit</a
+                        style="font-size:11px;color:var(--v2-slate);text-decoration:none"
+                        >{$_('goals.list.edit_link')}</a
                       >
                     {/if}
                   </div>
@@ -227,7 +246,8 @@
                     {value(g, g.progress_value)}
                   </span>
                   <span class="v2-sub" style="font-size:12px">
-                    of {value(g, g.target_value)}
+                    {$_('goals.list.of_target')}
+                    {value(g, g.target_value)}
                   </span>
                   <!-- The server's progress_percent, not a division done here.
                        SalesGoal floors it (int()) and caps it at 100, so
@@ -251,7 +271,7 @@
                     <span
                       class="v2-bar-pace"
                       style="left:calc({elapsed}% - 1px)"
-                      title="{elapsed}% through the period"
+                      title={$_('goals.list.pace_marker_title', { values: { percent: elapsed } })}
                     ></span>
                   {/if}
                 </div>
@@ -260,16 +280,17 @@
                     {#if g.assigned_to}
                       {g.assigned_to.name}
                     {:else if g.team}
-                      {g.team.name} (team)
+                      {$_('goals.list.team_suffix', { values: { name: g.team.name } })}
                     {:else}
-                      Whole org
+                      {$_('goals.list.whole_org')}
                     {/if}
                   </span>
                   <span>
                     {#if over}
-                      Period ended {shortDate(g.period_end)}
+                      {$_('goals.list.period_ended', { values: { date: shortDate(g.period_end) } })}
                     {:else}
-                      <span class="v2-num">{elapsed}%</span> through the period
+                      <span class="v2-num">{elapsed}%</span>
+                      {$_('goals.list.through_period_suffix')}
                     {/if}
                   </span>
                 </div>
@@ -281,7 +302,7 @@
         <div>
           <div class="v2-label" style="margin-bottom:10px">
             <Trophy size={12} style="vertical-align:-1px;margin-right:4px" />
-            Leaderboard
+            {$_('goals.list.leaderboard_title')}
           </div>
           <div class="v2-card" style="overflow:hidden">
             {#each data.leaderboard as row (row.goal_id)}
@@ -296,10 +317,9 @@
                 <div style="flex:1;min-width:0">
                   <div style="font-size:12.5px;font-weight:550">{row.user}</div>
                   <div class="v2-sub v2-num" style="font-size:11px">
-                    {money(row.achieved, data.org.currency)} of {money(
-                      row.target,
-                      data.org.currency
-                    )}
+                    {money(row.achieved, data.org.currency)}
+                    {$_('goals.list.leaderboard_of')}
+                    {money(row.target, data.org.currency)}
                   </div>
                 </div>
                 <!-- Uncapped on purpose: 104% is the interesting number, and
@@ -320,16 +340,14 @@
                    sees nothing here rather than the whole org. An empty card
                    under a heading reads as a failure, so it says why. -->
               <p class="v2-sub" style="padding:14px;margin:0;font-size:12px">
-                Nothing to rank yet. The board covers monthly goals running today, and shows the
-                ones you can see: your own, and your teams'.
+                {$_('goals.list.leaderboard_empty')}
               </p>
             {/each}
           </div>
 
           {#if data.leaderboard.length}
             <p class="v2-sub" style="font-size:11.5px;margin-top:11px">
-              Ranked on attainment against each person's own target, not on raw revenue. Otherwise
-              the biggest patch wins every quarter regardless of who worked hardest.
+              {$_('goals.list.leaderboard_note')}
             </p>
           {/if}
         </div>

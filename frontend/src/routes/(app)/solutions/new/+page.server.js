@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { createArticle } from '$lib/server/v2/solutions.js';
 import { getTags } from '$lib/server/v2/tags.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
@@ -37,7 +39,10 @@ export const actions = {
     try {
       created = await createArticle({ cookies }, values);
     } catch (/** @type {any} */ err) {
-      return fail(400, { values, error: readableError(err, 'Could not save this article.') });
+      return fail(400, {
+        values,
+        error: readableError(err, get(_)('solutions.form.error_save_fallback'))
+      });
     }
 
     redirect(303, `/solutions/${created.id}`);
