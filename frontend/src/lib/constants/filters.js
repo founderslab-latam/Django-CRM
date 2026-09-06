@@ -118,7 +118,8 @@ export const CURRENCY_CODES = [
   { value: 'SGD', label: 'SGD - Dollar' },
   { value: 'AED', label: 'AED - Dirham' },
   { value: 'BRL', label: 'BRL - Real' },
-  { value: 'MXN', label: 'MXN - Peso' }
+  { value: 'MXN', label: 'MXN - Peso' },
+  { value: 'CLP', label: 'CLP - Peso' }
 ];
 
 /** @type {Record<string, string>} */
@@ -135,5 +136,6 @@ export const CURRENCY_SYMBOLS = {
   SGD: 'S$',
   AED: 'د.إ',
   BRL: 'R$',
-  MXN: 'MX$'
+  MXN: 'MX$',
+  CLP: '$'
 };

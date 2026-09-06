@@ -402,6 +402,7 @@ CURRENCY_CODES = (
     ("AED", _("AED, Dirham")),
     ("BRL", _("BRL, Real")),
     ("MXN", _("MXN, Peso")),
+    ("CLP", _("CLP, Peso")),
 )
 
 CURRENCY_SYMBOLS = {
@@ -418,6 +419,7 @@ CURRENCY_SYMBOLS = {
     "AED": "د.إ",
     "BRL": "R$",
     "MXN": "MX$",
+    "CLP": "$",
 }
 
 
