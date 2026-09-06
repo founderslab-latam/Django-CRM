@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 07:28+0000\n"
+"POT-Creation-Date: 2026-09-06 07:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1700,6 +1700,189 @@ msgstr "Contacto actualizado correctamente."
 msgid "Contact Deleted Successfully."
 msgstr "Contacto eliminado correctamente."
 
+msgid "Invoice created successfully"
+msgstr "Factura creada correctamente."
+
+msgid "Invoice updated successfully"
+msgstr "Factura actualizada correctamente."
+
+#, python-format
+msgid "Cannot send a %(status)s invoice"
+msgstr "No se puede enviar una factura en estado %(status)s."
+
+msgid "Invoice sent successfully"
+msgstr "Factura enviada correctamente."
+
+msgid "Payment recorded successfully"
+msgstr "Pago registrado correctamente."
+
+msgid "Invoice duplicated successfully"
+msgstr "Factura duplicada correctamente."
+
+msgid "Invoice is already cancelled"
+msgstr "La factura ya está anulada."
+
+msgid "Cannot cancel a paid invoice"
+msgstr "No se puede anular una factura pagada."
+
+msgid "Invoice cancelled successfully"
+msgstr "Factura anulada correctamente."
+
+msgid "PDF generation unavailable"
+msgstr "La generación de PDF no está disponible."
+
+msgid "Failed to generate PDF"
+msgstr "No se pudo generar el PDF."
+
+msgid "Line item added"
+msgstr "Partida agregada."
+
+msgid "Line item not found"
+msgstr "No se encontró la partida."
+
+msgid "Line item updated"
+msgstr "Partida actualizada."
+
+msgid "Line item deleted"
+msgstr "Partida eliminada."
+
+msgid "Payment recorded"
+msgstr "Pago registrado."
+
+msgid "Payment not found"
+msgstr "No se encontró el pago."
+
+msgid "Payment deleted"
+msgstr "Pago eliminado."
+
+msgid "Only an administrator can change the product catalog."
+msgstr "Solo un administrador puede cambiar el catálogo de productos."
+
+msgid "Product created"
+msgstr "Producto creado."
+
+msgid "Product not found"
+msgstr "No se encontró el producto."
+
+msgid "Product updated"
+msgstr "Producto actualizado."
+
+msgid "Product deleted"
+msgstr "Producto eliminado."
+
+msgid "Estimate created"
+msgstr "Estimación creada."
+
+msgid "Estimate updated"
+msgstr "Estimación actualizada."
+
+msgid "Estimate deleted"
+msgstr "Estimación eliminada."
+
+msgid "Estimate already converted to invoice"
+msgstr "La estimación ya se convirtió en factura."
+
+msgid "Estimate converted to invoice"
+msgstr "Estimación convertida en factura."
+
+#, python-format
+msgid "Cannot send a %(status)s estimate"
+msgstr "No se puede enviar una estimación en estado %(status)s."
+
+msgid "Estimate sent successfully"
+msgstr "Estimación enviada correctamente."
+
+msgid "Recurring invoice created"
+msgstr "Factura recurrente creada."
+
+msgid "Recurring invoice updated"
+msgstr "Factura recurrente actualizada."
+
+msgid "Recurring invoice deleted"
+msgstr "Factura recurrente eliminada."
+
+#, python-format
+msgid "Recurring invoice %(action)s"
+msgstr "Factura recurrente %(action)s."
+
+msgid "Template created"
+msgstr "Plantilla creada."
+
+msgid "Template not found"
+msgstr "No se encontró la plantilla."
+
+msgid "Template updated"
+msgstr "Plantilla actualizada."
+
+msgid "Template deleted"
+msgstr "Plantilla eliminada."
+
+msgid "Comment text required"
+msgstr "El texto del comentario es obligatorio."
+
+msgid "Comment added"
+msgstr "Comentario agregado."
+
+msgid "Comment not found"
+msgstr "No se encontró el comentario."
+
+msgid "Comment updated"
+msgstr "Comentario actualizado."
+
+msgid "Comment deleted"
+msgstr "Comentario eliminado."
+
+msgid "File required"
+msgstr "El archivo es obligatorio."
+
+msgid "Attachment uploaded"
+msgstr "Adjunto subido."
+
+msgid "Attachment not found"
+msgstr "No se encontró el adjunto."
+
+msgid "Attachment deleted"
+msgstr "Adjunto eliminado."
+
+msgid "Only an administrator can view invoice reports."
+msgstr "Solo un administrador puede ver los informes de facturas."
+
+msgid "Opportunity not found"
+msgstr "No se encontró la oportunidad."
+
+msgid "You do not have permission to create invoice from this opportunity"
+msgstr "No tienes permiso para crear una factura desde esta oportunidad."
+
+msgid "Invoice can only be created from CLOSED_WON opportunities"
+msgstr "Solo se puede crear una factura desde oportunidades CLOSED_WON."
+
+msgid "Opportunity has no products/line items to invoice"
+msgstr "La oportunidad no tiene productos ni partidas para facturar."
+
+msgid "Opportunity must have an account to create an invoice"
+msgstr "La oportunidad debe tener una cuenta para crear una factura."
+
+msgid "Opportunity must have at least one contact to create an invoice"
+msgstr "La oportunidad debe tener al menos un contacto para crear una factura."
+
+msgid "Invoice created successfully from opportunity"
+msgstr "Factura creada correctamente desde la oportunidad."
+
+msgid "account_id is required."
+msgstr "Se requiere account_id."
+
+msgid "entry_ids must be a non-empty list."
+msgstr "entry_ids debe ser una lista no vacía."
+
+msgid "Account not found."
+msgstr "No se encontró la cuenta."
+
+msgid "One or more time entries were not found."
+msgstr "No se encontraron una o más entradas de tiempo."
+
+msgid "Draft invoice created from time entries."
+msgstr "Se creó una factura en borrador a partir de las entradas de tiempo."
+
 msgid "Template Name"
 msgstr ""
 
@@ -1958,6 +2141,54 @@ msgstr ""
 msgid "Change Details"
 msgstr ""
 
+msgid "Invoice not found or link expired"
+msgstr "No se encontró la factura o el enlace venció."
+
+msgid "Estimate not found or link expired"
+msgstr "No se encontró la estimación o el enlace venció."
+
+msgid "Estimate cannot be accepted in current state"
+msgstr "La estimación no se puede aceptar en su estado actual."
+
+msgid "Your name and email are required to accept this estimate."
+msgstr "Tu nombre y correo electrónico son obligatorios para aceptar esta estimación."
+
+msgid "Please enter a valid email address."
+msgstr "Ingresa una dirección de correo electrónico válida."
+
+msgid "Estimate accepted successfully"
+msgstr "Estimación aceptada correctamente."
+
+msgid "Estimate cannot be declined in current state"
+msgstr "La estimación no se puede rechazar en su estado actual."
+
+msgid "Estimate declined"
+msgstr "Estimación rechazada."
+
+msgid "Use a six digit hex colour, for example #3B82F6."
+msgstr "Usa un color hexadecimal de seis dígitos, por ejemplo #3B82F6."
+
+msgid "Product not found or does not belong to your organization"
+msgstr "No se encontró el producto o no pertenece a tu organización."
+
+msgid "Cannot record a payment against a cancelled invoice."
+msgstr "No se puede registrar un pago en una factura anulada."
+
+msgid "Payment amount must be greater than zero."
+msgstr "El monto del pago debe ser mayor que cero."
+
+msgid "Account not found or does not belong to your organization"
+msgstr "No se encontró la cuenta o no pertenece a tu organización."
+
+msgid "Contact not found or does not belong to your organization"
+msgstr "No se encontró el contacto o no pertenece a tu organización."
+
+msgid "Opportunity not found or does not belong to your organization"
+msgstr "No se encontró la oportunidad o no pertenece a tu organización."
+
+msgid "Template not found or does not belong to your organization"
+msgstr "No se encontró la plantilla o no pertenece a tu organización."
+
 msgid "Not a valid CSV file"
 msgstr "No es un archivo CSV válido."
 
@@ -2129,17 +2360,11 @@ msgstr "Meta eliminada correctamente."
 msgid "Opportunity moved successfully"
 msgstr "Oportunidad movida correctamente."
 
-msgid "Opportunity not found"
-msgstr "No se encontró la oportunidad."
-
 msgid "You do not have permission to access this opportunity"
 msgstr "No tienes permiso para acceder a esta oportunidad."
 
 msgid "Line item created successfully"
 msgstr "Partida creada correctamente."
-
-msgid "Line item not found"
-msgstr "No se encontró la partida."
 
 msgid "Line item updated successfully"
 msgstr "Partida actualizada correctamente."
@@ -2216,9 +2441,11 @@ msgstr "Acceso denegado."
 msgid "Task moved successfully"
 msgstr "Tarea movida correctamente."
 
+#, python-format
 msgid "Cannot delete pipeline with %(count)s tasks. Move tasks first."
 msgstr "No se puede eliminar un flujo con %(count)s tareas. Muévelas primero."
 
+#, python-format
 msgid "Cannot delete stage with %(count)s tasks. Move tasks first."
 msgstr "No se puede eliminar una etapa con %(count)s tareas. Muévelas primero."
 

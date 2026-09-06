@@ -10,6 +10,7 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.pagination import LimitOffsetPagination
@@ -281,7 +282,7 @@ class InvoiceListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Invoice created successfully",
+                    "message": _("Invoice created successfully"),
                     "invoice": InvoiceSerializer(invoice).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -390,7 +391,7 @@ class InvoiceDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Invoice updated successfully",
+                    "message": _("Invoice updated successfully"),
                     "invoice": InvoiceSerializer(invoice).data,
                 }
             )
@@ -418,7 +419,8 @@ class InvoiceSendView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": f"Cannot send a {invoice.status.lower()} invoice",
+                    "message": _("Cannot send a %(status)s invoice")
+                    % {"status": invoice.status.lower()},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -438,7 +440,7 @@ class InvoiceSendView(APIView):
             protocol=request.scheme,
         )
 
-        return Response({"error": False, "message": "Invoice sent successfully"})
+        return Response({"error": False, "message": _("Invoice sent successfully")})
 
 
 class InvoiceMarkPaidView(APIView):
@@ -476,7 +478,7 @@ class InvoiceMarkPaidView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Payment recorded successfully",
+                "message": _("Payment recorded successfully"),
                 "invoice": InvoiceSerializer(invoice).data,
             }
         )
@@ -554,7 +556,7 @@ class InvoiceDuplicateView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Invoice duplicated successfully",
+                    "message": _("Invoice duplicated successfully"),
                     "invoice": InvoiceSerializer(new_invoice).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -575,14 +577,14 @@ class InvoiceCancelView(APIView):
         # Cannot cancel already cancelled invoices
         if invoice.status == "Cancelled":
             return Response(
-                {"error": True, "message": "Invoice is already cancelled"},
+                {"error": True, "message": _("Invoice is already cancelled")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Cannot cancel paid invoices
         if invoice.status == "Paid":
             return Response(
-                {"error": True, "message": "Cannot cancel a paid invoice"},
+                {"error": True, "message": _("Cannot cancel a paid invoice")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -594,7 +596,7 @@ class InvoiceCancelView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Invoice cancelled successfully",
+                "message": _("Invoice cancelled successfully"),
                 "invoice": InvoiceSerializer(invoice).data,
             }
         )
@@ -621,13 +623,13 @@ class InvoicePDFView(APIView):
         except ImportError:
             logger.exception("PDF generation library not available")
             return Response(
-                {"error": True, "message": "PDF generation unavailable"},
+                {"error": True, "message": _("PDF generation unavailable")},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception:
             logger.exception("Failed to generate invoice PDF")
             return Response(
-                {"error": True, "message": "Failed to generate PDF"},
+                {"error": True, "message": _("Failed to generate PDF")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -670,7 +672,7 @@ class InvoiceLineItemListView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Line item added",
+                    "message": _("Line item added"),
                     "line_item": InvoiceLineItemSerializer(line_item).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -694,14 +696,14 @@ class InvoiceLineItemDetailView(APIView):
 
     @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_update")
     def put(self, request, invoice_id, pk):
-        _, error = get_invoice_or_error(request, invoice_id)
+        _invoice, error = get_invoice_or_error(request, invoice_id)
         if error:
             return error
 
         line_item = self.get_object(invoice_id, pk)
         if not line_item:
             return Response(
-                {"error": True, "message": "Line item not found"},
+                {"error": True, "message": _("Line item not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -718,7 +720,7 @@ class InvoiceLineItemDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Line item updated",
+                    "message": _("Line item updated"),
                     "line_item": InvoiceLineItemSerializer(line_item).data,
                 }
             )
@@ -730,14 +732,14 @@ class InvoiceLineItemDetailView(APIView):
 
     @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_destroy")
     def delete(self, request, invoice_id, pk):
-        _, error = get_invoice_or_error(request, invoice_id)
+        _invoice, error = get_invoice_or_error(request, invoice_id)
         if error:
             return error
 
         line_item = self.get_object(invoice_id, pk)
         if not line_item:
             return Response(
-                {"error": True, "message": "Line item not found"},
+                {"error": True, "message": _("Line item not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -749,7 +751,7 @@ class InvoiceLineItemDetailView(APIView):
         invoice.save()
 
         return Response(
-            {"error": False, "message": "Line item deleted"},
+            {"error": False, "message": _("Line item deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -787,7 +789,7 @@ class PaymentListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Payment recorded",
+                    "message": _("Payment recorded"),
                     "payment": PaymentSerializer(payment).data,
                     "invoice": InvoiceListSerializer(invoice).data,
                 },
@@ -807,7 +809,7 @@ class PaymentDetailView(APIView):
 
     @extend_schema(tags=["Payments"], operation_id="payments_destroy")
     def delete(self, request, invoice_id, pk):
-        _, error = get_invoice_or_error(request, invoice_id)
+        _invoice, error = get_invoice_or_error(request, invoice_id)
         if error:
             return error
 
@@ -820,13 +822,13 @@ class PaymentDetailView(APIView):
         )
         if not payment:
             return Response(
-                {"error": True, "message": "Payment not found"},
+                {"error": True, "message": _("Payment not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         payment.delete()
         return Response(
-            {"error": False, "message": "Payment deleted"},
+            {"error": False, "message": _("Payment deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -892,7 +894,9 @@ class ProductListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": True,
-                    "message": "Only an administrator can change the product catalog.",
+                    "message": _(
+                        "Only an administrator can change the product catalog."
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -905,7 +909,7 @@ class ProductListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Product created",
+                    "message": _("Product created"),
                     "product": ProductSerializer(product).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -930,7 +934,7 @@ class ProductDetailView(APIView):
         product = self.get_object(pk)
         if not product:
             return Response(
-                {"error": True, "message": "Product not found"},
+                {"error": True, "message": _("Product not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(ProductSerializer(product).data)
@@ -941,7 +945,9 @@ class ProductDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "Only an administrator can change the product catalog.",
+                    "message": _(
+                        "Only an administrator can change the product catalog."
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -952,7 +958,7 @@ class ProductDetailView(APIView):
         product = self.get_object(pk)
         if not product:
             return Response(
-                {"error": True, "message": "Product not found"},
+                {"error": True, "message": _("Product not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -968,7 +974,7 @@ class ProductDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Product updated",
+                    "message": _("Product updated"),
                     "product": ProductSerializer(product).data,
                 }
             )
@@ -983,7 +989,7 @@ class ProductDetailView(APIView):
         product = self.get_object(pk)
         if not product:
             return Response(
-                {"error": True, "message": "Product not found"},
+                {"error": True, "message": _("Product not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -993,7 +999,7 @@ class ProductDetailView(APIView):
 
         product.delete()
         return Response(
-            {"error": False, "message": "Product deleted"},
+            {"error": False, "message": _("Product deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1093,7 +1099,7 @@ class EstimateListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Estimate created",
+                    "message": _("Estimate created"),
                     "estimate": EstimateSerializer(estimate).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -1168,7 +1174,7 @@ class EstimateDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Estimate updated",
+                    "message": _("Estimate updated"),
                     "estimate": EstimateSerializer(estimate).data,
                 }
             )
@@ -1186,7 +1192,7 @@ class EstimateDetailView(APIView):
 
         estimate.delete()
         return Response(
-            {"error": False, "message": "Estimate deleted"},
+            {"error": False, "message": _("Estimate deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1204,7 +1210,7 @@ class EstimateConvertView(APIView):
 
         if estimate.converted_to_invoice:
             return Response(
-                {"error": True, "message": "Estimate already converted to invoice"},
+                {"error": True, "message": _("Estimate already converted to invoice")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1264,7 +1270,7 @@ class EstimateConvertView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Estimate converted to invoice",
+                "message": _("Estimate converted to invoice"),
                 "invoice": InvoiceSerializer(invoice).data,
             },
             status=status.HTTP_201_CREATED,
@@ -1290,7 +1296,8 @@ class EstimateSendView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": f"Cannot send a {estimate.status.lower()} estimate",
+                    "message": _("Cannot send a %(status)s estimate")
+                    % {"status": estimate.status.lower()},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -1326,7 +1333,7 @@ class EstimateSendView(APIView):
 
         send_estimate_to_client.delay(str(estimate.id), str(request.profile.org.id))
 
-        return Response({"error": False, "message": "Estimate sent successfully"})
+        return Response({"error": False, "message": _("Estimate sent successfully")})
 
 
 class EstimatePDFView(APIView):
@@ -1354,13 +1361,13 @@ class EstimatePDFView(APIView):
         except ImportError:
             logger.exception("PDF generation library not available")
             return Response(
-                {"error": True, "message": "PDF generation unavailable"},
+                {"error": True, "message": _("PDF generation unavailable")},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception:
             logger.exception("Failed to generate estimate PDF")
             return Response(
-                {"error": True, "message": "Failed to generate PDF"},
+                {"error": True, "message": _("Failed to generate PDF")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -1442,7 +1449,7 @@ class RecurringInvoiceListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Recurring invoice created",
+                    "message": _("Recurring invoice created"),
                     "recurring_invoice": RecurringInvoiceSerializer(recurring).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -1517,7 +1524,7 @@ class RecurringInvoiceDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Recurring invoice updated",
+                    "message": _("Recurring invoice updated"),
                     "recurring_invoice": RecurringInvoiceSerializer(recurring).data,
                 }
             )
@@ -1535,7 +1542,7 @@ class RecurringInvoiceDetailView(APIView):
 
         recurring.delete()
         return Response(
-            {"error": False, "message": "Recurring invoice deleted"},
+            {"error": False, "message": _("Recurring invoice deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1558,7 +1565,7 @@ class RecurringInvoicePauseView(APIView):
         return Response(
             {
                 "error": False,
-                "message": f"Recurring invoice {action}",
+                "message": _("Recurring invoice %(action)s") % {"action": action},
                 "recurring_invoice": RecurringInvoiceListSerializer(recurring).data,
             }
         )
@@ -1631,7 +1638,7 @@ class InvoiceTemplateListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Template created",
+                    "message": _("Template created"),
                     "template": InvoiceTemplateListSerializer(template).data,
                 },
                 status=status.HTTP_201_CREATED,
@@ -1658,7 +1665,7 @@ class InvoiceTemplateDetailView(APIView):
         template = self.get_object(pk)
         if not template:
             return Response(
-                {"error": True, "message": "Template not found"},
+                {"error": True, "message": _("Template not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         # Safe serializer only, never returns the raw template_html/css.
@@ -1673,7 +1680,7 @@ class InvoiceTemplateDetailView(APIView):
         template = self.get_object(pk)
         if not template:
             return Response(
-                {"error": True, "message": "Template not found"},
+                {"error": True, "message": _("Template not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1685,7 +1692,7 @@ class InvoiceTemplateDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Template updated",
+                    "message": _("Template updated"),
                     "template": InvoiceTemplateListSerializer(template).data,
                 }
             )
@@ -1704,13 +1711,13 @@ class InvoiceTemplateDetailView(APIView):
         template = self.get_object(pk)
         if not template:
             return Response(
-                {"error": True, "message": "Template not found"},
+                {"error": True, "message": _("Template not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         template.delete()
         return Response(
-            {"error": False, "message": "Template deleted"},
+            {"error": False, "message": _("Template deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1749,7 +1756,7 @@ class InvoiceTemplateEditorView(APIView):
         ).first()
         if not template:
             return Response(
-                {"error": True, "message": "Template not found"},
+                {"error": True, "message": _("Template not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1775,7 +1782,7 @@ class InvoiceCommentView(APIView):
         comment_text = request.data.get("comment")
         if not comment_text:
             return Response(
-                {"error": True, "message": "Comment text required"},
+                {"error": True, "message": _("Comment text required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1791,7 +1798,7 @@ class InvoiceCommentView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Comment added",
+                "message": _("Comment added"),
                 "comment": CommentSerializer(comment).data,
             },
             status=status.HTTP_201_CREATED,
@@ -1811,7 +1818,7 @@ class InvoiceCommentDetailView(APIView):
         comment = self.get_object(pk)
         if not comment:
             return Response(
-                {"error": True, "message": "Comment not found"},
+                {"error": True, "message": _("Comment not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1820,7 +1827,7 @@ class InvoiceCommentDetailView(APIView):
             request.profile
         ):
             return Response(
-                {"error": True, "message": "Permission denied"},
+                {"error": True, "message": _("Permission denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -1830,7 +1837,7 @@ class InvoiceCommentDetailView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Comment updated",
+                "message": _("Comment updated"),
                 "comment": CommentSerializer(comment).data,
             }
         )
@@ -1840,7 +1847,7 @@ class InvoiceCommentDetailView(APIView):
         comment = self.get_object(pk)
         if not comment:
             return Response(
-                {"error": True, "message": "Comment not found"},
+                {"error": True, "message": _("Comment not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1848,13 +1855,13 @@ class InvoiceCommentDetailView(APIView):
             request.profile
         ):
             return Response(
-                {"error": True, "message": "Permission denied"},
+                {"error": True, "message": _("Permission denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         comment.delete()
         return Response(
-            {"error": False, "message": "Comment deleted"},
+            {"error": False, "message": _("Comment deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1872,7 +1879,7 @@ class InvoiceAttachmentView(APIView):
 
         if not request.FILES.get("file"):
             return Response(
-                {"error": True, "message": "File required"},
+                {"error": True, "message": _("File required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1883,7 +1890,7 @@ class InvoiceAttachmentView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Attachment uploaded",
+                "message": _("Attachment uploaded"),
                 "attachment": AttachmentsSerializer(attachment).data,
             },
             status=status.HTTP_201_CREATED,
@@ -1900,7 +1907,7 @@ class InvoiceAttachmentDetailView(APIView):
         attachment = Attachments.objects.filter(id=pk, org=request.profile.org).first()
         if not attachment:
             return Response(
-                {"error": True, "message": "Attachment not found"},
+                {"error": True, "message": _("Attachment not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1911,13 +1918,13 @@ class InvoiceAttachmentDetailView(APIView):
             request.profile
         ):
             return Response(
-                {"error": True, "message": "Permission denied"},
+                {"error": True, "message": _("Permission denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         attachment.delete()
         return Response(
-            {"error": False, "message": "Attachment deleted"},
+            {"error": False, "message": _("Attachment deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -1943,7 +1950,7 @@ def _forbid_non_admin_reports(request):
         return Response(
             {
                 "error": True,
-                "message": "Only an administrator can view invoice reports.",
+                "message": _("Only an administrator can view invoice reports."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -2334,7 +2341,7 @@ class InvoiceFromOpportunityView(APIView):
 
         if not opportunity:
             return Response(
-                {"error": True, "message": "Opportunity not found"},
+                {"error": True, "message": _("Opportunity not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -2347,7 +2354,9 @@ class InvoiceFromOpportunityView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "message": "You do not have permission to create invoice from this opportunity",
+                        "message": _(
+                            "You do not have permission to create invoice from this opportunity"
+                        ),
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
@@ -2357,7 +2366,9 @@ class InvoiceFromOpportunityView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "Invoice can only be created from CLOSED_WON opportunities",
+                    "message": _(
+                        "Invoice can only be created from CLOSED_WON opportunities"
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -2368,7 +2379,7 @@ class InvoiceFromOpportunityView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "Opportunity has no products/line items to invoice",
+                    "message": _("Opportunity has no products/line items to invoice"),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -2378,7 +2389,9 @@ class InvoiceFromOpportunityView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "Opportunity must have an account to create an invoice",
+                    "message": _(
+                        "Opportunity must have an account to create an invoice"
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -2391,7 +2404,9 @@ class InvoiceFromOpportunityView(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "Opportunity must have at least one contact to create an invoice",
+                    "message": _(
+                        "Opportunity must have at least one contact to create an invoice"
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -2463,7 +2478,7 @@ class InvoiceFromOpportunityView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Invoice created successfully from opportunity",
+                "message": _("Invoice created successfully from opportunity"),
                 "invoice": InvoiceSerializer(invoice).data,
             },
             status=status.HTTP_201_CREATED,
@@ -2494,12 +2509,12 @@ class InvoiceFromTimeEntriesView(APIView):
 
         if not account_id:
             return Response(
-                {"error": True, "message": "account_id is required."},
+                {"error": True, "message": _("account_id is required.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not isinstance(entry_ids, list) or not entry_ids:
             return Response(
-                {"error": True, "message": "entry_ids must be a non-empty list."},
+                {"error": True, "message": _("entry_ids must be a non-empty list.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -2507,7 +2522,7 @@ class InvoiceFromTimeEntriesView(APIView):
             account = Account.objects.get(id=account_id, org=org)
         except (Account.DoesNotExist, ValueError):
             return Response(
-                {"error": True, "message": "Account not found."},
+                {"error": True, "message": _("Account not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -2521,7 +2536,7 @@ class InvoiceFromTimeEntriesView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "message": "One or more time entries were not found.",
+                        "message": _("One or more time entries were not found."),
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
@@ -2556,7 +2571,7 @@ class InvoiceFromTimeEntriesView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Draft invoice created from time entries.",
+                "message": _("Draft invoice created from time entries."),
                 "invoice_id": str(invoice.id),
                 "invoice_number": invoice.invoice_number,
                 "currency": currency,
