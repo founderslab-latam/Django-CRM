@@ -26,6 +26,7 @@
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
   import PortalLineItems from '$lib/v2/components/PortalLineItems.svelte';
   import { money, longDate } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { Download, CheckCircle2, XCircle, AlertTriangle } from '@lucide/svelte';
 
   /** @type {{ data: { estimate: any, token: string }, form: any }} */
@@ -72,7 +73,7 @@
 </script>
 
 <svelte:head>
-  <title>{est.estimate_number} from {est.org.name}</title>
+  <title>{$_('portal.estimate.head_title', { values: { number: est.estimate_number, org: est.org.name } })}</title>
 </svelte:head>
 
 <PortalShell>
@@ -82,8 +83,10 @@
         <div class="from">{est.org.name}</div>
         <h1>{est.title}</h1>
         <div class="ref">
-          Estimate <span class="v2-num">{est.estimate_number}</span> · issued
-          {longDate(est.issue_date)}
+          {$_('portal.estimate.ref_label')}
+          <span class="v2-num">{est.estimate_number}</span> · {$_('portal.estimate.ref_issued', {
+            values: { date: longDate(est.issue_date) }
+          })}
         </div>
       </div>
       <!-- A backend download endpoint, not a SvelteKit route: rel="external"
@@ -93,7 +96,7 @@
         class="v2-btn v2-btn-sm"
         href="/api/public/estimate/{token}/pdf/"
         rel="external"
-        aria-label="Download this estimate as a PDF"
+        aria-label={$_('portal.estimate.download_aria')}
       >
         <Download size={13} />PDF
       </a>
@@ -101,18 +104,19 @@
 
     <section class="amount">
       <div>
-        <div class="amount-label">Total if accepted</div>
+        <div class="amount-label">{$_('portal.estimate.total_if_accepted')}</div>
         <div class="amount-value v2-num">{money(est.total_amount, est.currency)}</div>
         <div class="amount-sub">
           {#if expired}
-            Expired {longDate(est.expiry_date)}
+            {$_('portal.estimate.expiry_expired', { values: { date: longDate(est.expiry_date) } })}
           {:else if daysToExpiry === 0}
-            Valid until end of today
+            {$_('portal.estimate.expiry_today')}
           {:else if daysToExpiry !== null}
-            Valid until {longDate(est.expiry_date)} · {daysToExpiry}
-            {daysToExpiry === 1 ? 'day' : 'days'} left
+            {$_('portal.estimate.expiry_valid', {
+              values: { date: longDate(est.expiry_date), count: daysToExpiry }
+            })}
           {:else}
-            No expiry date set
+            {$_('portal.estimate.expiry_none')}
           {/if}
         </div>
       </div>
@@ -130,16 +134,20 @@
       <section class="decided" class:no={est.status === 'Declined'}>
         {#if est.status === 'Accepted'}<CheckCircle2 size={18} />{:else}<XCircle size={18} />{/if}
         <div>
-          <b>{est.status}</b>
+          <b>{$_('portal.estimate.status_label', { values: { status: est.status } })}</b>
           {#if est.status === 'Accepted'}
             <p>
-              {est.org.name} has been notified and will raise an invoice for
-              {money(est.total_amount, est.currency)}. A copy has been sent to {est.client_email}.
+              {$_('portal.estimate.accepted_detail', {
+                values: {
+                  org: est.org.name,
+                  amount: money(est.total_amount, est.currency),
+                  email: est.client_email
+                }
+              })}
             </p>
           {:else}
             <p>
-              {est.org.name} has been notified. If you declined by mistake, reply to the email this link
-              came from. This page cannot undo it.
+              {$_('portal.estimate.declined_detail', { values: { org: est.org.name } })}
             </p>
           {/if}
         </div>
@@ -150,10 +158,11 @@
       <section class="expired">
         <AlertTriangle size={17} />
         <div>
-          <b>This estimate has expired</b>
+          <b>{$_('portal.estimate.expired_heading')}</b>
           <p>
-            Prices were held until {longDate(est.expiry_date)}. Reply to the email this link came
-            from and {est.org.name} can send a current quote.
+            {$_('portal.estimate.expired_detail', {
+              values: { date: longDate(est.expiry_date), org: est.org.name }
+            })}
           </p>
         </div>
       </section>
@@ -161,56 +170,61 @@
       <section class="decide">
         {#if !confirming}
           <div class="decide-copy">
-            <b>Ready to go ahead?</b>
-            <p>Accepting authorises {est.org.name} to invoice you for the amounts above.</p>
+            <b>{$_('portal.estimate.decide_heading')}</b>
+            <p>{$_('portal.estimate.decide_detail', { values: { org: est.org.name } })}</p>
           </div>
           <div class="decide-actions">
             <button class="v2-btn v2-btn-primary" onclick={() => (confirming = true)}>
-              Accept this estimate
+              {$_('portal.estimate.accept_button')}
             </button>
             <form method="POST" action="?/decline" use:enhance={respond}>
-              <button class="v2-btn" type="submit" disabled={submitting}>Decline</button>
+              <button class="v2-btn" type="submit" disabled={submitting}
+                >{$_('portal.estimate.decline_button')}</button
+              >
             </form>
           </div>
         {:else}
           <!-- Step two. The total is repeated here on purpose: it is the number
                being agreed to, and it should be under the thumb that agrees. -->
           <form class="confirm" method="POST" action="?/accept" use:enhance={respond}>
-            <b>Confirm acceptance of {money(est.total_amount, est.currency)}</b>
+            <b>
+              {$_('portal.estimate.confirm_heading', {
+                values: { amount: money(est.total_amount, est.currency) }
+              })}
+            </b>
             <p>
-              This tells {est.org.name} to raise an invoice. It cannot be undone from this page.
+              {$_('portal.estimate.confirm_detail', { values: { org: est.org.name } })}
             </p>
             <label class="field">
-              <span>Your name</span>
+              <span>{$_('portal.estimate.name_label')}</span>
               <input
                 name="name"
                 bind:value={acceptedByName}
-                placeholder="Who is accepting"
+                placeholder={$_('portal.estimate.name_placeholder')}
                 autocomplete="name"
                 required
               />
             </label>
             <label class="field">
-              <span>Your email</span>
+              <span>{$_('portal.estimate.email_label')}</span>
               <input
                 name="email"
                 type="email"
                 bind:value={acceptedByEmail}
-                placeholder="name@company.com"
+                placeholder={$_('portal.estimate.email_placeholder')}
                 autocomplete="email"
                 required
               />
             </label>
             <p class="field-note">
-              Recorded with your acceptance: {est.org.name} keeps this as the record of who authorised
-              the invoice.
+              {$_('portal.estimate.record_note', { values: { org: est.org.name } })}
             </p>
             <div class="decide-actions">
               <button class="v2-btn v2-btn-primary" type="submit" disabled={submitting}>
-                {submitting ? 'Accepting…' : 'Yes, accept'}
+                {submitting ? $_('portal.estimate.accepting') : $_('portal.estimate.confirm_button')}
               </button>
               <button class="v2-btn" type="button" onclick={() => (confirming = false)}>
-                Go back
+                {$_('portal.estimate.go_back')}
               </button>
             </div>
           </form>
@@ -219,7 +233,7 @@
     {/if}
 
     <section class="block">
-      <div class="v2-label">Prepared for</div>
+      <div class="v2-label">{$_('portal.estimate.prepared_for')}</div>
       <div class="addr">
         <div class="addr-name">{est.client_name}</div>
         {#each addressLines as line, i (i)}
@@ -229,7 +243,7 @@
     </section>
 
     <section class="block">
-      <div class="v2-label">What is included</div>
+      <div class="v2-label">{$_('portal.estimate.what_included')}</div>
       <PortalLineItems
         items={est.line_items}
         currency={est.currency}
@@ -245,20 +259,20 @@
 
     {#if est.notes}
       <section class="block">
-        <div class="v2-label">Notes</div>
+        <div class="v2-label">{$_('portal.estimate.notes_label')}</div>
         <p class="note">{est.notes}</p>
       </section>
     {/if}
 
     {#if est.terms}
       <section class="block">
-        <div class="v2-label">Terms</div>
+        <div class="v2-label">{$_('portal.estimate.terms_label')}</div>
         <p class="note">{est.terms}</p>
       </section>
     {/if}
 
     <footer class="doc-foot">
-      <p>Questions? Reply to the email this estimate arrived with.</p>
+      <p>{$_('portal.estimate.footer_questions')}</p>
       {#if est.template?.footer_text}
         <p class="foot-org">{est.template.footer_text}</p>
       {/if}

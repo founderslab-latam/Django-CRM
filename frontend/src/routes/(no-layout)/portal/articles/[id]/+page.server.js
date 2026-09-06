@@ -8,6 +8,7 @@
  */
 
 import { error, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import {
   ACCESS_COOKIE,
   ORG_COOKIE,
@@ -16,6 +17,7 @@ import {
   getArticle,
   loginPath
 } from '$lib/server/portal';
+import { _ } from '$lib/i18n/index.js';
 
 /** Send an expired or missing session back to the right org's sign-in page. */
 function toLogin(cookies) {
@@ -38,7 +40,7 @@ export async function load({ cookies, params }) {
   } catch (err) {
     if (err instanceof PortalError) {
       if (err.status === 401 || err.status === 403) toLogin(cookies);
-      if (err.status === 404) throw error(404, 'Article not found');
+      if (err.status === 404) throw error(404, get(_)('portal.articles.error_not_found'));
     }
     throw err;
   }

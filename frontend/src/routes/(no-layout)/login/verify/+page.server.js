@@ -12,15 +12,17 @@
 
 import axios from 'axios';
 import { redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('@sveltejs/kit').ServerLoad} */
 export async function load({ url, cookies }) {
   const token = url.searchParams.get('token');
 
   if (!token) {
-    return { error: 'Missing verification token.' };
+    return { error: get(_)('auth.verify.error_missing_token') };
   }
 
   try {
@@ -53,7 +55,7 @@ export async function load({ url, cookies }) {
       maxAge: 60 * 60 * 24 * 365 // 1 year
     });
   } catch (error) {
-    const errorMessage = error.response?.data?.error || 'Verification failed';
+    const errorMessage = error.response?.data?.error || get(_)('auth.verify.error_failed');
     return { error: errorMessage };
   }
 

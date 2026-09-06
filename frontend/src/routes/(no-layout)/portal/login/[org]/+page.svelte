@@ -8,6 +8,7 @@
    */
   import { enhance } from '$app/forms';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   let { form } = $props();
 
@@ -16,21 +17,21 @@
 </script>
 
 <svelte:head>
-  <title>Sign in to support</title>
+  <title>{$_('portal.login.head_title')}</title>
 </svelte:head>
 
 <PortalShell>
   <div class="card">
-    <h1>Your support requests</h1>
+    <h1>{$_('portal.login.heading')}</h1>
 
     {#if stage === 'code'}
       <p class="lede">
-        If <strong>{email}</strong> is on file, we have sent it a six digit code. It expires in 10 minutes.
+        {$_('portal.login.code_lede_before')}<strong>{email}</strong>{$_('portal.login.code_lede_after')}
       </p>
 
       <form method="POST" action="?/verify" use:enhance>
         <input type="hidden" name="email" value={email} />
-        <label for="code">Code</label>
+        <label for="code">{$_('portal.login.code_label')}</label>
         <input
           id="code"
           name="code"
@@ -42,30 +43,30 @@
           required
         />
         {#if form?.error}<p class="err">{form.error}</p>{/if}
-        <button type="submit">Sign in</button>
+        <button type="submit">{$_('portal.login.sign_in_button')}</button>
       </form>
 
       <form method="POST" action="?/request" use:enhance class="again">
         <input type="hidden" name="email" value={email} />
-        <button type="submit" class="link">Send a new code</button>
+        <button type="submit" class="link">{$_('portal.login.resend_button')}</button>
       </form>
     {:else}
       <p class="lede">
-        Enter the email address you use with this company and we will send you a sign-in code.
+        {$_('portal.login.request_lede')}
       </p>
 
       <form method="POST" action="?/request" use:enhance>
-        <label for="email">Email</label>
+        <label for="email">{$_('portal.login.email_label')}</label>
         <input
           id="email"
           name="email"
           type="email"
           autocomplete="email"
-          placeholder="you@company.com"
+          placeholder={$_('portal.login.email_placeholder')}
           required
         />
         {#if form?.error}<p class="err">{form.error}</p>{/if}
-        <button type="submit">Email me a code</button>
+        <button type="submit">{$_('portal.login.request_button')}</button>
       </form>
     {/if}
   </div>

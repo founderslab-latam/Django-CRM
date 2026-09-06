@@ -10,6 +10,7 @@
    */
   import { resolve } from '$app/paths';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   let { data } = $props();
 
@@ -28,19 +29,21 @@
 </svelte:head>
 
 <PortalShell>
-  <a class="back" href={resolve('/portal/articles')}>Back to help articles</a>
+  <a class="back" href={resolve('/portal/articles')}>{$_('portal.articles.back_link')}</a>
 
   <article>
     <h1>{data.article.title}</h1>
     {#if data.article.updated_at}
-      <p class="when">Updated {formatDate(data.article.updated_at)}</p>
+      <p class="when">
+        {$_('portal.articles.updated', { values: { date: formatDate(data.article.updated_at) } })}
+      </p>
     {/if}
     <div class="body">{data.article.description}</div>
   </article>
 
   {#if data.related.length > 0}
-    <nav class="related" aria-label="Related articles">
-      <h2>Related articles</h2>
+    <nav class="related" aria-label={$_('portal.articles.related_aria')}>
+      <h2>{$_('portal.articles.related_heading')}</h2>
       <ul>
         {#each data.related as item (item.id)}
           <li><a href={resolve(`/portal/articles/${item.id}`)}>{item.title}</a></li>
@@ -53,8 +56,8 @@
        inline prose it measured 17px tall, well under a thumb, and it is the
        action this whole page exists to avoid needing. -->
   <div class="ask">
-    <p>Still stuck?</p>
-    <a href={resolve('/portal/cases')}>Send us a request</a>
+    <p>{$_('portal.articles.still_stuck')}</p>
+    <a href={resolve('/portal/cases')}>{$_('portal.articles.send_request')}</a>
   </div>
 </PortalShell>
 

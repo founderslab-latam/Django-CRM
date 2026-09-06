@@ -23,6 +23,7 @@
   import { untrack } from 'svelte';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
   import { longDate, relativeDays } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { Star, CheckCircle2, Clock } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -40,11 +41,11 @@
   let hover = $state(0);
   let submitting = $state(false);
 
-  const SCALE_ENDS = { 1: 'Not good', 5: 'Great' };
+  let SCALE_ENDS = $derived({ 1: $_('csat.survey.scale_low'), 5: $_('csat.survey.scale_high') });
 </script>
 
 <svelte:head>
-  <title>How did we do?, {survey?.orgName ?? 'Feedback'}</title>
+  <title>{$_('csat.survey.head_title', { values: { org: survey?.orgName ?? $_('csat.survey.head_title_fallback') } })}</title>
 </svelte:head>
 
 <PortalShell>
@@ -54,43 +55,45 @@
            copy does not apologise; it gives the one route that still works. -->
       <section class="card center">
         <Clock size={22} />
-        <h1>This survey has closed</h1>
-        <p>
-          Survey links stay open for a limited time after a ticket is closed. If there is still
-          something you want the team to know, reply to the email this link came from and it will
-          reach them.
-        </p>
+        <h1>{$_('csat.survey.closed_heading')}</h1>
+        <p>{$_('csat.survey.closed_detail')}</p>
       </section>
     {:else if data.invalid}
       <section class="card center">
         <Clock size={22} />
-        <h1>This link isn't valid</h1>
-        <p>We couldn't verify this link. Please use the most recent one from your email.</p>
+        <h1>{$_('csat.survey.invalid_heading')}</h1>
+        <p>{$_('csat.survey.invalid_detail')}</p>
       </section>
     {:else if data.error}
       <section class="card center">
         <Clock size={22} />
-        <h1>Something went wrong</h1>
+        <h1>{$_('csat.survey.error_heading')}</h1>
         <p>{data.error}</p>
       </section>
     {:else if form?.success}
       <section class="card center">
         <div class="tick"><CheckCircle2 size={26} /></div>
-        <h1>Thank you</h1>
+        <h1>{$_('csat.survey.thanks_heading')}</h1>
         <p>
-          Your rating of {form.rating} of 5 went straight to {survey?.agentName ?? 'the team'} and their
-          team lead. You can change it for the next 24 hours by reopening this link.
+          {$_('csat.survey.thanks_detail', {
+            values: {
+              rating: form.rating,
+              agent: survey?.agentName ?? $_('csat.survey.thanks_agent_fallback')
+            }
+          })}
         </p>
       </section>
     {:else if survey}
       <section class="card">
         <header>
           <div class="org">{survey.orgName}</div>
-          <h1>How did we do?</h1>
+          <h1>{$_('csat.survey.heading')}</h1>
           <p class="ctx">
-            {survey.agentName}
-            {#if survey.closedAt}closed your request {relativeDays(survey.closedAt)}{:else}handled
-              your request{/if},
+            {#if survey.closedAt}{$_('csat.survey.context_closed', {
+                values: { agent: survey.agentName, when: relativeDays(survey.closedAt) }
+              })}{:else}{$_('csat.survey.context_handled', {
+                values: { agent: survey.agentName }
+              })}{/if},
             <span class="subject">“{survey.ticketSubject}”</span>
           </p>
         </header>
@@ -99,10 +102,14 @@
           <!-- Coming back to an answered survey. Say what is on file and by when
                it can change, rather than silently showing a pre-filled form. -->
           <div class="prior">
-            You rated this <b>{survey.rating} of 5</b>
-            {relativeDays(survey.respondedAt)}. You can change it until {longDate(
-              survey.editableUntil
-            )}.
+            {$_('csat.survey.prior_before')}<b
+              >{$_('csat.survey.prior_score', { values: { rating: survey.rating } })}</b
+            >{$_('csat.survey.prior_after', {
+              values: {
+                when: relativeDays(survey.respondedAt),
+                until: longDate(survey.editableUntil)
+              }
+            })}
           </div>
         {/if}
 
@@ -119,7 +126,7 @@
         >
           <input type="hidden" name="rating" value={rating} />
 
-          <div class="stars" role="radiogroup" aria-label="Rate from 1 to 5">
+          <div class="stars" role="radiogroup" aria-label={$_('csat.survey.stars_aria')}>
             {#each [1, 2, 3, 4, 5] as n (n)}
               <button
                 type="button"
@@ -148,14 +155,14 @@
                matters. -->
           {#if rating}
             <label class="comment">
-              <span>Anything you want to add? <i>Optional</i></span>
+              <span>{$_('csat.survey.comment_label')} <i>{$_('csat.survey.comment_optional')}</i></span>
               <textarea
                 name="comment"
                 rows="3"
                 bind:value={comment}
                 placeholder={rating <= 2
-                  ? 'What went wrong? This goes to the team lead, not just the agent.'
-                  : 'What worked well?'}></textarea>
+                  ? $_('csat.survey.comment_placeholder_low')
+                  : $_('csat.survey.comment_placeholder_high')}></textarea>
             </label>
 
             {#if form?.error}
@@ -163,13 +170,17 @@
             {/if}
 
             <button class="v2-btn v2-btn-primary submit" type="submit" disabled={submitting}>
-              {submitting ? 'Sending…' : survey.respondedAt ? 'Update my rating' : 'Send'}
+              {submitting
+                ? $_('csat.survey.sending')
+                : survey.respondedAt
+                  ? $_('csat.survey.update_button')
+                  : $_('csat.survey.send_button')}
             </button>
           {/if}
         </form>
 
         <p class="fine">
-          Your answer goes to {survey.orgName}'s support team. It is not published anywhere.
+          {$_('csat.survey.fine_print', { values: { org: survey.orgName } })}
         </p>
       </section>
     {/if}

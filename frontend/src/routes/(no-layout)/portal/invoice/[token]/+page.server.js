@@ -6,7 +6,9 @@
  */
 
 import { error } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { env } from '$env/dynamic/public';
+import { _ } from '$lib/i18n/index.js';
 
 // The Django API, reached server-to-server. Absolute (not a relative `/api/...`
 // that only resolves behind a production reverse proxy) so the anonymous portal
@@ -18,7 +20,7 @@ export async function load({ params, fetch }) {
   const { token } = params;
 
   if (!token) {
-    throw error(400, 'Invoice token is required');
+    throw error(400, get(_)('portal.invoice.error_token_required'));
   }
 
   try {
@@ -27,9 +29,9 @@ export async function load({ params, fetch }) {
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw error(404, 'Invoice not found or link has expired');
+        throw error(404, get(_)('portal.invoice.error_not_found'));
       }
-      throw error(response.status, 'Failed to load invoice');
+      throw error(response.status, get(_)('portal.invoice.error_load'));
     }
 
     // The v2 portal renders the Django shape directly (snake_case, template
@@ -40,6 +42,6 @@ export async function load({ params, fetch }) {
   } catch (err) {
     if (err.status) throw err;
     console.error('Error loading public invoice:', err);
-    throw error(500, 'Failed to load invoice');
+    throw error(500, get(_)('portal.invoice.error_load'));
   }
 }

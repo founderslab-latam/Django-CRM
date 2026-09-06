@@ -9,12 +9,14 @@
  *   mv +page.server.api.js +page.server.js
  */
 
+import { get } from 'svelte/store';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
 import axios from 'axios';
 import { describeError } from '$lib/server/log-safe.js';
 import { listPacks, applyPack } from '$lib/server/packs.js';
 import { listTimezones } from '$lib/server/v2/organization.js';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies }) {
@@ -50,7 +52,7 @@ export const actions = {
     if (!user) {
       return {
         error: {
-          name: 'You must be logged in to create an organization'
+          name: get(_)('org.new.error_must_be_logged_in')
         }
       };
     }
@@ -65,7 +67,7 @@ export const actions = {
     if (!orgName || orgName.trim().length === 0) {
       return {
         error: {
-          name: 'Organization name is required'
+          name: get(_)('org.new.error_name_required')
         }
       };
     }
@@ -75,7 +77,7 @@ export const actions = {
       if (!jwtAccess) {
         return {
           error: {
-            name: 'Authentication required'
+            name: get(_)('org.new.error_auth_required')
           }
         };
       }
@@ -201,14 +203,14 @@ export const actions = {
             name:
               err.response.data?.name?.[0] ||
               err.response.data?.error ||
-              'Organization with this name may already exist'
+              get(_)('org.new.error_duplicate_name')
           }
         };
       }
 
       return {
         error: {
-          name: 'An unexpected error occurred while creating the organization.'
+          name: get(_)('org.new.error_unexpected')
         }
       };
     }

@@ -7,9 +7,11 @@
  */
 
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { env } from '$env/dynamic/public';
 
 import { preselectedRating } from '$lib/server/v2/csat.js';
+import { _ } from '$lib/i18n/index.js';
 
 const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
 
@@ -23,7 +25,10 @@ export async function load({ params, fetch, url }) {
     return { invalid: true, token: params.token };
   }
   if (!res.ok) {
-    return { error: `Server returned ${res.status}`, token: params.token };
+    return {
+      error: get(_)('csat.errors.server_returned', { values: { status: res.status } }),
+      token: params.token
+    };
   }
   const data = await res.json();
   return {
@@ -52,7 +57,7 @@ export const actions = {
     const rating = Number(form.get('rating'));
     const comment = (form.get('comment')?.toString() || '').trim();
     if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-      return fail(400, { error: 'Please pick a rating between 1 and 5.' });
+      return fail(400, { error: get(_)('csat.errors.pick_rating') });
     }
     const res = await fetch(`${API_BASE_URL}/public/csat/${params.token}/`, {
       method: 'POST',
@@ -60,15 +65,15 @@ export const actions = {
       body: JSON.stringify({ rating, comment })
     });
     if (res.status === 410) {
-      return fail(410, { error: 'This survey link has expired.' });
+      return fail(410, { error: get(_)('csat.errors.expired') });
     }
     if (res.status === 409) {
-      return fail(409, { error: 'This survey is locked. The edit window has closed.' });
+      return fail(409, { error: get(_)('csat.errors.locked') });
     }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       return fail(res.status, {
-        error: body?.error || `Server returned ${res.status}`
+        error: body?.error || get(_)('csat.errors.server_returned', { values: { status: res.status } })
       });
     }
     return { success: true, rating, comment };

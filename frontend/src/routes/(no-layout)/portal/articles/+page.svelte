@@ -9,31 +9,37 @@
    */
   import { resolve } from '$app/paths';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   let { data } = $props();
 </script>
 
 <svelte:head>
-  <title>Help articles</title>
+  <title>{$_('portal.articles.head_title')}</title>
 </svelte:head>
 
 <PortalShell>
   <header class="head">
-    <h1>Help articles</h1>
-    <a class="btn" href={resolve('/portal/cases')}>Your requests</a>
+    <h1>{$_('portal.articles.heading')}</h1>
+    <a class="btn" href={resolve('/portal/cases')}>{$_('portal.articles.your_requests_link')}</a>
   </header>
 
   <form method="GET" class="find">
-    <label class="sr-only" for="search">Search help articles</label>
-    <input id="search" name="search" value={data.search} placeholder="Search for an answer" />
-    <button type="submit">Search</button>
+    <label class="sr-only" for="search">{$_('portal.articles.search_label')}</label>
+    <input
+      id="search"
+      name="search"
+      value={data.search}
+      placeholder={$_('portal.articles.search_placeholder')}
+    />
+    <button type="submit">{$_('portal.articles.search_button')}</button>
   </form>
 
   {#if data.articles.length === 0}
     <p class="empty">
       {data.search
-        ? `Nothing matches "${data.search}". Try a different word, or send us a request.`
-        : 'There are no help articles yet.'}
+        ? $_('portal.articles.empty_search', { values: { query: data.search } })
+        : $_('portal.articles.empty')}
     </p>
   {:else}
     <ul class="list">

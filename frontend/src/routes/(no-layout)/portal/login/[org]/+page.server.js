@@ -9,6 +9,7 @@
  */
 
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import {
   ACCESS_COOKIE,
   ORG_COOKIE,
@@ -18,6 +19,7 @@ import {
   setSession,
   verifyLogin
 } from '$lib/server/portal';
+import { _ } from '$lib/i18n/index.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, cookies }) {
@@ -38,7 +40,7 @@ export const actions = {
   request: async ({ request, params }) => {
     const form = await request.formData();
     const email = String(form.get('email') || '').trim();
-    if (!email) return fail(400, { error: 'Enter your email address.' });
+    if (!email) return fail(400, { error: get(_)('portal.login.error_enter_email') });
 
     // The API answers identically whether or not this address is a contact
     // here, and so must this page. Anything conditional on the result would
@@ -55,7 +57,12 @@ export const actions = {
     const form = await request.formData();
     const email = String(form.get('email') || '').trim();
     const code = String(form.get('code') || '').trim();
-    if (!code) return fail(400, { error: 'Enter the code from your email.', stage: 'code', email });
+    if (!code)
+      return fail(400, {
+        error: get(_)('portal.login.error_enter_code'),
+        stage: 'code',
+        email
+      });
 
     try {
       const result = await verifyLogin(params.org, email, code);
@@ -63,7 +70,7 @@ export const actions = {
     } catch (err) {
       if (err instanceof PortalError) {
         return fail(400, {
-          error: err.data?.error || 'That code is not valid. Request a new one.',
+          error: err.data?.error || get(_)('portal.login.error_invalid_code'),
           stage: 'code',
           email
         });

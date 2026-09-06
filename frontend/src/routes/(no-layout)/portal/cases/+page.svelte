@@ -7,6 +7,7 @@
   import { enhance } from '$app/forms';
   import { resolve } from '$app/paths';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
+  import { _ } from '$lib/i18n/index.js';
 
   let { data, form } = $props();
 
@@ -42,12 +43,12 @@
     }, 300);
   }
 
-  const FILTERS = [
-    { value: '', label: 'All' },
-    { value: 'New', label: 'New' },
-    { value: 'Pending', label: 'Pending' },
-    { value: 'Closed', label: 'Closed' }
-  ];
+  let FILTERS = $derived([
+    { value: '', label: $_('portal.cases.filter_all') },
+    { value: 'New', label: $_('portal.cases.filter_new') },
+    { value: 'Pending', label: $_('portal.cases.filter_pending') },
+    { value: 'Closed', label: $_('portal.cases.filter_closed') }
+  ]);
 
   const OPEN_STATUSES = new Set(['New', 'Assigned', 'Pending']);
 
@@ -62,35 +63,35 @@
 </script>
 
 <svelte:head>
-  <title>Your support requests</title>
+  <title>{$_('portal.cases.head_title')}</title>
 </svelte:head>
 
 <PortalShell>
   <header class="head">
-    <h1>Your requests</h1>
+    <h1>{$_('portal.cases.heading')}</h1>
     <div class="actions">
-      <a class="btn" href={resolve('/portal/articles')}>Help</a>
+      <a class="btn" href={resolve('/portal/articles')}>{$_('portal.cases.help_link')}</a>
       <button type="button" onclick={() => (composing = !composing)}>
-        {composing ? 'Cancel' : 'New request'}
+        {composing ? $_('portal.cases.cancel_button') : $_('portal.cases.new_request_button')}
       </button>
     </div>
   </header>
 
   {#if composing}
     <form method="POST" action="?/create" use:enhance class="compose">
-      <label for="name">What do you need help with?</label>
+      <label for="name">{$_('portal.cases.field_summary_label')}</label>
       <input
         id="name"
         name="name"
         required
-        placeholder="Short summary"
+        placeholder={$_('portal.cases.field_summary_placeholder')}
         bind:value={summary}
         oninput={findAnswers}
       />
 
       {#if suggestions.length > 0}
         <aside class="deflect">
-          <p class="deflect-head">These might already answer it</p>
+          <p class="deflect-head">{$_('portal.cases.suggestions_heading')}</p>
           <ul>
             {#each suggestions as article (article.id)}
               <li>
@@ -104,18 +105,18 @@
         </aside>
       {/if}
 
-      <label for="description">Any detail that would help</label>
+      <label for="description">{$_('portal.cases.field_detail_label')}</label>
       <textarea id="description" name="description" rows="4"></textarea>
 
-      <label for="priority">How urgent is it?</label>
+      <label for="priority">{$_('portal.cases.field_priority_label')}</label>
       <select id="priority" name="priority">
-        <option value="Low">Low</option>
-        <option value="Normal" selected>Normal</option>
-        <option value="High">High</option>
+        <option value="Low">{$_('portal.cases.priority_low')}</option>
+        <option value="Normal" selected>{$_('portal.cases.priority_normal')}</option>
+        <option value="High">{$_('portal.cases.priority_high')}</option>
       </select>
 
       {#if form?.error}<p class="err">{form.error}</p>{/if}
-      <button type="submit" class="primary">Send request</button>
+      <button type="submit" class="primary">{$_('portal.cases.send_request_button')}</button>
     </form>
   {/if}
 
@@ -133,8 +134,8 @@
   {#if data.cases.length === 0}
     <p class="empty">
       {data.status
-        ? `You have no ${data.status.toLowerCase()} requests.`
-        : 'You have not sent us any requests yet.'}
+        ? $_('portal.cases.empty_filtered', { values: { status: data.status } })
+        : $_('portal.cases.empty_all')}
     </p>
   {:else}
     <ul class="list">

@@ -5,6 +5,7 @@
   import imgLogo from '$lib/assets/images/logo.png';
   import { Building2, LogOut, Plus, ChevronRight } from '@lucide/svelte';
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
 
   // `locale` in the default below only satisfies the type merged in from
   // the root layout's i18n load (see src/routes/+layout.server.js) - it's
@@ -17,7 +18,7 @@
 </script>
 
 <svelte:head>
-  <title>Choose organisation · BottleCRM</title>
+  <title>{$_('org.select.head_title')}</title>
 </svelte:head>
 
 <div class="v2-root v2-auth">
@@ -29,11 +30,11 @@
 
     <div class="v2-auth-card">
       <div class="v2-auth-head">
-        <h1>Choose an organisation</h1>
+        <h1>{$_('org.select.heading')}</h1>
         <p>
           {orgs.length
-            ? "Pick the workspace you'd like to open."
-            : 'Create your first workspace to get started.'}
+            ? $_('org.select.subheading_has_orgs')
+            : $_('org.select.subheading_no_orgs')}
         </p>
       </div>
 
@@ -61,7 +62,7 @@
               <span class="v2-auth-org-body">
                 <b>{org.name}</b>
                 <span class="v2-sub" style="display:block;text-transform:capitalize">
-                  {org.role?.toLowerCase() || 'member'}
+                  {org.role?.toLowerCase() || $_('org.select.role_fallback')}
                 </span>
               </span>
               {#if loading && selectedOrgId === org.id}
@@ -75,16 +76,16 @@
 
         <a href={resolve('/org/new')} class="v2-auth-add">
           <Plus />
-          Create new organisation
+          {$_('org.select.create_new')}
         </a>
       {:else}
         <div class="v2-state" style="padding:22px 0 8px">
           <div class="v2-state-icon"><Building2 size={22} /></div>
-          <h3>No organisations yet</h3>
-          <p>Create your first workspace to start using BottleCRM.</p>
+          <h3>{$_('org.select.empty_heading')}</h3>
+          <p>{$_('org.select.empty_detail')}</p>
           <a href={resolve('/org/new')} class="v2-btn v2-btn-primary">
             <Plus size={15} />
-            Create organisation
+            {$_('org.select.empty_create_button')}
           </a>
         </div>
       {/if}
@@ -92,7 +93,7 @@
 
     <div class="v2-auth-foot">
       <a href={resolve('/logout')} style="display:inline-flex;align-items:center;gap:5px">
-        <LogOut size={13} /> Sign out
+        <LogOut size={13} /> {$_('org.select.sign_out')}
       </a>
     </div>
   </div>
