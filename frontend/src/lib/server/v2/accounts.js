@@ -141,6 +141,7 @@ function toRow(account) {
     city: account.city ?? '',
     country: account.country ?? '',
     country_display: account.country_display ?? '',
+    tax_id: account.tax_id ?? '',
     description: account.description ?? '',
     is_active: account.is_active !== false,
     created_at: account.created_at,
@@ -321,6 +322,7 @@ export const EDITABLE_FIELDS = [
   'state',
   'postcode',
   'country',
+  'tax_id',
   'description'
 ];
 
@@ -391,6 +393,7 @@ export async function getAccountForEdit({ cookies }, id) {
       state: raw.state ?? '',
       postcode: raw.postcode ?? '',
       country: account.country,
+      tax_id: account.tax_id,
       description: account.description,
       // Binds to a Profile id, not a display name.
       assigned_to: raw.assigned_to?.[0]?.id ?? ''

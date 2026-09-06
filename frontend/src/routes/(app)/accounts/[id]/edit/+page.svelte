@@ -24,6 +24,8 @@
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
   import { _ } from '$lib/i18n/index.js';
+  import { isValidRut } from '$lib/common/rut.js';
+  import { taxIdLabel, taxIdHint } from '$lib/common/tax-id-label.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -69,11 +71,21 @@
     if (form.phone && !/^[\d\s\-()+.]{7,25}$/.test(form.phone))
       e.phone = $_('accounts.edit.error_phone_invalid');
 
+    // A Chilean account's tax ID is a RUT; the serializer rejects one whose
+    // check digit does not match. Mirror that so the field can say so.
+    if (form.country === 'CL' && form.tax_id && !isValidRut(form.tax_id))
+      e.tax_id = $_('common.tax_id.cl_invalid');
+
     return e;
   });
 
   let valid = $derived(Object.keys(errors).length === 0);
   const show = (/** @type {string} */ field) => (touched[field] || submitted) && errors[field];
+
+  // Chile's tax ID is the RUT and has a checkable format; elsewhere the field
+  // is a free-form tax/VAT number. Only the label and hint change.
+  let taxLabel = $derived(taxIdLabel(form.country, $_));
+  let taxHint = $derived(taxIdHint(form.country, $_));
 
   /**
    * These checks are a UX hint. The serializer is the rule, and its 400 is
@@ -325,6 +337,25 @@
           <option value={c.value}>{c.label}</option>
         {/each}
       </select>
+    </div>
+
+    <div class="v2-field">
+      <label for="f-tax">{taxLabel}</label>
+      <input
+        id="f-tax"
+        name="tax_id"
+        class="v2-input"
+        maxlength="50"
+        bind:value={form.tax_id}
+        placeholder={form.country === 'CL' ? $_('common.tax_id.cl_placeholder') : undefined}
+        onblur={() => (touched.tax_id = true)}
+        aria-invalid={show('tax_id') ? 'true' : undefined}
+      />
+      {#if show('tax_id')}
+        <p class="v2-error">{errors.tax_id}</p>
+      {:else if taxHint}
+        <p class="v2-hint">{taxHint}</p>
+      {/if}
     </div>
 
     <div class="v2-field">

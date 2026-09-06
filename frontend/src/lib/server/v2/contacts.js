@@ -104,6 +104,7 @@ function toRow(contact) {
     city: contact.city ?? '',
     state: contact.state ?? '',
     country: contact.country ?? '',
+    tax_id: contact.tax_id ?? '',
     address_line: contact.address_line ?? '',
     postcode: contact.postcode ?? '',
     description: contact.description ?? '',
@@ -307,6 +308,7 @@ export const EDITABLE_FIELDS = [
   'state',
   'postcode',
   'country',
+  'tax_id',
   'description',
   'account',
   'is_active'
@@ -395,6 +397,7 @@ export async function getContactForEdit({ cookies }, id) {
       state: contact.state,
       postcode: contact.postcode,
       country: contact.country,
+      tax_id: contact.tax_id,
       description: contact.description,
       is_active: contact.is_active,
       // The FK only. Membership of other accounts is not this form's to edit,
