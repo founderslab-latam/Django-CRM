@@ -84,3 +84,12 @@ TODO.md
 # Compiled gettext catalogs — the .po files are the source, .mo is built at
 # container start (docker/backend/entrypoint.sh) and on deploy.
 *.mo
+
+# Local pnpm content-addressable store, if it lands inside the repo instead of
+# the global one. Pure download cache; pnpm rebuilds it.
+frontend/.pnpm-store/
+
+# docker-compose's local override. It's auto-loaded by `docker compose` and is
+# where per-machine tweaks live (host ports, an alternate entrypoint, extra
+# services); it must not be committed so it can differ per developer.
+docker-compose.override.yml
