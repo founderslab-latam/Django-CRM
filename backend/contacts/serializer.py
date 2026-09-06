@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -122,7 +123,7 @@ class CreateContactSerializer(serializers.ModelSerializer):
         a superuser. The org filter is the contract either way.
         """
         if account is not None and (self.org is None or account.org_id != self.org.id):
-            raise serializers.ValidationError("No such account.")
+            raise serializers.ValidationError(_("No such account."))
         return account
 
     def validate_email(self, email):
@@ -134,12 +135,12 @@ class CreateContactSerializer(serializers.ModelSerializer):
                     .exists()
                 ):
                     raise serializers.ValidationError(
-                        "Contact already exists with this email"
+                        _("Contact already exists with this email")
                     )
             else:
                 if Contact.objects.filter(email__iexact=email, org=self.org).exists():
                     raise serializers.ValidationError(
-                        "Contact already exists with this email"
+                        _("Contact already exists with this email")
                     )
         return email
 

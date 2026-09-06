@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -155,11 +156,11 @@ class EmailSerializer(serializers.ModelSerializer):
                 count -= 1
             if count < 0:
                 raise serializers.ValidationError(
-                    "Brackets do not match, Enter valid tags."
+                    _("Brackets do not match, Enter valid tags.")
                 )
         if count != 0:
             raise serializers.ValidationError(
-                "Brackets do not match, Enter valid tags."
+                _("Brackets do not match, Enter valid tags.")
             )
         return message_body
 
@@ -210,12 +211,12 @@ class AccountCreateSerializer(serializers.ModelSerializer):
                 if not Account.objects.filter(name__iexact=name, org=self.org).exists():
                     return name
                 raise serializers.ValidationError(
-                    "Account already exists with this name"
+                    _("Account already exists with this name")
                 )
             return name
         if not Account.objects.filter(name__iexact=name, org=self.org).exists():
             return name
-        raise serializers.ValidationError("Account already exists with this name")
+        raise serializers.ValidationError(_("Account already exists with this name"))
 
     def validate_annual_revenue(self, annual_revenue):
         """Reject negative revenue here rather than letting the database do it.
@@ -228,7 +229,7 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         which is why the sibling field already answered 400 and this one did not.
         """
         if annual_revenue is not None and annual_revenue < 0:
-            raise serializers.ValidationError("Annual revenue cannot be negative.")
+            raise serializers.ValidationError(_("Annual revenue cannot be negative."))
         return annual_revenue
 
     class Meta:

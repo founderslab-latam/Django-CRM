@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import (
     extend_schema,
     inline_serializer,
@@ -266,7 +267,7 @@ class ContactsListView(APIView, LimitOffsetPagination):
             # is the one it just made.
             {
                 "error": False,
-                "message": "Contact created Successfuly",
+                "message": _("Contact created Successfuly"),
                 "id": str(contact_obj.id),
             },
             status=status.HTTP_200_OK,
@@ -464,7 +465,7 @@ class ContactDetailView(APIView):
                 request.profile,
             )
         return Response(
-            {"error": False, "message": "Contact Updated Successfully"},
+            {"error": False, "message": _("Contact Updated Successfully")},
             status=status.HTTP_200_OK,
         )
 
@@ -604,13 +605,13 @@ class ContactDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
         self.object.delete()
         return Response(
-            {"error": False, "message": "Contact Deleted Successfully."},
+            {"error": False, "message": _("Contact Deleted Successfully.")},
             status=status.HTTP_200_OK,
         )
 
@@ -787,7 +788,7 @@ class ContactDetailView(APIView):
                 contact_obj.tags.add(*tag_objs)
 
         return Response(
-            {"error": False, "message": "Contact Updated Successfully"},
+            {"error": False, "message": _("Contact Updated Successfully")},
             status=status.HTTP_200_OK,
         )
 
@@ -826,7 +827,7 @@ class ContactCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Submitted"},
+                    {"error": False, "message": _("Comment Submitted")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -836,7 +837,7 @@ class ContactCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to edit this Comment",
+                "errors": _("You don't have permission to edit this Comment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -865,7 +866,7 @@ class ContactCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Updated"},
+                    {"error": False, "message": _("Comment Updated")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -875,7 +876,7 @@ class ContactCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to edit this Comment",
+                "errors": _("You don't have permission to edit this Comment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -898,13 +899,13 @@ class ContactCommentView(APIView):
         if is_org_admin(request.profile) or request.profile == self.object.commented_by:
             self.object.delete()
             return Response(
-                {"error": False, "message": "Comment Deleted Successfully"},
+                {"error": False, "message": _("Comment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action",
+                "errors": _("You don't have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -951,13 +952,13 @@ class ContactAttachmentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Attachment Deleted Successfully"},
+                {"error": False, "message": _("Attachment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to delete this Attachment",
+                "errors": _("You don't have permission to delete this Attachment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )

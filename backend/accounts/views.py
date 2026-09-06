@@ -19,6 +19,7 @@ from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.pagination import LimitOffsetPagination
@@ -400,7 +401,7 @@ class AccountsListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Account Created Successfully",
+                    "message": _("Account Created Successfully"),
                     # Without this a client cannot open what it just created.
                     # The alternative is searching for it by name, which is a
                     # race and a guess. Additive; nothing reads it positionally.
@@ -544,7 +545,7 @@ class AccountDetailView(APIView):
                 str(request.profile.org.id),
             )
             return Response(
-                {"error": False, "message": "Account Updated Successfully"},
+                {"error": False, "message": _("Account Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -564,7 +565,9 @@ class AccountDetailView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "You do not have Permission to perform this action",
+                        "errors": _(
+                            "You do not have Permission to perform this action"
+                        ),
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
@@ -578,13 +581,15 @@ class AccountDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "This account can't be deleted while it still has "
-                    "invoices, estimates or recurring invoices linked to it.",
+                    "errors": _(
+                        "This account can't be deleted while it still has "
+                        "invoices, estimates or recurring invoices linked to it."
+                    ),
                 },
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(
-            {"error": False, "message": "Account Deleted Successfully."},
+            {"error": False, "message": _("Account Deleted Successfully.")},
             status=status.HTTP_200_OK,
         )
 
@@ -847,7 +852,7 @@ class AccountDetailView(APIView):
                     account_object.assigned_to.add(*profiles)
 
             return Response(
-                {"error": False, "message": "Account Updated Successfully"},
+                {"error": False, "message": _("Account Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -885,7 +890,7 @@ class AccountCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Submitted"},
+                    {"error": False, "message": _("Comment Submitted")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -895,7 +900,7 @@ class AccountCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to edit this Comment",
+                "errors": _("You don't have permission to edit this Comment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -915,7 +920,7 @@ class AccountCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Updated"},
+                    {"error": False, "message": _("Comment Updated")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -925,7 +930,7 @@ class AccountCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to edit this Comment",
+                "errors": _("You don't have permission to edit this Comment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -936,13 +941,13 @@ class AccountCommentView(APIView):
         if is_org_admin(request.profile) or request.profile == self.object.commented_by:
             self.object.delete()
             return Response(
-                {"error": False, "message": "Comment Deleted Successfully"},
+                {"error": False, "message": _("Comment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action",
+                "errors": _("You don't have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -977,13 +982,13 @@ class AccountAttachmentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Attachment Deleted Successfully"},
+                {"error": False, "message": _("Attachment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to delete this Attachment",
+                "errors": _("You don't have permission to delete this Attachment"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -1029,7 +1034,7 @@ class AccountCreateMailView(APIView):
         account = Account.objects.filter(id=pk, org=request.profile.org).first()
         if account is None:
             return Response(
-                {"error": True, "errors": "Account not found"},
+                {"error": True, "errors": _("Account not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1051,7 +1056,7 @@ class AccountCreateMailView(APIView):
                     "error": True,
                     "errors": {
                         "scheduled_date_time": [
-                            "A scheduled email needs a date and time."
+                            _("A scheduled email needs a date and time.")
                         ]
                     },
                 },
@@ -1080,7 +1085,7 @@ class AccountCreateMailView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": {"recipients": ["Please enter valid recipients."]},
+                        "errors": {"recipients": [_("Please enter valid recipients.")]},
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -1098,9 +1103,9 @@ class AccountCreateMailView(APIView):
 
         if not scheduled_later:
             send_email.delay(email_obj.id, str(request.profile.org.id))
-            message = "Email sent successfully"
+            message = _("Email sent successfully")
         else:
-            message = "Email scheduled successfully"
+            message = _("Email scheduled successfully")
         return Response(
             {"error": False, "message": message, "id": str(email_obj.id)},
             status=status.HTTP_200_OK,

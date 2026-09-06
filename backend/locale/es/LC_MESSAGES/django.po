@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 03:51+0000\n"
+"POT-Creation-Date: 2026-09-06 04:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,6 +59,66 @@ msgstr ""
 
 msgid "Notes"
 msgstr ""
+
+msgid "Brackets do not match, Enter valid tags."
+msgstr "Las llaves no coinciden. Ingresa etiquetas válidas."
+
+msgid "Account already exists with this name"
+msgstr "Ya existe una cuenta con este nombre"
+
+msgid "Annual revenue cannot be negative."
+msgstr "Los ingresos anuales no pueden ser negativos."
+
+msgid "Account Created Successfully"
+msgstr "Cuenta creada correctamente."
+
+msgid "Account Updated Successfully"
+msgstr "Cuenta actualizada correctamente."
+
+msgid "You do not have Permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "This account can't be deleted while it still has invoices, estimates or recurring invoices linked to it."
+msgstr "No se puede eliminar esta cuenta mientras tenga facturas, presupuestos o facturas recurrentes vinculados a ella."
+
+msgid "Account Deleted Successfully."
+msgstr "Cuenta eliminada correctamente."
+
+msgid "Comment Submitted"
+msgstr "Comentario enviado."
+
+msgid "You don't have permission to edit this Comment"
+msgstr "No tienes permiso para editar este comentario."
+
+msgid "Comment Updated"
+msgstr "Comentario actualizado."
+
+msgid "Comment Deleted Successfully"
+msgstr "Comentario eliminado correctamente."
+
+msgid "You don't have permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "Attachment Deleted Successfully"
+msgstr "Adjunto eliminado correctamente."
+
+msgid "You don't have permission to delete this Attachment"
+msgstr "No tienes permiso para eliminar este adjunto."
+
+msgid "Account not found"
+msgstr "No se encontró la cuenta."
+
+msgid "A scheduled email needs a date and time."
+msgstr "Un correo programado necesita una fecha y una hora."
+
+msgid "Please enter valid recipients."
+msgstr "Ingresa destinatarios válidos."
+
+msgid "Email sent successfully"
+msgstr "Correo enviado correctamente."
+
+msgid "Email scheduled successfully"
+msgstr "Correo programado correctamente."
 
 msgctxt "Name of the case"
 msgid "Name"
@@ -1069,9 +1129,6 @@ msgstr "Campo personalizado desactivado."
 msgid "Document Created Successfully"
 msgstr "Documento creado correctamente."
 
-msgid "You do not have Permission to perform this action"
-msgstr "No tienes permiso para realizar esta acción."
-
 msgid "Document deleted Successfully"
 msgstr "Documento eliminado correctamente."
 
@@ -1218,6 +1275,18 @@ msgstr "La organización debe conservar al menos un administrador activo."
 msgid "Please enter Valid Status for user"
 msgstr "Ingresa un estado válido para el usuario."
 
+msgid "No file uploaded (expected field 'file')"
+msgstr "No se subió ningún archivo (se esperaba el campo 'file')."
+
+msgid "File must have a .csv extension"
+msgstr "El archivo debe tener la extensión .csv."
+
+msgid "File exceeds the 5 MB upload limit"
+msgstr "El archivo supera el límite de subida de 5 MB."
+
+msgid "Permission denied"
+msgstr "Permiso denegado."
+
 msgid "First name"
 msgstr ""
 
@@ -1238,6 +1307,116 @@ msgstr ""
 
 msgid "LinkedIn URL"
 msgstr ""
+
+msgid "No such account."
+msgstr "No existe esa cuenta."
+
+msgid "Contact already exists with this email"
+msgstr "Ya existe un contacto con este correo electrónico"
+
+msgid "File could not be decoded as UTF-8. Save your CSV as UTF-8 and try again."
+msgstr "No se pudo decodificar el archivo como UTF-8. Guarda tu CSV como UTF-8 e inténtalo de nuevo."
+
+msgid "CSV is empty"
+msgstr "El CSV está vacío"
+
+#, python-format
+msgid "Missing required header(s): %(headers)s"
+msgstr "Faltan encabezados obligatorios: %(headers)s"
+
+#, python-format
+msgid "Unknown header(s): %(headers)s"
+msgstr "Encabezados desconocidos: %(headers)s"
+
+#, python-format
+msgid "Too many rows (%(count)s); limit is %(limit)s"
+msgstr "Demasiadas filas (%(count)s); el límite es %(limit)s"
+
+msgid "First name is required"
+msgstr "El nombre es obligatorio"
+
+#, python-format
+msgid "First name exceeds %(max)s characters"
+msgstr "El nombre supera los %(max)s caracteres"
+
+msgid "Last name is required"
+msgstr "El apellido es obligatorio"
+
+#, python-format
+msgid "Last name exceeds %(max)s characters"
+msgstr "El apellido supera los %(max)s caracteres"
+
+#, python-format
+msgid "'%(value)s' is not a valid email"
+msgstr "'%(value)s' no es un correo electrónico válido"
+
+#, python-format
+msgid "Duplicate email also used by row %(row)s in this file"
+msgstr "Correo electrónico duplicado, también usado por la fila %(row)s de este archivo"
+
+msgid "A contact with this email already exists in your organization"
+msgstr "Ya existe un contacto con este correo electrónico en tu organización"
+
+msgid "Phone must be 7-25 characters of digits and separators (+ - ( ) . space)"
+msgstr "El teléfono debe tener entre 7 y 25 caracteres de dígitos y separadores (+ - ( ) . espacio)"
+
+#, python-format
+msgid "Duplicate phone number also used by row %(row)s in this file"
+msgstr "Número de teléfono duplicado, también usado por la fila %(row)s de este archivo"
+
+msgid "A contact with this phone number already exists in your organization"
+msgstr "Ya existe un contacto con este número de teléfono en tu organización"
+
+#, python-format
+msgid "Same name as row %(row)s in this file; add an email or phone to either row to confirm they're different people"
+msgstr "Mismo nombre que la fila %(row)s de este archivo; agrega un correo electrónico o teléfono a alguna de las filas para confirmar que son personas diferentes"
+
+msgid "A contact with this name already exists; add an email or phone to confirm it's a different person"
+msgstr "Ya existe un contacto con este nombre; agrega un correo electrónico o teléfono para confirmar que es una persona diferente"
+
+msgid "Must be a valid URL starting with http:// or https://"
+msgstr "Debe ser una URL válida que comience con http:// o https://"
+
+#, python-format
+msgid "'%(value)s' is not a known country code"
+msgstr "'%(value)s' no es un código de país conocido"
+
+msgid "Use yes/no, true/false, or 1/0"
+msgstr "Usa yes/no, true/false o 1/0"
+
+#, python-format
+msgid "No account named '%(name)s'"
+msgstr "No hay ninguna cuenta llamada '%(name)s'"
+
+#, python-format
+msgid "No active member with email '%(email)s'"
+msgstr "No hay ningún miembro activo con el correo electrónico '%(email)s'"
+
+#, python-format
+msgid "No team named '%(name)s'"
+msgstr "No hay ningún equipo llamado '%(name)s'"
+
+#, python-format
+msgid "Exceeds %(max)s characters"
+msgstr "Supera los %(max)s caracteres"
+
+msgid "Exceeds 64 characters"
+msgstr "Supera los 64 caracteres"
+
+msgid "Fix the invalid rows before importing"
+msgstr "Corrige las filas inválidas antes de importar"
+
+msgid "A contact was created concurrently that conflicts with this import (likely a duplicate email). Re-run preview and try again."
+msgstr "Se creó un contacto de forma concurrente que entra en conflicto con esta importación (probablemente un correo electrónico duplicado). Vuelve a ejecutar la vista previa e inténtalo de nuevo."
+
+msgid "Contact created Successfuly"
+msgstr "Contacto creado correctamente."
+
+msgid "Contact Updated Successfully"
+msgstr "Contacto actualizado correctamente."
+
+msgid "Contact Deleted Successfully."
+msgstr "Contacto eliminado correctamente."
 
 msgid "Template Name"
 msgstr ""

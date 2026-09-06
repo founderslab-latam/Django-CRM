@@ -35,6 +35,7 @@ from django.core.validators import URLValidator
 from django.db import IntegrityError, transaction
 from django.db.models.functions import Lower
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
 from accounts.models import Account
 from common.models import Profile, Tags, Teams
@@ -220,12 +221,16 @@ def parse_and_validate(file_bytes: bytes, org) -> ImportResult:
         return ImportResult(
             valid=[],
             errors=[],
-            header_error="File could not be decoded as UTF-8. Save your CSV as UTF-8 and try again.",
+            header_error=gettext_lazy(
+                "File could not be decoded as UTF-8. Save your CSV as UTF-8 and try again."
+            ),
         )
     reader = csv.reader(io.StringIO(text))
     rows = list(reader)
     if not rows:
-        return ImportResult(valid=[], errors=[], header_error="CSV is empty")
+        return ImportResult(
+            valid=[], errors=[], header_error=gettext_lazy("CSV is empty")
+        )
 
     headers = _normalize_headers(rows[0])
     missing = [h for h in REQUIRED_HEADERS if h not in headers]
@@ -233,14 +238,16 @@ def parse_and_validate(file_bytes: bytes, org) -> ImportResult:
         return ImportResult(
             valid=[],
             errors=[],
-            header_error=f"Missing required header(s): {', '.join(missing)}",
+            header_error=gettext_lazy("Missing required header(s): %(headers)s")
+            % {"headers": ", ".join(missing)},
         )
     unknown = [h for h in headers if h and h not in KNOWN_HEADERS]
     if unknown:
         return ImportResult(
             valid=[],
             errors=[],
-            header_error=f"Unknown header(s): {', '.join(unknown)}",
+            header_error=gettext_lazy("Unknown header(s): %(headers)s")
+            % {"headers": ", ".join(unknown)},
         )
 
     data_rows = rows[1:]
@@ -248,7 +255,8 @@ def parse_and_validate(file_bytes: bytes, org) -> ImportResult:
         return ImportResult(
             valid=[],
             errors=[],
-            header_error=f"Too many rows ({len(data_rows)}); limit is {MAX_ROWS}",
+            header_error=gettext_lazy("Too many rows (%(count)s); limit is %(limit)s")
+            % {"count": len(data_rows), "limit": MAX_ROWS},
         )
 
     # First pass: parse each row into a dict and skip blank rows.
@@ -428,22 +436,40 @@ def _validate_and_build(
     first_name = record.get("first_name", "")
     last_name = record.get("last_name", "")
     if not first_name:
-        errors.append(RowError(idx, "first_name", "First name is required"))
+        errors.append(
+            RowError(idx, "first_name", gettext_lazy("First name is required"))
+        )
     elif len(first_name) > NAME_MAX_LEN:
         errors.append(
-            RowError(idx, "first_name", f"First name exceeds {NAME_MAX_LEN} characters")
+            RowError(
+                idx,
+                "first_name",
+                gettext_lazy("First name exceeds %(max)s characters")
+                % {"max": NAME_MAX_LEN},
+            )
         )
     if not last_name:
-        errors.append(RowError(idx, "last_name", "Last name is required"))
+        errors.append(RowError(idx, "last_name", gettext_lazy("Last name is required")))
     elif len(last_name) > NAME_MAX_LEN:
         errors.append(
-            RowError(idx, "last_name", f"Last name exceeds {NAME_MAX_LEN} characters")
+            RowError(
+                idx,
+                "last_name",
+                gettext_lazy("Last name exceeds %(max)s characters")
+                % {"max": NAME_MAX_LEN},
+            )
         )
 
     email = record.get("email", "")
     if email:
         if not EMAIL_RE.match(email):
-            errors.append(RowError(idx, "email", f"'{email}' is not a valid email"))
+            errors.append(
+                RowError(
+                    idx,
+                    "email",
+                    gettext_lazy("'%(value)s' is not a valid email") % {"value": email},
+                )
+            )
         else:
             email_lower = email.lower()
             prior = seen_emails.get(email_lower)
@@ -452,7 +478,10 @@ def _validate_and_build(
                     RowError(
                         idx,
                         "email",
-                        f"Duplicate email also used by row {prior} in this file",
+                        gettext_lazy(
+                            "Duplicate email also used by row %(row)s in this file"
+                        )
+                        % {"row": prior},
                     )
                 )
             elif email_lower in refs.existing_emails:
@@ -460,7 +489,9 @@ def _validate_and_build(
                     RowError(
                         idx,
                         "email",
-                        "A contact with this email already exists in your organization",
+                        gettext_lazy(
+                            "A contact with this email already exists in your organization"
+                        ),
                     )
                 )
 
@@ -472,7 +503,9 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "phone",
-                    "Phone must be 7-25 characters of digits and separators (+ - ( ) . space)",
+                    gettext_lazy(
+                        "Phone must be 7-25 characters of digits and separators (+ - ( ) . space)"
+                    ),
                 )
             )
         else:
@@ -484,7 +517,10 @@ def _validate_and_build(
                         RowError(
                             idx,
                             "phone",
-                            f"Duplicate phone number also used by row {prior} in this file",
+                            gettext_lazy(
+                                "Duplicate phone number also used by row %(row)s in this file"
+                            )
+                            % {"row": prior},
                         )
                     )
                 elif normalized_phone in refs.existing_phones:
@@ -492,7 +528,9 @@ def _validate_and_build(
                         RowError(
                             idx,
                             "phone",
-                            "A contact with this phone number already exists in your organization",
+                            gettext_lazy(
+                                "A contact with this phone number already exists in your organization"
+                            ),
                         )
                     )
 
@@ -507,7 +545,10 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "first_name",
-                    f"Same name as row {prior} in this file; add an email or phone to either row to confirm they're different people",
+                    gettext_lazy(
+                        "Same name as row %(row)s in this file; add an email or phone to either row to confirm they're different people"
+                    )
+                    % {"row": prior},
                 )
             )
         elif key in refs.existing_full_names:
@@ -515,7 +556,9 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "first_name",
-                    "A contact with this name already exists; add an email or phone to confirm it's a different person",
+                    gettext_lazy(
+                        "A contact with this name already exists; add an email or phone to confirm it's a different person"
+                    ),
                 )
             )
 
@@ -528,7 +571,9 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "linkedin_url",
-                    "Must be a valid URL starting with http:// or https://",
+                    gettext_lazy(
+                        "Must be a valid URL starting with http:// or https://"
+                    ),
                 )
             )
 
@@ -538,14 +583,21 @@ def _validate_and_build(
         country = country_raw.strip().upper()
         if country not in COUNTRY_CODES:
             errors.append(
-                RowError(idx, "country", f"'{country_raw}' is not a known country code")
+                RowError(
+                    idx,
+                    "country",
+                    gettext_lazy("'%(value)s' is not a known country code")
+                    % {"value": country_raw},
+                )
             )
             country = None
 
     do_not_call_raw = record.get("do_not_call", "")
     do_not_call = _parse_bool(do_not_call_raw)
     if do_not_call is None:
-        errors.append(RowError(idx, "do_not_call", "Use yes/no, true/false, or 1/0"))
+        errors.append(
+            RowError(idx, "do_not_call", gettext_lazy("Use yes/no, true/false, or 1/0"))
+        )
         do_not_call = False
 
     account_id: str | None = None
@@ -554,7 +606,12 @@ def _validate_and_build(
         account_id = refs.accounts.get(account_name.lower())
         if account_id is None:
             errors.append(
-                RowError(idx, "account_name", f"No account named '{account_name}'")
+                RowError(
+                    idx,
+                    "account_name",
+                    gettext_lazy("No account named '%(name)s'")
+                    % {"name": account_name},
+                )
             )
 
     assigned_ids: list[str] = []
@@ -564,7 +621,8 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "assigned_emails",
-                    f"'{assigned_email}' is not a valid email",
+                    gettext_lazy("'%(value)s' is not a valid email")
+                    % {"value": assigned_email},
                 )
             )
             continue
@@ -574,7 +632,8 @@ def _validate_and_build(
                 RowError(
                     idx,
                     "assigned_emails",
-                    f"No active member with email '{assigned_email}'",
+                    gettext_lazy("No active member with email '%(email)s'")
+                    % {"email": assigned_email},
                 )
             )
         else:
@@ -584,7 +643,13 @@ def _validate_and_build(
     for team_name in _split_multi(record.get("team_names", "")):
         resolved = refs.teams.get(team_name.lower())
         if resolved is None:
-            errors.append(RowError(idx, "team_names", f"No team named '{team_name}'"))
+            errors.append(
+                RowError(
+                    idx,
+                    "team_names",
+                    gettext_lazy("No team named '%(name)s'") % {"name": team_name},
+                )
+            )
         else:
             team_ids.append(resolved)
 
@@ -599,12 +664,16 @@ def _validate_and_build(
         val = record.get(length_field, "")
         if val and len(val) > NAME_MAX_LEN:
             errors.append(
-                RowError(idx, length_field, f"Exceeds {NAME_MAX_LEN} characters")
+                RowError(
+                    idx,
+                    length_field,
+                    gettext_lazy("Exceeds %(max)s characters") % {"max": NAME_MAX_LEN},
+                )
             )
 
     postcode = record.get("postcode", "")
     if postcode and len(postcode) > 64:
-        errors.append(RowError(idx, "postcode", "Exceeds 64 characters"))
+        errors.append(RowError(idx, "postcode", gettext_lazy("Exceeds 64 characters")))
 
     if errors:
         return errors, None
@@ -653,7 +722,7 @@ def commit_rows(file_bytes: bytes, org, profile) -> dict[str, Any]:
         # Refuse to write anything if any row failed; users fix the file first.
         return {
             "error": True,
-            "message": "Fix the invalid rows before importing",
+            "message": gettext_lazy("Fix the invalid rows before importing"),
             "errors": [e.to_dict() for e in result.errors],
             "created": 0,
         }
@@ -665,7 +734,7 @@ def commit_rows(file_bytes: bytes, org, profile) -> dict[str, Any]:
         # the user to re-preview so the conflict shows up as a row error.
         return {
             "error": True,
-            "message": (
+            "message": gettext_lazy(
                 "A contact was created concurrently that conflicts with this "
                 "import (likely a duplicate email). Re-run preview and try again."
             ),
