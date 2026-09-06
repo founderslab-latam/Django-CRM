@@ -1,7 +1,15 @@
 allowBuilds:
   '@sentry/cli': true
+  esbuild: true
+  es5-ext: true
 onlyBuiltDependencies:
+  # svelte-i18n (added for the app's translations) pulls es5-ext, and the
+  # toolchain pulls esbuild; both carry postinstall scripts. Without listing
+  # them here pnpm 10 fails `pnpm install --frozen-lockfile` with
+  # ERR_PNPM_IGNORED_BUILDS, which broke `docker compose up --build`.
   - '@sentry/cli'
+  - esbuild
+  - es5-ext
 overrides:
   # GHSA-rgw5-rvv9-x895 (high): DoS via unbounded intermediate arrays.
   # Only reachable through dev tooling (eslint, @sentry/vite-plugin), but the
