@@ -11,12 +11,20 @@
  * `admin: true` marks a tab whose page is a "for administrators" gate to a
  * member. SectionTabs hides it for non-admins so they are not offered a tab
  * that only turns them away. The backend still enforces the gate; this is UX.
+ *
+ * Each `label` is `() => string`, resolved through the active locale when
+ * `SectionTabs.svelte` renders it (via its `labelText()` helper), never
+ * eagerly at import time — same pattern and safety rationale as the filter
+ * descriptors in `$lib/v2/filters.js`.
  */
+import { get } from 'svelte/store';
+import { _ as $i18n } from '$lib/i18n/index.js';
+
 export const TAB_SETS = {
   tickets: [
-    { href: '/tickets', label: 'Queue', exact: true, count: 'tickets' },
-    { href: '/tickets/approvals', label: 'Approvals', count: 'approvals' },
-    { href: '/tickets/analytics', label: 'Analytics', admin: true }
+    { href: '/tickets', label: () => get($i18n)('common.tabs.tickets_queue'), exact: true, count: 'tickets' },
+    { href: '/tickets/approvals', label: () => get($i18n)('common.tabs.tickets_approvals'), count: 'approvals' },
+    { href: '/tickets/analytics', label: () => get($i18n)('common.tabs.tickets_analytics'), admin: true }
   ],
   /**
    * These two are NOT two views of one list. `tasks.Task` and
@@ -26,17 +34,17 @@ export const TAB_SETS = {
    * says the rest out loud, because nothing about the word suggests it.
    */
   tasks: [
-    { href: '/tasks', label: 'Task list', exact: true, count: 'tasks' },
-    { href: '/tasks/board', label: 'Boards' },
-    { href: '/tasks/calendar', label: 'Calendar' }
+    { href: '/tasks', label: () => get($i18n)('common.tabs.tasks_list'), exact: true, count: 'tasks' },
+    { href: '/tasks/board', label: () => get($i18n)('common.tabs.tasks_boards') },
+    { href: '/tasks/calendar', label: () => get($i18n)('common.tabs.tasks_calendar') }
   ],
   invoices: [
-    { href: '/invoices', label: 'Invoices', exact: true, count: 'invoices' },
-    { href: '/invoices/estimates', label: 'Estimates' },
-    { href: '/invoices/recurring', label: 'Recurring' },
-    { href: '/invoices/products', label: 'Products' },
-    { href: '/invoices/reports', label: 'Reports', admin: true },
-    { href: '/invoices/templates', label: 'Templates' }
+    { href: '/invoices', label: () => get($i18n)('common.tabs.invoices_invoices'), exact: true, count: 'invoices' },
+    { href: '/invoices/estimates', label: () => get($i18n)('common.tabs.invoices_estimates') },
+    { href: '/invoices/recurring', label: () => get($i18n)('common.tabs.invoices_recurring') },
+    { href: '/invoices/products', label: () => get($i18n)('common.tabs.invoices_products') },
+    { href: '/invoices/reports', label: () => get($i18n)('common.tabs.invoices_reports'), admin: true },
+    { href: '/invoices/templates', label: () => get($i18n)('common.tabs.invoices_templates') }
   ]
 };
 

@@ -8,6 +8,57 @@
       "english": "English",
       "spanish": "Spanish"
     },
+    "filters": {
+      "button": "Filter",
+      "any": "Any",
+      "yes": "Yes",
+      "no": "No",
+      "min": "Min",
+      "max": "Max",
+      "apply": "Apply",
+      "clear_all": "Clear all",
+      "all": "All",
+      "remove_aria": "Remove the {label} filter",
+      "range_over": "over {value}",
+      "range_under": "under {value}",
+      "range_between": "{from} to {to}",
+      "range_from": "from {value}",
+      "range_upto": "up to {value}"
+    },
+    "tabs": {
+      "tickets_queue": "Queue",
+      "tickets_approvals": "Approvals",
+      "tickets_analytics": "Analytics",
+      "tasks_list": "Task list",
+      "tasks_boards": "Boards",
+      "tasks_calendar": "Calendar",
+      "invoices_invoices": "Invoices",
+      "invoices_estimates": "Estimates",
+      "invoices_recurring": "Recurring",
+      "invoices_products": "Products",
+      "invoices_reports": "Reports",
+      "invoices_templates": "Templates"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirm": "Confirm"
+    },
+    "nav": {
+      "settings": "Settings"
+    },
+    "enums": {
+      "role": {
+        "admin": "Admin",
+        "user": "Member"
+      },
+      "aging": {
+        "green": "On pace",
+        "yellow": "Past expected",
+        "red": "Stalled"
+      }
+    },
     "sidebar": {
       "nav": {
         "landmark": "Main",
@@ -79,6 +130,14 @@
     }
   },
   "accounts": {
+    "filters": {
+      "preset_mine": "Mine",
+      "preset_all": "All accounts",
+      "field_owner": "Owner",
+      "field_tag": "Tag",
+      "field_industry": "Industry",
+      "field_city": "City"
+    },
     "list": {
       "title": "Accounts",
       "count_suffix": "{count, plural, one {account} other {accounts}}",
@@ -225,6 +284,14 @@
     }
   },
   "contacts": {
+    "filters": {
+      "preset_mine": "Mine",
+      "preset_inactive": "Including inactive",
+      "preset_active": "Active contacts",
+      "field_owner": "Owner",
+      "field_tag": "Tag",
+      "field_city": "City"
+    },
     "list": {
       "title": "Contacts",
       "people_suffix": "people",
@@ -641,6 +708,27 @@
     }
   },
   "opportunity": {
+    "filters": {
+      "preset_open": "Open deals",
+      "preset_mine": "Mine",
+      "preset_stalled": "Stalled",
+      "preset_all": "All deals",
+      "field_owner": "Owner",
+      "field_stage": "Stage",
+      "field_source": "Source",
+      "field_value": "Value",
+      "field_tag": "Tag"
+    },
+    "enums": {
+      "stage": {
+        "prospecting": "Prospecting",
+        "qualification": "Qualification",
+        "proposal": "Proposal",
+        "negotiation": "Negotiation",
+        "closed_won": "Closed Won",
+        "closed_lost": "Closed Lost"
+      }
+    },
     "list": {
       "title": "Pipeline",
       "deals_suffix": "{count, plural, one {deal} other {deals}}",
@@ -1709,7 +1797,14 @@
       "field_status": "Status",
       "field_account": "Account",
       "field_owner": "Owner",
-      "field_due_date": "Due date"
+      "field_due_date": "Due date",
+      "estimates_preset_accepted": "Accepted",
+      "estimates_preset_all": "All estimates",
+      "estimates_field_status": "Status",
+      "estimates_field_account": "Account",
+      "recurring_preset_active": "Active schedules",
+      "recurring_preset_all": "All schedules",
+      "recurring_field_active": "Active"
     },
     "products": {
       "list": {

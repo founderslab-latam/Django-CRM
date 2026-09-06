@@ -8,6 +8,57 @@
       "english": "Inglés",
       "spanish": "Español"
     },
+    "filters": {
+      "button": "Filtro",
+      "any": "Cualquiera",
+      "yes": "Sí",
+      "no": "No",
+      "min": "Mín",
+      "max": "Máx",
+      "apply": "Aplicar",
+      "clear_all": "Limpiar todo",
+      "all": "Todos",
+      "remove_aria": "Quitar el filtro {label}",
+      "range_over": "más de {value}",
+      "range_under": "menos de {value}",
+      "range_between": "de {from} a {to}",
+      "range_from": "desde {value}",
+      "range_upto": "hasta {value}"
+    },
+    "tabs": {
+      "tickets_queue": "Cola",
+      "tickets_approvals": "Aprobaciones",
+      "tickets_analytics": "Analíticas",
+      "tasks_list": "Lista de tareas",
+      "tasks_boards": "Tableros",
+      "tasks_calendar": "Calendario",
+      "invoices_invoices": "Facturas",
+      "invoices_estimates": "Estimaciones",
+      "invoices_recurring": "Recurrentes",
+      "invoices_products": "Productos",
+      "invoices_reports": "Informes",
+      "invoices_templates": "Plantillas"
+    },
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "confirm": "Confirmar"
+    },
+    "nav": {
+      "settings": "Configuración"
+    },
+    "enums": {
+      "role": {
+        "admin": "Administrador",
+        "user": "Miembro"
+      },
+      "aging": {
+        "green": "Al día",
+        "yellow": "Más de lo previsto",
+        "red": "Estancado"
+      }
+    },
     "sidebar": {
       "nav": {
         "landmark": "Principal",
@@ -79,6 +130,14 @@
     }
   },
   "accounts": {
+    "filters": {
+      "preset_mine": "Mías",
+      "preset_all": "Todas las cuentas",
+      "field_owner": "Propietario",
+      "field_tag": "Etiqueta",
+      "field_industry": "Industria",
+      "field_city": "Ciudad"
+    },
     "list": {
       "title": "Cuentas",
       "count_suffix": "{count, plural, one {cuenta} other {cuentas}}",
@@ -225,6 +284,14 @@
     }
   },
   "contacts": {
+    "filters": {
+      "preset_mine": "Míos",
+      "preset_inactive": "Incluir inactivos",
+      "preset_active": "Contactos activos",
+      "field_owner": "Propietario",
+      "field_tag": "Etiqueta",
+      "field_city": "Ciudad"
+    },
     "list": {
       "title": "Contactos",
       "people_suffix": "personas",
@@ -641,6 +708,27 @@
     }
   },
   "opportunity": {
+    "filters": {
+      "preset_open": "Negocios abiertos",
+      "preset_mine": "Míos",
+      "preset_stalled": "Estancados",
+      "preset_all": "Todos los negocios",
+      "field_owner": "Propietario",
+      "field_stage": "Etapa",
+      "field_source": "Origen",
+      "field_value": "Valor",
+      "field_tag": "Etiqueta"
+    },
+    "enums": {
+      "stage": {
+        "prospecting": "Prospección",
+        "qualification": "Calificación",
+        "proposal": "Propuesta",
+        "negotiation": "Negociación",
+        "closed_won": "Cerrado ganado",
+        "closed_lost": "Cerrado perdido"
+      }
+    },
     "list": {
       "title": "Flujo de ventas",
       "deals_suffix": "{count, plural, one {negocio} other {negocios}}",
@@ -1709,7 +1797,14 @@
       "field_status": "Estado",
       "field_account": "Cuenta",
       "field_owner": "Propietario",
-      "field_due_date": "Fecha de vencimiento"
+      "field_due_date": "Fecha de vencimiento",
+      "estimates_preset_accepted": "Aceptadas",
+      "estimates_preset_all": "Todas las estimaciones",
+      "estimates_field_status": "Estado",
+      "estimates_field_account": "Cuenta",
+      "recurring_preset_active": "Programaciones activas",
+      "recurring_preset_all": "Todas las programaciones",
+      "recurring_field_active": "Activa"
     },
     "products": {
       "list": {

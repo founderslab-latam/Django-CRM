@@ -26,6 +26,15 @@
   let role = $derived(page.data.role ?? 'USER');
   let tabs = $derived((TAB_SETS[set] ?? []).filter((tab) => role === 'ADMIN' || !tab.admin));
 
+  /**
+   * A tab's `label` is `() => string` so it resolves through the current
+   * locale at render time (see `$lib/v2/tabs.js`). Same string|function
+   * treatment as `FilterBar.svelte`'s `labelText()`, so a plain string would
+   * still render if a tab set ever carried one.
+   */
+  const labelText = (/** @type {string | (() => string)} */ label) =>
+    typeof label === 'function' ? label() : label;
+
   const isActive = (href, exact) =>
     exact ? page.url.pathname === href : page.url.pathname.startsWith(href);
 </script>
@@ -36,7 +45,7 @@
       href={resolve(asInternalPath(tab.href))}
       aria-current={isActive(tab.href, tab.exact) ? 'page' : undefined}
     >
-      {tab.label}
+      {labelText(tab.label)}
       {#if tab.count && counts[tab.count]}
         <span class="v2-tab-count v2-num">{counts[tab.count]}</span>
       {/if}

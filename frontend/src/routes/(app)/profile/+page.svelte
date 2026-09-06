@@ -19,7 +19,8 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { relativeDays, shortDate, count } from '$lib/v2/format.js';
-  import { ROLE_LABEL, ROLE_TONE } from '$lib/v2/enums.js';
+  import { ROLE_TONE } from '$lib/v2/enums.js';
+  import { roleKey } from '$lib/common/enums-labels.js';
   import { _ } from '$lib/i18n/index.js';
   import { KeyRound, Lock, ArrowLeftRight } from '@lucide/svelte';
   import LanguageSwitcher from '$lib/v2/components/LanguageSwitcher.svelte';
@@ -68,7 +69,7 @@
 
 <PageHeader title={name} record>
   {#snippet sub()}
-    {ROLE_LABEL[p.role]} · {data.org.name} · {$_('profile.main.joined', {
+    {$_(roleKey(p.role))} · {data.org.name} · {$_('profile.main.joined', {
       values: { date: shortDate(p.joined_at) }
     })}
   {/snippet}
@@ -158,7 +159,7 @@
                   {$_('profile.main.org_you_are', {
                     values: {
                       role:
-                        ROLE_LABEL[o.role] === 'Admin'
+                        o.role === 'ADMIN'
                           ? $_('profile.main.org_role_admin')
                           : $_('profile.main.org_role_member')
                     }
@@ -200,7 +201,7 @@
               </span>
             </div>
             <Lock size={14} style="color:var(--v2-slate);flex:none" />
-            <Pill tone={ROLE_TONE[p.role]}>{ROLE_LABEL[p.role]}</Pill>
+            <Pill tone={ROLE_TONE[p.role]}>{$_(roleKey(p.role))}</Pill>
           </div>
           <!-- /profile/tokens, not /settings/api-tokens. The settings page is
                the org-wide oversight list and 403s a member, so this count used

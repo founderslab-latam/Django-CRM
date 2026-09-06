@@ -12,9 +12,10 @@
    * thing this belongs to", whether that thing is an account or a section.
    */
   import { ChevronLeft } from '@lucide/svelte';
+  import { _ } from '$lib/i18n/index.js';
 </script>
 
-<a href={resolve('/settings')}><ChevronLeft size={13} />Settings</a>
+<a href={resolve('/settings')}><ChevronLeft size={13} />{$_('common.nav.settings')}</a>
 
 <style>
   a {

@@ -11,7 +11,8 @@
   import StageMeter from '$lib/v2/components/StageMeter.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { money, count, shortDate } from '$lib/v2/format.js';
-  import { STAGE_LABEL, AGING_TONE, AGING_LABEL } from '$lib/v2/enums.js';
+  import { STAGE_LABEL, AGING_TONE } from '$lib/v2/enums.js';
+  import { agingKey } from '$lib/common/enums-labels.js';
   import { activeChips, activePresetKey, withoutParam } from '$lib/v2/filters.js';
   import { Columns3, List, Plus, TriangleAlert } from '@lucide/svelte';
   import { flip } from 'svelte/animate';
@@ -258,7 +259,7 @@
               <div class="v2-sub" style="margin-top:2px">{d.account.name}</div>
               <div style="margin-top:9px">
                 <Pill tone={AGING_TONE[d.aging_status]} dot>
-                  {AGING_LABEL[d.aging_status] +
+                  {$_(agingKey(d.aging_status)) +
                     (d.aging_status === 'green'
                       ? ''
                       : ` · ${d.days_in_current_stage}${$_('opportunity.list.days_short_suffix')}`)}
@@ -319,7 +320,7 @@
               </td>
               <td><StageMeter stage={d.stage} /></td>
               <td data-m="tag">
-                <Pill tone={AGING_TONE[d.aging_status]} dot>{AGING_LABEL[d.aging_status]}</Pill>
+                <Pill tone={AGING_TONE[d.aging_status]} dot>{$_(agingKey(d.aging_status))}</Pill>
               </td>
               <td class="v2-r v2-num" style="font-weight:600">{money(d.amount, d.currency)}</td>
               <td>{shortDate(d.closed_on)}</td>

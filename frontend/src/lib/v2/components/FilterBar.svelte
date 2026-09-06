@@ -32,7 +32,7 @@
    */
   import { X, Plus, ChevronDown } from '@lucide/svelte';
   import { FILTERS, activeChips, activePresetKey, withParams } from '$lib/v2/filters.js';
-  import { invoiceStatusLabel } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
 
   let {
     page,
@@ -49,11 +49,11 @@
   let descriptor = $derived(FILTERS[page] ?? { presets: [], fields: [] });
 
   /**
-   * A `label` (on a field, a preset, or a chip copied from one) is a plain
-   * string for every module except Leads, whose labels are `() => string`
-   * so they can resolve through the current locale at render time (see
-   * `$lib/v2/filters.js`). This treats both the same either way, so a
-   * module that hasn't been translated yet renders exactly as before.
+   * A `label` (on a field, a preset, or a chip copied from one) is
+   * `() => string` for every module, resolving through the current locale at
+   * render time (see `$lib/v2/filters.js`). A plain string is still accepted
+   * and passed straight through, so a descriptor added before its keys exist
+   * renders without throwing.
    */
   const labelText = (/** @type {string | (() => string)} */ label) =>
     typeof label === 'function' ? label() : label;
@@ -86,7 +86,7 @@
   let activeKey = $derived(activePresetKey(page, url, meId));
   let activeLabel = $derived(
     labelText(descriptor.presets.find((/** @type {any} */ p) => p.key === activeKey)?.label) ??
-      'All'
+      $_('common.filters.all')
   );
 
   /**
@@ -125,7 +125,7 @@
     if (field.type === 'account') return accounts;
     return (field.options ?? []).map((/** @type {string} */ v) => ({
       id: v,
-      name: field.labelFor ? field.labelFor(v) : invoiceStatusLabel(v)
+      name: field.labelFor ? field.labelFor(v) : v
     }));
   };
 </script>
@@ -155,7 +155,7 @@
       {chip.value}
       <a
         href={resolve(asInternalPath(chip.href))}
-        aria-label="Remove the {labelText(chip.label)} filter"
+        aria-label={$_('common.filters.remove_aria', { values: { label: labelText(chip.label) } })}
         ><X size={12} /></a
       >
     </span>
@@ -165,7 +165,7 @@
     <details class="v2-filter-menu">
       <summary class="v2-chip v2-chip-add">
         <Plus size={12} />
-        Filter
+        {$_('common.filters.button')}
       </summary>
       <form class="v2-menu v2-filter-form" method="GET">
         <!-- Params the form does not own (the preset's own, plus paging) would
@@ -210,7 +210,7 @@
                   min="0"
                   name={field.gteKey}
                   value={url.searchParams.get(field.gteKey) ?? ''}
-                  placeholder="Min"
+                  placeholder={$_('common.filters.min')}
                 />
                 <input
                   class="v2-input"
@@ -218,17 +218,17 @@
                   min="0"
                   name={field.lteKey}
                   value={url.searchParams.get(field.lteKey) ?? ''}
-                  placeholder="Max"
+                  placeholder={$_('common.filters.max')}
                 />
               </span>
             {:else if field.type === 'boolean'}
               <select class="v2-input" name={field.key}>
-                <option value="">Any</option>
+                <option value="">{$_('common.filters.any')}</option>
                 <option value="true" selected={url.searchParams.get(field.key) === 'true'}
-                  >Yes</option
+                  >{$_('common.filters.yes')}</option
                 >
                 <option value="false" selected={url.searchParams.get(field.key) === 'false'}
-                  >No</option
+                  >{$_('common.filters.no')}</option
                 >
               </select>
             {:else if field.type === 'text'}
@@ -237,11 +237,11 @@
                 type="text"
                 name={field.key}
                 value={url.searchParams.get(field.key) ?? ''}
-                placeholder="Any"
+                placeholder={$_('common.filters.any')}
               />
             {:else}
               <select class="v2-input" name={field.key}>
-                <option value="">Any</option>
+                <option value="">{$_('common.filters.any')}</option>
                 {#each optionsFor(field) as option (option.id)}
                   <option
                     value={option.id}
@@ -256,8 +256,12 @@
         {/each}
 
         <div class="v2-filter-actions">
-          <button class="v2-btn v2-btn-primary v2-btn-sm" type="submit">Apply</button>
-          <a class="v2-btn v2-btn-sm" href={resolve(asInternalPath(url.pathname))}>Clear all</a>
+          <button class="v2-btn v2-btn-primary v2-btn-sm" type="submit"
+            >{$_('common.filters.apply')}</button
+          >
+          <a class="v2-btn v2-btn-sm" href={resolve(asInternalPath(url.pathname))}
+            >{$_('common.filters.clear_all')}</a
+          >
         </div>
       </form>
     </details>

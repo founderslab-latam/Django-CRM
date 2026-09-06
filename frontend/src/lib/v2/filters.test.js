@@ -9,10 +9,11 @@ import {
 } from '$lib/v2/filters.js';
 import { setupI18n } from '$lib/i18n/index.js';
 
-// The `leads` and `tickets` descriptors carry `label`/`labelFor` functions that
-// resolve through svelte-i18n at call time (see the comments in filters.js).
-// `activeChips` invokes a field's `labelFor`, so the store has to be initialised
-// before those cases run or `get($i18n)(...)` throws "set the initial locale".
+// Every descriptor carries `label`/`labelFor` functions that resolve through
+// svelte-i18n at call time (see the comments in filters.js), and `activeChips`
+// itself now formats range and boolean chip values through the store. It has to
+// be initialised before these cases run or `get($i18n)(...)` throws "set the
+// initial locale".
 beforeAll(() => setupI18n('en'));
 
 /**
@@ -259,7 +260,11 @@ describe('number-range chips (pipeline "Value")', () => {
   it('renders a half-open floor as "over X"', () => {
     const chips = activeChips('pipeline', new URL('http://x/pipeline?amount__gte=5000'));
     expect(chips).toHaveLength(1);
-    expect(chips[0]).toMatchObject({ key: 'amount', label: 'Value', value: 'over 5000' });
+    // `label` is a locale-resolving function now (see filters.js); FilterBar's
+    // `labelText()` calls it at render. The range phrase itself is built from
+    // the `common.filters.range_*` keys, which read identically in English.
+    expect(chips[0]).toMatchObject({ key: 'amount', value: 'over 5000' });
+    expect(typeof chips[0].label === 'function' ? chips[0].label() : chips[0].label).toBe('Value');
   });
 
   it('renders a half-open ceiling as "under X"', () => {

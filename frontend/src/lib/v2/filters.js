@@ -32,10 +32,8 @@ import {
   INVOICE_STATUSES,
   LEAD_LIST_STATUSES,
   LEAD_SOURCES,
-  LEAD_SOURCE_LABEL,
   SOLUTION_STATUS,
   STAGES,
-  STAGE_LABEL,
   TASK_PRIORITY,
   TASK_STATUS,
   industryLabel
@@ -45,13 +43,17 @@ import { _ as $i18n } from '$lib/i18n/index.js';
 import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
 import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
 import { taskPriorityKey, taskStatusKey } from '$lib/tasks/labels.js';
-import { invoiceStatusKey } from '$lib/invoices/labels.js';
+import { invoiceStatusKey, estimateStatusKey } from '$lib/invoices/labels.js';
 import { solutionStatusKey } from '$lib/solutions/labels.js';
+import { opportunityStageKey } from '$lib/opportunity/labels.js';
 
 /**
- * `label` is a plain string, except Leads', which is `() => string` so it
- * resolves through the active locale at render time — see the comment above
- * the `leads` entry below and `FilterBar.svelte`'s `labelText()`.
+ * Every descriptor's `label` (and `labelFor`) is `() => string`, resolved
+ * through the active locale at render time — `FilterBar.svelte`'s `labelText()`
+ * calls it there, never eagerly at import time, which keeps this safe against
+ * the module-level-store caveat documented in `$lib/i18n/index.js`.
+ * `labelText()` also still accepts a plain string, so a future descriptor added
+ * before its keys exist renders without throwing.
  */
 /** @typedef {{ key: string, label: string | (() => string), params: Record<string, string> }} Preset */
 /** @typedef {{ key: string, label: string | (() => string), type: string, options?: string[], labelFor?: (v: string) => string, gteKey?: string, lteKey?: string }} Field */
@@ -139,50 +141,67 @@ export const FILTERS = {
     ]
   },
 
+  // `contacts`, `pipeline`, `accounts`, `estimates` and `recurring` follow the
+  // same function-label pattern as the entries above. `labelFor` on a select
+  // routes the raw value through a per-module `labels.js` helper (or, for
+  // `industry`, through `industryLabel`, which is a formatter not a translation
+  // and stays as-is) so the option list translates too.
   contacts: {
     presets: [
-      { key: 'mine', label: 'Mine', params: { assigned_to: '@me' } },
-      { key: 'inactive', label: 'Including inactive', params: { inactive: '1' } },
-      { key: 'active', label: 'Active contacts', params: {} }
+      { key: 'mine', label: () => get($i18n)('contacts.filters.preset_mine'), params: { assigned_to: '@me' } },
+      {
+        key: 'inactive',
+        label: () => get($i18n)('contacts.filters.preset_inactive'),
+        params: { inactive: '1' }
+      },
+      { key: 'active', label: () => get($i18n)('contacts.filters.preset_active'), params: {} }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
-      { key: 'tags', label: 'Tag', type: 'tag' },
-      { key: 'city', label: 'City', type: 'text' }
+      { key: 'assigned_to', label: () => get($i18n)('contacts.filters.field_owner'), type: 'person' },
+      { key: 'tags', label: () => get($i18n)('contacts.filters.field_tag'), type: 'tag' },
+      { key: 'city', label: () => get($i18n)('contacts.filters.field_city'), type: 'text' }
     ]
   },
 
   pipeline: {
     presets: [
-      { key: 'open', label: 'Open deals', params: { open: 'true' } },
-      { key: 'mine', label: 'Mine', params: { assigned_to: '@me' } },
-      { key: 'stalled', label: 'Stalled', params: { rotten: 'true' } },
-      { key: 'all', label: 'All deals', params: {} }
+      {
+        key: 'open',
+        label: () => get($i18n)('opportunity.filters.preset_open'),
+        params: { open: 'true' }
+      },
+      { key: 'mine', label: () => get($i18n)('opportunity.filters.preset_mine'), params: { assigned_to: '@me' } },
+      {
+        key: 'stalled',
+        label: () => get($i18n)('opportunity.filters.preset_stalled'),
+        params: { rotten: 'true' }
+      },
+      { key: 'all', label: () => get($i18n)('opportunity.filters.preset_all'), params: {} }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
+      { key: 'assigned_to', label: () => get($i18n)('opportunity.filters.field_owner'), type: 'person' },
       {
         key: 'stage',
-        label: 'Stage',
+        label: () => get($i18n)('opportunity.filters.field_stage'),
         type: 'select',
         options: STAGES,
-        labelFor: (v) => STAGE_LABEL[v] ?? v
+        labelFor: (v) => get($i18n)(opportunityStageKey(v))
       },
       {
         key: 'lead_source',
-        label: 'Source',
+        label: () => get($i18n)('opportunity.filters.field_source'),
         type: 'select',
         options: LEAD_SOURCES,
-        labelFor: (v) => LEAD_SOURCE_LABEL[v] ?? v
+        labelFor: (v) => get($i18n)(leadSourceKey(v))
       },
       {
         key: 'amount',
-        label: 'Value',
+        label: () => get($i18n)('opportunity.filters.field_value'),
         type: 'number-range',
         gteKey: 'amount__gte',
         lteKey: 'amount__lte'
       },
-      { key: 'tags', label: 'Tag', type: 'tag' }
+      { key: 'tags', label: () => get($i18n)('opportunity.filters.field_tag'), type: 'tag' }
     ]
   },
 
@@ -229,20 +248,22 @@ export const FILTERS = {
 
   accounts: {
     presets: [
-      { key: 'mine', label: 'Mine', params: { assigned_to: '@me' } },
-      { key: 'all', label: 'All accounts', params: {} }
+      { key: 'mine', label: () => get($i18n)('accounts.filters.preset_mine'), params: { assigned_to: '@me' } },
+      { key: 'all', label: () => get($i18n)('accounts.filters.preset_all'), params: {} }
     ],
     fields: [
-      { key: 'assigned_to', label: 'Owner', type: 'person' },
-      { key: 'tags', label: 'Tag', type: 'tag' },
+      { key: 'assigned_to', label: () => get($i18n)('accounts.filters.field_owner'), type: 'person' },
+      { key: 'tags', label: () => get($i18n)('accounts.filters.field_tag'), type: 'tag' },
       {
         key: 'industry',
-        label: 'Industry',
+        label: () => get($i18n)('accounts.filters.field_industry'),
         type: 'select',
         options: INDUSTRIES,
+        // A formatter ("FOOD & BEVERAGE" → "Food & beverage"), not a
+        // translation: industry names are not localised anywhere in the app.
         labelFor: industryLabel
       },
-      { key: 'city', label: 'City', type: 'text' }
+      { key: 'city', label: () => get($i18n)('accounts.filters.field_city'), type: 'text' }
     ]
   },
 
@@ -301,12 +322,26 @@ export const FILTERS = {
 
   estimates: {
     presets: [
-      { key: 'accepted', label: 'Accepted', params: { status: 'Accepted' } },
-      { key: 'all', label: 'All estimates', params: {} }
+      {
+        key: 'accepted',
+        label: () => get($i18n)('invoices.filters.estimates_preset_accepted'),
+        params: { status: 'Accepted' }
+      },
+      { key: 'all', label: () => get($i18n)('invoices.filters.estimates_preset_all'), params: {} }
     ],
     fields: [
-      { key: 'status', label: 'Status', type: 'select', options: ESTIMATE_STATUSES },
-      { key: 'account', label: 'Account', type: 'account' }
+      {
+        key: 'status',
+        label: () => get($i18n)('invoices.filters.estimates_field_status'),
+        type: 'select',
+        options: ESTIMATE_STATUSES,
+        labelFor: (v) => get($i18n)(estimateStatusKey(v))
+      },
+      {
+        key: 'account',
+        label: () => get($i18n)('invoices.filters.estimates_field_account'),
+        type: 'account'
+      }
       // No Owner field: `EstimateListView.get` (backend/invoices/api_views.py
       // :1028-1036) reads only `status` and `account`, never `assigned_to`.
       // Offering one here would draw a chip that filters nothing underneath it.
@@ -373,10 +408,20 @@ export const FILTERS = {
 
   recurring: {
     presets: [
-      { key: 'active', label: 'Active schedules', params: { is_active: 'true' } },
-      { key: 'all', label: 'All schedules', params: {} }
+      {
+        key: 'active',
+        label: () => get($i18n)('invoices.filters.recurring_preset_active'),
+        params: { is_active: 'true' }
+      },
+      { key: 'all', label: () => get($i18n)('invoices.filters.recurring_preset_all'), params: {} }
     ],
-    fields: [{ key: 'is_active', label: 'Active', type: 'boolean' }]
+    fields: [
+      {
+        key: 'is_active',
+        label: () => get($i18n)('invoices.filters.recurring_field_active'),
+        type: 'boolean'
+      }
+    ]
   }
 };
 
@@ -479,18 +524,19 @@ export function activeChips(
       const from = url.searchParams.get(/** @type {string} */ (field.gteKey));
       const to = url.searchParams.get(/** @type {string} */ (field.lteKey));
       if (!from && !to) continue;
+      const t = get($i18n);
       const value =
         field.type === 'number-range'
           ? from && to
-            ? `${from} to ${to}`
+            ? t('common.filters.range_between', { values: { from, to } })
             : from
-              ? `over ${from}`
-              : `under ${to}`
+              ? t('common.filters.range_over', { values: { value: from } })
+              : t('common.filters.range_under', { values: { value: to } })
           : from && to
-            ? `${from} to ${to}`
+            ? t('common.filters.range_between', { values: { from, to } })
             : from
-              ? `from ${from}`
-              : `up to ${to}`;
+              ? t('common.filters.range_from', { values: { value: from } })
+              : t('common.filters.range_upto', { values: { value: to } });
       chips.push({
         key: field.key,
         label: field.label,
@@ -509,7 +555,8 @@ export function activeChips(
     if (field.type === 'person') value = nameFrom(lookups.people ?? [], raw);
     else if (field.type === 'tag') value = nameFrom(lookups.tags ?? [], raw);
     else if (field.type === 'account') value = nameFrom(lookups.accounts ?? [], raw);
-    else if (field.type === 'boolean') value = raw === 'true' ? 'Yes' : 'No';
+    else if (field.type === 'boolean')
+      value = get($i18n)(raw === 'true' ? 'common.filters.yes' : 'common.filters.no');
     else if (field.labelFor) value = field.labelFor(raw);
 
     chips.push({ key: field.key, label: field.label, value, href: withoutParam(url, field.key) });

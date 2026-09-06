@@ -49,7 +49,7 @@
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import { _ } from '$lib/i18n/index.js';
   import { count, relativeDays, shortDate } from '$lib/v2/format.js';
-  import { ROLE_LABEL } from '$lib/v2/enums.js';
+  import { roleKey } from '$lib/common/enums-labels.js';
   import {
     tokenStateKey,
     tokenScopeDescriptor,
@@ -306,7 +306,7 @@
                 <td data-m="meta">
                   {owner.name}
                   <span class="v2-table-secondary" style="display:block">
-                    {ROLE_LABEL[owner.role] ?? owner.role}{owner.is_active === false
+                    {owner.role ? $_(roleKey(owner.role)) : owner.role}{owner.is_active === false
                       ? $_('settings.api_tokens.owner_deactivated_suffix')
                       : ''}
                   </span>

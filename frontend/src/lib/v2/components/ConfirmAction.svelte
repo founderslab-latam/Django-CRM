@@ -12,6 +12,7 @@
    * the backend.
    */
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{
    *   action: string,
@@ -20,7 +21,12 @@
    *   explain?: string,
    *   hidden?: Record<string, string>
    * }} */
-  let { action, label = 'Delete', confirmLabel = 'Confirm', explain = '', hidden = {} } = $props();
+  let { action, label, confirmLabel, explain = '', hidden = {} } = $props();
+
+  // The consumers pass their own translated verb; these are only the generic
+  // fallbacks for a call site that does not.
+  let labelText = $derived(label ?? $_('common.actions.delete'));
+  let confirmText = $derived(confirmLabel ?? $_('common.actions.confirm'));
 
   let armed = $state(false);
   let busy = $state(false);
@@ -48,13 +54,13 @@
     {#if explain}
       <span class="v2-sub" style="font-size:11.5px">{explain}</span>
     {/if}
-    <button class="v2-btn v2-btn-sm" type="submit" disabled={busy}>{confirmLabel}</button>
+    <button class="v2-btn v2-btn-sm" type="submit" disabled={busy}>{confirmText}</button>
     <button class="v2-btn v2-btn-sm" type="button" disabled={busy} onclick={() => (armed = false)}>
-      Cancel
+      {$_('common.actions.cancel')}
     </button>
   </form>
 {:else}
-  <button class="v2-btn v2-btn-sm" type="button" onclick={() => (armed = true)}>{label}</button>
+  <button class="v2-btn v2-btn-sm" type="button" onclick={() => (armed = true)}>{labelText}</button>
 {/if}
 
 <style>

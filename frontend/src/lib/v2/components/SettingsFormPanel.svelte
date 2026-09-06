@@ -20,6 +20,7 @@
    * `{#if}`.
    */
   import { enhance } from '$app/forms';
+  import { _ } from '$lib/i18n/index.js';
 
   /** @type {{
    *   title: string,
@@ -30,7 +31,11 @@
    *   ondone?: () => void,
    *   fields: import('svelte').Snippet
    * }} */
-  let { title, action, error = null, submitLabel = 'Save', oncancel, ondone, fields } = $props();
+  let { title, action, error = null, submitLabel, oncancel, ondone, fields } = $props();
+
+  // Consumers pass their own translated verb; this is only the generic
+  // fallback for a call site that does not.
+  let submitText = $derived(submitLabel ?? $_('common.actions.save'));
 
   // Disables submit while a request is in flight so a double-click cannot
   // fire two writes.
@@ -64,8 +69,10 @@
     </div>
 
     <div class="v2-sfp-foot">
-      <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}>{submitLabel}</button>
-      <button class="v2-btn" type="button" disabled={busy} onclick={oncancel}>Cancel</button>
+      <button class="v2-btn v2-btn-primary" type="submit" disabled={busy}>{submitText}</button>
+      <button class="v2-btn" type="button" disabled={busy} onclick={oncancel}
+        >{$_('common.actions.cancel')}</button
+      >
     </div>
   </form>
 </div>

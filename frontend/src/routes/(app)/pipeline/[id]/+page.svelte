@@ -6,13 +6,8 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { money, longDate } from '$lib/v2/format.js';
-  import {
-    OPEN_STAGES,
-    STAGE_LABEL,
-    AGING_TONE,
-    AGING_LABEL,
-    OPPORTUNITY_TYPE_LABEL
-  } from '$lib/v2/enums.js';
+  import { OPEN_STAGES, STAGE_LABEL, AGING_TONE, OPPORTUNITY_TYPE_LABEL } from '$lib/v2/enums.js';
+  import { agingKey } from '$lib/common/enums-labels.js';
   import { Check, ChevronRight } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -72,7 +67,7 @@
         <Pill tone={AGING_TONE[deal.aging_status]} dot>
           {$_('opportunity.detail.aging_pill', {
             values: {
-              agingLabel: AGING_LABEL[deal.aging_status],
+              agingLabel: $_(agingKey(deal.aging_status)),
               days: deal.days_in_current_stage,
               stageLabel: STAGE_LABEL[deal.stage]
             }
