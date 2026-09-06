@@ -35,6 +35,9 @@ export async function apiRequest(endpoint, options = {}, locals) {
     /** @type {{ cookies?: Cookies }} */ (locals).cookies || locals
   );
   const accessToken = cookies?.get?.('jwt_access');
+  // The user's chosen locale, so Django's LocaleMiddleware returns error and
+  // validation messages in it. Same `locale` cookie the SvelteKit side reads.
+  const localeCookie = cookies?.get?.('locale') || 'en';
 
   // A FormData body is a file upload (multipart). Do NOT set Content-Type for it
   //. Fetch has to add the multipart boundary itself, and a hand-set
@@ -47,6 +50,7 @@ export async function apiRequest(endpoint, options = {}, locals) {
   /** @type {Record<string, string>} */
   const requestHeaders = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    'Accept-Language': localeCookie,
     ...headers
   };
 

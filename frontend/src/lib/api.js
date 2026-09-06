@@ -8,8 +8,11 @@ import { resolve } from '$app/paths';
  * @module lib/api
  */
 
+import { get } from 'svelte/store';
+
 import { env } from '$env/dynamic/public';
 import { goto } from '$app/navigation';
+import { locale, DEFAULT_LOCALE } from '$lib/i18n/index.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -204,6 +207,10 @@ export async function apiRequest(endpoint, options = {}) {
   /** @type {Record<string, string>} */
   const requestHeaders = {
     'Content-Type': 'application/json',
+    // So Django's LocaleMiddleware returns error and validation messages in
+    // the language the user picked. `get(locale)` is null before i18n init
+    // (SSR of a cold page), hence the fallback.
+    'Accept-Language': get(locale) || DEFAULT_LOCALE,
     ...headers
   };
 

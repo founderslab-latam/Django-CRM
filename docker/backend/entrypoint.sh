@@ -29,5 +29,8 @@ python manage.py create_default_admin
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
+echo "Compiling translation catalogs..."
+python manage.py compilemessages
+
 echo "Starting development server..."
 exec python manage.py runserver 0.0.0.0:8000

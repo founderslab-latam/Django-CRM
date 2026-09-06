@@ -86,6 +86,12 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Reads Accept-Language (set by the web/mobile clients from the user's
+    # chosen locale) and activates it for the request, so gettext() in views,
+    # serializers and email templates resolves to that language. After
+    # SessionMiddleware, before the app's own middleware that may build
+    # user-facing strings.
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # CSRF protection
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -213,7 +219,24 @@ AUTH_PASSWORD_VALIDATORS = [
 # live tenant's boundaries move.
 TIME_ZONE = "UTC"
 
+# Internationalisation. The SvelteKit app and the Flutter app both know which
+# language the user picked (a `locale` cookie on the web side) and send it as
+# an `Accept-Language` header on every API call; `django.middleware.locale.
+# LocaleMiddleware` (in MIDDLEWARE) reads that header and activates the match.
+# No per-request locale is stored server-side and there is no URL prefix.
+#
+# `LANGUAGE_CODE` is the fallback when the header is absent or names a language
+# we don't ship. Translations live in `backend/locale/<lang>/LC_MESSAGES/`,
+# generated with `makemessages` and compiled with `compilemessages`; a missing
+# catalog or an empty msgstr falls back to the source string (English), so
+# adding `es` here before it is fully translated changes nothing user-visible.
 USE_I18N = True
+LANGUAGE_CODE = "en-us"
+LANGUAGES = [
+    ("en", "English"),
+    ("es", "Español"),
+]
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 
 USE_TZ = True
 

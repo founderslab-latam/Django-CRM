@@ -80,3 +80,7 @@ CLAUDE.md
 TODO.md
 .playwright-mcp
 .superpowers/
+
+# Compiled gettext catalogs — the .po files are the source, .mo is built at
+# container start (docker/backend/entrypoint.sh) and on deploy.
+*.mo
