@@ -26,7 +26,9 @@
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import { count, relativeDays } from '$lib/v2/format.js';
-  import { ROLE_LABEL, ROLE_TONE } from '$lib/v2/enums.js';
+  import { ROLE_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { roleKey } from '$lib/common/enums-labels.js';
   import { enhance } from '$app/forms';
   import { UserPlus, KeyRound } from '@lucide/svelte';
 
@@ -57,42 +59,47 @@
 </script>
 
 {#if data.forbidden}
-  <PageHeader title="Team and access" />
+  <PageHeader title={$_('team.forbidden_title')} />
   <div class="v2-pad" style="padding-top:40px">
-    <NextAction
-      label="Admins only"
-      text="Managing people, roles and access is limited to organization admins. Ask an admin on your team if you need someone added or a role changed."
-    />
+    <NextAction label={$_('team.forbidden_label')} text={$_('team.forbidden_text')} />
   </div>
 {:else}
-  <PageHeader title="Team and access">
+  <PageHeader title={$_('team.title')}>
     {#snippet sub()}
-      <span class="v2-num">{count(data.totals.count)}</span> people ·
-      <span class="v2-num">{count(data.totals.admins)}</span> admins
+      <span class="v2-num">{count(data.totals.count)}</span>
+      {$_('team.sub_people')} ·
+      <span class="v2-num">{count(data.totals.admins)}</span>
+      {$_('team.sub_admins')}
     {/snippet}
     {#snippet actions()}
       <button class="v2-btn v2-btn-primary" onclick={() => (inviting = !inviting)}>
-        <UserPlus />Invite
+        <UserPlus />{$_('team.invite_button')}
       </button>
     {/snippet}
   </PageHeader>
 
   <div class="v2-pad" style="padding-top:16px;flex:none">
     <div class="v2-stats">
-      <StatCard label="Active people" value={count(data.totals.count)} tone="ink" />
+      <StatCard label={$_('team.stat_active_people')} value={count(data.totals.count)} tone="ink" />
       <StatCard
-        label="Admins"
+        label={$_('team.stat_admins')}
         value={count(data.totals.admins)}
         tone="clay"
-        detail="Can change roles and org settings"
+        detail={$_('team.stat_admins_detail')}
       />
       <StatCard
-        label="Never signed in"
+        label={$_('team.stat_never')}
         value={count(data.totals.never_signed_in)}
         tone={data.totals.never_signed_in ? 'clay' : 'slate'}
-        detail={data.totals.never_signed_in ? 'Invited, seat unclaimed' : 'Everyone has signed in'}
+        detail={data.totals.never_signed_in
+          ? $_('team.stat_never_detail_some')
+          : $_('team.stat_never_detail_none')}
       />
-      <StatCard label="Deactivated" value={count(data.totals.deactivated)} tone="slate" />
+      <StatCard
+        label={$_('team.stat_deactivated')}
+        value={count(data.totals.deactivated)}
+        tone="slate"
+      />
     </div>
   </div>
 
@@ -108,7 +115,7 @@
         >
           <div style="flex:1;min-width:220px">
             <label class="v2-label" for="invite-email" style="display:block;margin-bottom:4px">
-              Invite by email
+              {$_('team.invite_email_label')}
             </label>
             <input
               id="invite-email"
@@ -117,21 +124,21 @@
               required
               class="v2-input"
               style="width:100%"
-              placeholder="name@company.com"
+              placeholder={$_('team.invite_email_placeholder')}
             />
           </div>
           <div>
             <label class="v2-label" for="invite-role" style="display:block;margin-bottom:4px">
-              Role
+              {$_('team.invite_role_label')}
             </label>
             <select id="invite-role" name="role" class="v2-input" style="width:130px">
-              <option value="USER">Member</option>
-              <option value="ADMIN">Admin</option>
+              <option value="USER">{$_(roleKey('USER'))}</option>
+              <option value="ADMIN">{$_(roleKey('ADMIN'))}</option>
             </select>
           </div>
-          <button class="v2-btn v2-btn-primary" disabled={busy}>Send invite</button>
+          <button class="v2-btn v2-btn-primary" disabled={busy}>{$_('team.invite_send')}</button>
           <button type="button" class="v2-btn" disabled={busy} onclick={() => (inviting = false)}>
-            Cancel
+            {$_('team.invite_cancel')}
           </button>
           {#if form?.invite?.error}
             <p
@@ -149,12 +156,11 @@
           class="v2-sub"
           style="color:var(--v2-moss);font-size:12.5px;margin:0 0 16px;font-weight:550"
         >
-          {form.invited} is a member now. They show below as “never” signed in until they log in with
-          that email.
+          {$_('team.invited_notice', { values: { name: form.invited } })}
         </p>
       {:else if form?.error}
         <div style="margin-bottom:16px">
-          <NextAction label="That did not work" text={form.error} tone="rust" />
+          <NextAction label={$_('team.error_heading')} text={form.error} tone="rust" />
         </div>
       {/if}
 
@@ -168,25 +174,27 @@
         -->
         <div style="margin-bottom:20px">
           <NextAction
-            label="Loose end"
-            text={`${data.totals.tokens_on_deactivated} API ${data.totals.tokens_on_deactivated === 1 ? 'token belongs' : 'tokens belong'} to a deactivated account. Deactivating already stops them at login, but they are not revoked. Reactivating the account would bring them back. Revoke to close that off.`}
-            action="Review tokens"
+            label={$_('team.loose_end_label')}
+            text={$_('team.loose_end_text', {
+              values: { count: data.totals.tokens_on_deactivated }
+            })}
+            action={$_('team.loose_end_action')}
             href="/settings/api-tokens"
           />
         </div>
       {/if}
 
-      <div class="v2-label" style="margin-bottom:10px">People</div>
+      <div class="v2-label" style="margin-bottom:10px">{$_('team.section_people')}</div>
       <div class="v2-table-wrap" style="margin-bottom:26px">
         <table class="v2-table">
           <thead>
             <tr>
-              <th>Person</th>
-              <th>Role</th>
-              <th>Teams</th>
-              <th data-m="hide">Tokens</th>
-              <th class="v2-r">Last signed in</th>
-              <th class="v2-r">Manage</th>
+              <th>{$_('team.col_person')}</th>
+              <th>{$_('team.col_role')}</th>
+              <th>{$_('team.col_teams')}</th>
+              <th data-m="hide">{$_('team.col_tokens')}</th>
+              <th class="v2-r">{$_('team.col_last_signed')}</th>
+              <th class="v2-r">{$_('team.col_manage')}</th>
             </tr>
           </thead>
           <tbody>
@@ -199,7 +207,7 @@
                     <span style="min-width:0">
                       <span class="v2-table-primary">
                         {m.name}{#if m.is_you}<span class="v2-sub" style="font-weight:400"
-                            >, you</span
+                            >{$_('team.you_suffix')}</span
                           >{/if}
                       </span>
                       <span class="v2-table-secondary" style="display:block">{m.email}</span>
@@ -207,9 +215,12 @@
                   </span>
                 </td>
                 <td data-m="tag">
-                  <Pill tone={m.is_active ? ROLE_TONE[m.role] : 'slate'}>{ROLE_LABEL[m.role]}</Pill>
+                  <Pill tone={m.is_active ? ROLE_TONE[m.role] : 'slate'}>{$_(roleKey(m.role))}</Pill
+                  >
                   {#if !m.is_active}
-                    <span class="v2-table-secondary" style="display:block">Deactivated</span>
+                    <span class="v2-table-secondary" style="display:block"
+                      >{$_('team.row_deactivated')}</span
+                    >
                   {/if}
                 </td>
                 <td>
@@ -238,7 +249,7 @@
                   {#if m.last_login}
                     {relativeDays(m.last_login)}
                   {:else}
-                    <span style="color:var(--v2-clay);font-weight:600">never</span>
+                    <span style="color:var(--v2-clay);font-weight:600">{$_('team.never')}</span>
                   {/if}
                 </td>
                 <td class="v2-r">
@@ -262,10 +273,10 @@
                           class="v2-btn v2-btn-sm"
                           disabled={busy || (m.role === 'ADMIN' && isLastAdmin)}
                           title={m.role === 'ADMIN' && isLastAdmin
-                            ? 'The org must keep at least one admin'
+                            ? $_('team.make_admin_disabled_title')
                             : ''}
                         >
-                          {m.role === 'ADMIN' ? 'Make member' : 'Make admin'}
+                          {m.role === 'ADMIN' ? $_('team.make_member') : $_('team.make_admin')}
                         </button>
                       </form>
                       <!-- Activate / deactivate. The last active admin cannot
@@ -281,11 +292,11 @@
                           class="v2-btn v2-btn-sm"
                           disabled={busy || (m.is_active && isLastAdmin)}
                           title={m.is_active && isLastAdmin
-                            ? 'The org must keep at least one active admin'
+                            ? $_('team.deactivate_disabled_title')
                             : ''}
                           style={m.is_active ? 'color:var(--v2-rust)' : ''}
                         >
-                          {m.is_active ? 'Deactivate' : 'Reactivate'}
+                          {m.is_active ? $_('team.deactivate') : $_('team.reactivate')}
                         </button>
                       </form>
                     </span>
@@ -297,7 +308,7 @@
         </table>
       </div>
 
-      <div class="v2-label" style="margin-bottom:10px">Teams</div>
+      <div class="v2-label" style="margin-bottom:10px">{$_('team.section_teams')}</div>
       <div class="v2-card" style="overflow:hidden;margin-bottom:14px">
         {#each data.teams as t (t.id)}
           <div class="v2-setting">
@@ -306,21 +317,18 @@
               <span class="v2-sub" style="font-size:11.5px">{t.description}</span>
             </div>
             <span class="v2-sub v2-num" style="font-size:12px">
-              {t.member_count}
-              {t.member_count === 1 ? 'member' : 'members'}
+              {$_('team.team_members', { values: { count: t.member_count } })}
             </span>
           </div>
         {:else}
           <div class="v2-setting">
-            <span class="v2-sub" style="font-size:12px">No teams yet.</span>
+            <span class="v2-sub" style="font-size:12px">{$_('team.no_teams')}</span>
           </div>
         {/each}
       </div>
 
       <p class="v2-sub" style="font-size:11.5px">
-        Roles are Admin and Member, the only two the API recognises. Admins can invite people,
-        change roles and edit org settings; the server refuses to let anyone change their own role
-        or deactivate the last admin. Editing team membership is not available here yet.
+        {$_('team.footer_note')}
       </p>
     </div>
   </div>

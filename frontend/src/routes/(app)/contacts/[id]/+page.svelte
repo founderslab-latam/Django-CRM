@@ -25,12 +25,7 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { money, shortDate, relativeDays, daysSince } from '$lib/v2/format.js';
-  import {
-    STAGE_LABEL,
-    PRIORITY_TONE,
-    CASE_STATUS_TONE,
-    TASK_PRIORITY_TONE
-  } from '$lib/v2/enums.js';
+  import { PRIORITY_TONE, CASE_STATUS_TONE, TASK_PRIORITY_TONE } from '$lib/v2/enums.js';
   import { enhance } from '$app/forms';
   import {
     ChevronRight,
@@ -44,6 +39,7 @@
     X
   } from '@lucide/svelte';
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -285,7 +281,7 @@
                      fact once it is not. A won deal that "closes 22 Aug" reads
                      as still running. -->
                 <div class="v2-sub" style="font-size:11.5px">
-                  {STAGE_LABEL[d.stage]}{d.closed_on
+                  {$_(opportunityStageKey(d.stage))}{d.closed_on
                     ? d.stage.startsWith('CLOSED_')
                       ? ` · closed ${shortDate(d.closed_on)}`
                       : ` · due ${shortDate(d.closed_on)}`

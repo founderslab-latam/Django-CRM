@@ -1,5 +1,7 @@
 <script>
-  import { OPEN_STAGES, STAGE_LABEL } from '$lib/v2/enums.js';
+  import { OPEN_STAGES } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
 
   /**
    * Four segments for the four open stages. A closed deal leaves the meter
@@ -15,14 +17,20 @@
 </script>
 
 {#if !closed}
-  <div class="v2-meter" role="img" aria-label="Stage: {STAGE_LABEL[stage]}">
+  <div
+    class="v2-meter"
+    role="img"
+    aria-label={$_('common.enums.stage_aria', {
+      values: { stage: $_(opportunityStageKey(stage)) }
+    })}
+  >
     {#each OPEN_STAGES as stageKey, i (stageKey)}
       <i class={i <= index ? 'on' : ''}></i>
     {/each}
   </div>
   {#if label}
-    <div class="v2-table-secondary" style="margin-top:4px">{STAGE_LABEL[stage]}</div>
+    <div class="v2-table-secondary" style="margin-top:4px">{$_(opportunityStageKey(stage))}</div>
   {/if}
 {:else}
-  <span class="v2-sub">{STAGE_LABEL[stage]}</span>
+  <span class="v2-sub">{$_(opportunityStageKey(stage))}</span>
 {/if}

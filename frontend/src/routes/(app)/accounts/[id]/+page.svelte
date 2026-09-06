@@ -12,18 +12,14 @@
    * returned them, so this costs no extra round trips.
    */
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import StatCard from '$lib/v2/components/StatCard.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { money, shortDate, longDate } from '$lib/v2/format.js';
-  import {
-    STAGE_LABEL,
-    PRIORITY_TONE,
-    INVOICE_STATUS_TONE,
-    invoiceStatusLabel
-  } from '$lib/v2/enums.js';
+  import { PRIORITY_TONE, INVOICE_STATUS_TONE, invoiceStatusLabel } from '$lib/v2/enums.js';
   import { ChevronRight, Mail, Phone } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -173,7 +169,7 @@
                    and means two different things depending on the stage. Bare,
                    it reads as though an open deal already closed. -->
               <div class="v2-sub" style="font-size:11.5px">
-                {STAGE_LABEL[d.stage]}{d.closed_on
+                {$_(opportunityStageKey(d.stage))}{d.closed_on
                   ? d.stage.startsWith('CLOSED_')
                     ? ` · ${$_('accounts.detail.deal_closed_prefix')} ${shortDate(d.closed_on)}`
                     : ` · ${$_('accounts.detail.deal_due_prefix')} ${shortDate(d.closed_on)}`

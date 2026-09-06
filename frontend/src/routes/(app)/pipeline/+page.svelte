@@ -4,6 +4,7 @@
   import { asInternalPath } from '$lib/utils/paths.js';
   import { page } from '$app/state';
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -11,7 +12,7 @@
   import StageMeter from '$lib/v2/components/StageMeter.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { money, count, shortDate } from '$lib/v2/format.js';
-  import { STAGE_LABEL, AGING_TONE } from '$lib/v2/enums.js';
+  import { AGING_TONE } from '$lib/v2/enums.js';
   import { agingKey } from '$lib/common/enums-labels.js';
   import { activeChips, activePresetKey, withoutParam } from '$lib/v2/filters.js';
   import { Columns3, List, Plus, TriangleAlert } from '@lucide/svelte';
@@ -224,7 +225,7 @@
     {#each boardLanes as lane (lane.stage)}
       <section class="v2-lane">
         <div class="v2-lane-head">
-          <span class="v2-label">{STAGE_LABEL[lane.stage]}</span>
+          <span class="v2-label">{$_(opportunityStageKey(lane.stage))}</span>
           <span class="v2-num"
             >{count(laneCount(lane))} · {money(laneSum(lane), data.org.currency)}</span
           >

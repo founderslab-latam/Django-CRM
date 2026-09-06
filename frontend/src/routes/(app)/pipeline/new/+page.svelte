@@ -3,8 +3,9 @@
   import { untrack, tick } from 'svelte';
   import { enhance } from '$app/forms';
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
-  import { STAGES, STAGE_LABEL, OPPORTUNITY_TYPE_LABEL } from '$lib/v2/enums.js';
+  import { STAGES, OPPORTUNITY_TYPE_LABEL } from '$lib/v2/enums.js';
   import { money } from '$lib/v2/format.js';
   import { ChevronDown, ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -237,7 +238,7 @@
       <label for="f-stage">{$_('opportunity.new.label_stage')}</label>
       <select id="f-stage" name="stage" class="v2-input" bind:value={form.stage}>
         {#each STAGES.filter((s) => !s.startsWith('CLOSED_')) as s (s)}
-          <option value={s}>{STAGE_LABEL[s]}</option>
+          <option value={s}>{$_(opportunityStageKey(s))}</option>
         {/each}
       </select>
       <p class="v2-hint">

@@ -44,15 +44,10 @@
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
-  import {
-    STAGES,
-    STAGE_LABEL,
-    OPPORTUNITY_TYPE_LABEL,
-    AGING_TONE,
-    AGING_LABEL
-  } from '$lib/v2/enums.js';
+  import { STAGES, OPPORTUNITY_TYPE_LABEL, AGING_TONE, AGING_LABEL } from '$lib/v2/enums.js';
   import { money, longDate } from '$lib/v2/format.js';
   import { ChevronRight, TriangleAlert, Lock } from '@lucide/svelte';
 
@@ -99,7 +94,7 @@
 
     if (isClosed && !form.closed_on)
       e.closed_on = $_('opportunity.edit.error_closed_on_required', {
-        values: { stageLabel: STAGE_LABEL[form.stage] }
+        values: { stageLabel: $_(opportunityStageKey(form.stage)) }
       });
 
     const p = Number(form.probability);
@@ -151,7 +146,10 @@
   {#snippet sub()}
     {deal.account.name} · <span class="v2-num">{money(deal.amount, deal.currency)}</span> ·
     {$_('opportunity.edit.stage_duration', {
-      values: { stageLabel: STAGE_LABEL[originalStage], days: server.days_in_current_stage }
+      values: {
+        stageLabel: $_(opportunityStageKey(originalStage)),
+        days: server.days_in_current_stage
+      }
     })}
   {/snippet}
 </PageHeader>
@@ -260,7 +258,7 @@
         aria-describedby={stageChanged ? 'stage-effect' : undefined}
       >
         {#each STAGES as s (s)}
-          <option value={s}>{STAGE_LABEL[s]}</option>
+          <option value={s}>{$_(opportunityStageKey(s))}</option>
         {/each}
       </select>
 
@@ -272,7 +270,7 @@
       {#if stageChanged}
         <div class="consequence" style="--edge:var(--v2-clay)" id="stage-effect">
           <div style="font-weight:600">
-            {STAGE_LABEL[originalStage]} → {STAGE_LABEL[form.stage]}
+            {$_(opportunityStageKey(originalStage))} → {$_(opportunityStageKey(form.stage))}
           </div>
           <p>
             {$_('opportunity.edit.stage_change_intro')}

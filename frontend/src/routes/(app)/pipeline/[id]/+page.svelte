@@ -1,12 +1,13 @@
 <script>
   import { resolve } from '$app/paths';
   import { _ } from '$lib/i18n/index.js';
+  import { opportunityStageKey } from '$lib/opportunity/labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Timeline from '$lib/v2/components/Timeline.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { money, longDate } from '$lib/v2/format.js';
-  import { OPEN_STAGES, STAGE_LABEL, AGING_TONE, OPPORTUNITY_TYPE_LABEL } from '$lib/v2/enums.js';
+  import { OPEN_STAGES, AGING_TONE, OPPORTUNITY_TYPE_LABEL } from '$lib/v2/enums.js';
   import { agingKey } from '$lib/common/enums-labels.js';
   import { Check, ChevronRight } from '@lucide/svelte';
 
@@ -60,7 +61,7 @@
             : 'color:var(--v2-slate);background:var(--v2-line-soft)'}
         >
           {#if i < stageIndex}<Check size={11} />{/if}
-          {STAGE_LABEL[stage]}
+          {$_(opportunityStageKey(stage))}
         </span>
       {/each}
       <span style="margin-left:auto">
@@ -69,7 +70,7 @@
             values: {
               agingLabel: $_(agingKey(deal.aging_status)),
               days: deal.days_in_current_stage,
-              stageLabel: STAGE_LABEL[deal.stage]
+              stageLabel: $_(opportunityStageKey(deal.stage))
             }
           })}
         </Pill>
@@ -143,7 +144,7 @@
     <div class="v2-label v2-rail-head">{$_('opportunity.detail.rail_deal_label')}</div>
     <dl class="v2-kv">
       <dt>{$_('opportunity.detail.dt_stage')}</dt>
-      <dd>{STAGE_LABEL[deal.stage]}</dd>
+      <dd>{$_(opportunityStageKey(deal.stage))}</dd>
       <dt>{$_('opportunity.detail.dt_value')}</dt>
       <dd class="v2-num">{money(deal.amount, deal.currency)}</dd>
       <dt>{$_('opportunity.detail.dt_probability')}</dt>
