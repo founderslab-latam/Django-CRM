@@ -26,6 +26,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -125,12 +126,12 @@ class WebFormSubmitView(PublicWebFormMixin, APIView):
         form = self.load_form(org_id, form_id)
         if form is None:
             return Response(
-                {"detail": "Form not found."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("Form not found.")}, status=status.HTTP_404_NOT_FOUND
             )
 
         if not self.origin_allowed(request, form):
             return Response(
-                {"detail": "This form cannot be submitted from this site."},
+                {"detail": _("This form cannot be submitted from this site.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -173,7 +174,7 @@ class WebFormSubmitView(PublicWebFormMixin, APIView):
                 reason="captcha verification failed",
             )
             return Response(
-                {"detail": "Could not verify that you are human. Please try again."},
+                {"detail": _("Could not verify that you are human. Please try again.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -238,7 +239,7 @@ class WebFormEmbedView(EmbedViewMixin, APIView):
     def get(self, request, org_id, form_id):
         form = self.load_form(org_id, form_id)
         if form is None:
-            return HttpResponseNotFound("Form not found.")
+            return HttpResponseNotFound(_("Form not found."))
 
         self.count_view(form)
         html = render_to_string(

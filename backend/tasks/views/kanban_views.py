@@ -6,6 +6,7 @@ Supports both status-based (default) and custom pipeline-based kanban boards.
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -265,7 +266,7 @@ class TaskMoveView(APIView):
                 or request.profile in task.assigned_to.all()
             ):
                 return Response(
-                    {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                    {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
                 )
 
         serializer = TaskMoveSerializer(data=request.data)
@@ -288,7 +289,10 @@ class TaskMoveView(APIView):
                     if current_count >= stage.wip_limit:
                         return Response(
                             {
-                                "error": f"Stage '{stage.name}' has reached its WIP limit of {stage.wip_limit}"
+                                "error": _(
+                                    "Stage '%(stage)s' has reached its WIP limit of %(limit)s"
+                                )
+                                % {"stage": stage.name, "limit": stage.wip_limit}
                             },
                             status=status.HTTP_400_BAD_REQUEST,
                         )
@@ -321,7 +325,7 @@ class TaskMoveView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Task moved successfully",
+                "message": _("Task moved successfully"),
                 "task": TaskKanbanCardSerializer(task).data,
             }
         )
@@ -367,7 +371,7 @@ class TaskPipelineListCreateView(APIView):
         # Only admins can create pipelines
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Only admins can create pipelines"},
+                {"error": _("Only admins can create pipelines")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -443,7 +447,7 @@ class TaskPipelineDetailView(APIView):
         """Update pipeline."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -463,7 +467,7 @@ class TaskPipelineDetailView(APIView):
         """Delete pipeline (soft delete by setting is_active=False)."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -473,7 +477,10 @@ class TaskPipelineDetailView(APIView):
         if task_count > 0:
             return Response(
                 {
-                    "error": f"Cannot delete pipeline with {task_count} tasks. Move tasks first."
+                    "error": _(
+                        "Cannot delete pipeline with %(count)s tasks. Move tasks first."
+                    )
+                    % {"count": task_count}
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -497,7 +504,7 @@ class TaskStageCreateView(APIView):
         """Add a new stage to pipeline."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -528,7 +535,7 @@ class TaskStageDetailView(APIView):
         """Update stage."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(TaskStage, pk=pk, org=request.profile.org)
@@ -548,7 +555,7 @@ class TaskStageDetailView(APIView):
         """Delete stage."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(TaskStage, pk=pk, org=request.profile.org)
@@ -558,7 +565,10 @@ class TaskStageDetailView(APIView):
         if task_count > 0:
             return Response(
                 {
-                    "error": f"Cannot delete stage with {task_count} tasks. Move tasks first."
+                    "error": _(
+                        "Cannot delete stage with %(count)s tasks. Move tasks first."
+                    )
+                    % {"count": task_count}
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -584,7 +594,7 @@ class TaskStageReorderView(APIView):
         """Reorder stages by providing ordered list of stage IDs."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -596,7 +606,7 @@ class TaskStageReorderView(APIView):
         stages = TaskStage.objects.filter(pipeline=pipeline, id__in=stage_ids)
         if stages.count() != len(stage_ids):
             return Response(
-                {"error": "Invalid stage IDs provided"},
+                {"error": _("Invalid stage IDs provided")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -604,4 +614,4 @@ class TaskStageReorderView(APIView):
         for order, stage_id in enumerate(stage_ids):
             TaskStage.objects.filter(id=stage_id).update(order=order)
 
-        return Response({"message": "Stages reordered successfully"})
+        return Response({"message": _("Stages reordered successfully")})

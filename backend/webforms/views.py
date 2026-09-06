@@ -21,6 +21,7 @@ import datetime
 
 from django.db.models import Count
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.pagination import LimitOffsetPagination
@@ -43,7 +44,7 @@ ANALYTICS_WINDOW_DAYS = 30
 
 def _admin_required():
     return Response(
-        {"error": True, "errors": "Admin access required"},
+        {"error": True, "errors": _("Admin access required")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -179,7 +180,7 @@ class WebFormPublishView(WebFormBaseView):
 
         if form.is_published:
             return Response(
-                {"error": True, "errors": "This form is already published."},
+                {"error": True, "errors": _("This form is already published.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -221,7 +222,7 @@ class WebFormUnpublishView(WebFormBaseView):
 
         if not form.is_published:
             return Response(
-                {"error": True, "errors": "This form is not published."},
+                {"error": True, "errors": _("This form is not published.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

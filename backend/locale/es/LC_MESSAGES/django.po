@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 07:25+0000\n"
+"POT-Creation-Date: 2026-09-06 07:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -119,6 +119,12 @@ msgstr "Correo enviado correctamente."
 
 msgid "Email scheduled successfully"
 msgstr "Correo programado correctamente."
+
+msgid "Not a valid IANA timezone."
+msgstr "No es una zona horaria IANA válida."
+
+msgid "Only admins can update business hours."
+msgstr "Solo los administradores pueden actualizar el horario laboral."
 
 msgid "Admin access required"
 msgstr "Se requiere acceso de administrador."
@@ -2024,6 +2030,15 @@ msgstr "Prospecto eliminado correctamente."
 msgid "you don't have permission to delete this lead"
 msgstr "no tienes permiso para eliminar este prospecto"
 
+msgid "Only admins can edit org-scope macros."
+msgstr "Solo los administradores pueden editar las macros de toda la organización."
+
+msgid "Macro is inactive."
+msgstr "La macro está inactiva."
+
+msgid "case_id is required."
+msgstr "Se requiere case_id."
+
 msgid "Opportunity Name"
 msgstr ""
 
@@ -2188,3 +2203,48 @@ msgstr ""
 
 msgid "A task can only be linked to one parent entity (Account, Opportunity, Case, or Lead). "
 msgstr ""
+
+msgid "Board not found or access denied"
+msgstr "No se encontró el tablero o se denegó el acceso."
+
+msgid "Only board owner can delete the board"
+msgstr "Solo el propietario del tablero puede eliminarlo."
+
+msgid "Access denied"
+msgstr "Acceso denegado."
+
+msgid "Task moved successfully"
+msgstr "Tarea movida correctamente."
+
+msgid "Cannot delete pipeline with %(count)s tasks. Move tasks first."
+msgstr "No se puede eliminar un flujo con %(count)s tareas. Muévelas primero."
+
+msgid "Cannot delete stage with %(count)s tasks. Move tasks first."
+msgstr "No se puede eliminar una etapa con %(count)s tareas. Muévelas primero."
+
+msgid "Task Created Successfully"
+msgstr "Tarea creada correctamente."
+
+msgid "Task updated Successfully"
+msgstr "Tarea actualizada correctamente."
+
+msgid "Task deleted Successfully"
+msgstr "Tarea eliminada correctamente."
+
+msgid "You don't have Permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "Form not found."
+msgstr "No se encontró el formulario."
+
+msgid "This form cannot be submitted from this site."
+msgstr "Este formulario no se puede enviar desde este sitio."
+
+msgid "Could not verify that you are human. Please try again."
+msgstr "No se pudo verificar que eres una persona. Inténtalo de nuevo."
+
+msgid "This form is already published."
+msgstr "Este formulario ya está publicado."
+
+msgid "This form is not published."
+msgstr "Este formulario no está publicado."

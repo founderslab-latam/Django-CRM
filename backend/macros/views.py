@@ -17,6 +17,7 @@ Routes (all under /api/macros/):
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -142,7 +143,7 @@ class MacroDetailView(APIView):
             # An org macro IS visible to this non-admin; the refusal is an
             # authorization one (403), not a hidden object.
             return Response(
-                {"error": "Only admins can edit org-scope macros."},
+                {"error": _("Only admins can edit org-scope macros.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         if macro.scope == Macro.SCOPE_PERSONAL and macro.owner_id != request.profile.id:
@@ -151,7 +152,7 @@ class MacroDetailView(APIView):
             # a 403 either, or the id space leaks which rows are somebody else's
             # personal macros. Mirror the GET: 404.
             return Response(
-                {"detail": "Not found."},
+                {"detail": _("Not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return macro
@@ -160,7 +161,9 @@ class MacroDetailView(APIView):
         macro = get_object_or_404(Macro, pk=pk, org=request.profile.org)
         # Visibility: same rule as the list filter.
         if macro.scope == Macro.SCOPE_PERSONAL and macro.owner_id != request.profile.id:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND
+            )
         return Response(MacroSerializer(macro).data)
 
     def put(self, request, pk, *args, **kwargs):
@@ -216,16 +219,18 @@ class MacroRenderView(APIView):
         # Mirror visibility rules: a personal macro from another user
         # should not be discoverable by id either.
         if macro.scope == Macro.SCOPE_PERSONAL and macro.owner_id != request.profile.id:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND
+            )
         if not macro.is_active:
             return Response(
-                {"error": "Macro is inactive."},
+                {"error": _("Macro is inactive.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         case_id = request.data.get("case_id")
         if not case_id:
             return Response(
-                {"error": "case_id is required."},
+                {"error": _("case_id is required.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # The case query is RLS-protected and additionally org-filtered here

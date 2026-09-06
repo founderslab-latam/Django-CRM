@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.pagination import LimitOffsetPagination
@@ -187,7 +188,7 @@ class BoardDetailView(APIView):
         board = self.get_object(pk, request.profile.org, request.profile)
         if not board:
             return Response(
-                {"error": "Board not found or access denied"},
+                {"error": _("Board not found or access denied")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         serializer = BoardSerializer(board)
@@ -208,7 +209,7 @@ class BoardDetailView(APIView):
         board = self.get_object(pk, request.profile.org, request.profile)
         if not board:
             return Response(
-                {"error": "Board not found or access denied"},
+                {"error": _("Board not found or access denied")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -218,7 +219,7 @@ class BoardDetailView(APIView):
         ).first()
         if not membership or membership.role not in ["owner", "admin"]:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         serializer = BoardSerializer(board, data=request.data, partial=True)
@@ -247,7 +248,7 @@ class BoardDetailView(APIView):
         board = self.get_object(pk, request.profile.org, request.profile)
         if not board:
             return Response(
-                {"error": "Board not found or access denied"},
+                {"error": _("Board not found or access denied")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -257,7 +258,7 @@ class BoardDetailView(APIView):
         ).first()
         if not membership or membership.role not in ["owner", "admin"]:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         serializer = BoardSerializer(board, data=request.data, partial=True)
@@ -284,14 +285,14 @@ class BoardDetailView(APIView):
         board = self.get_object(pk, request.profile.org, request.profile)
         if not board:
             return Response(
-                {"error": "Board not found or access denied"},
+                {"error": _("Board not found or access denied")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         # Only owner can delete
         if board.owner != request.profile:
             return Response(
-                {"error": "Only board owner can delete the board"},
+                {"error": _("Only board owner can delete the board")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -324,7 +325,7 @@ class BoardColumnListCreateView(APIView):
             and not board.members.filter(id=request.profile.id).exists()
         ):
             return Response(
-                {"error": "Board not found or access denied"},
+                {"error": _("Board not found or access denied")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -363,7 +364,7 @@ class BoardColumnListCreateView(APIView):
         ).first()
         if not membership or membership.role not in ["owner", "admin"]:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         data = request.data.copy()
@@ -422,7 +423,7 @@ class BoardTaskListCreateView(APIView):
             and not board.members.filter(id=request.profile.id).exists()
         ):
             return Response(
-                {"error": "Access denied"}, status=status.HTTP_404_NOT_FOUND
+                {"error": _("Access denied")}, status=status.HTTP_404_NOT_FOUND
             )
 
         tasks = column.tasks.all()
@@ -451,7 +452,7 @@ class BoardTaskListCreateView(APIView):
         ).first()
         if not membership:
             return Response(
-                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Access denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         data = request.data.copy()
@@ -499,7 +500,7 @@ class BoardTaskDetailView(APIView):
         ).first()
         if not membership:
             return Response(
-                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Access denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         data = request.data.copy()
@@ -579,7 +580,7 @@ class BoardTaskDetailView(APIView):
         ).first()
         if not membership or membership.role not in ["owner", "admin", "member"]:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         task.delete()
