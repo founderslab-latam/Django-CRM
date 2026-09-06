@@ -101,6 +101,18 @@
   });
 
   let valid = $derived(Object.keys(errors).length === 0);
+
+  // The company tax ID is called different things by country. Chile's is the
+  // RUT; everywhere else the generic label stands. The field and its stored
+  // value do not change, only what it is called.
+  let taxIdLabel = $derived(
+    form.country === 'CL'
+      ? $_('settings.organization.tax_id_cl')
+      : $_('settings.organization.edit.tax_id')
+  );
+  let taxIdHint = $derived(
+    form.country === 'CL' ? $_('settings.organization.tax_id_cl_hint') : ''
+  );
   const show = (/** @type {string} */ field) => (touched[field] || submitted) && errors[field];
 
   /**
@@ -214,7 +226,7 @@
 
       <div class="pair">
         <div class="v2-field">
-          <label for="f-tax">{$_('settings.organization.edit.tax_id')}</label>
+          <label for="f-tax">{taxIdLabel}</label>
           <input
             id="f-tax"
             name="tax_id"
@@ -222,6 +234,9 @@
             maxlength="50"
             bind:value={form.tax_id}
           />
+          {#if taxIdHint}
+            <p class="v2-hint">{taxIdHint}</p>
+          {/if}
         </div>
         <div class="v2-field">
           <label for="f-phone">{$_('settings.organization.edit.phone')}</label>

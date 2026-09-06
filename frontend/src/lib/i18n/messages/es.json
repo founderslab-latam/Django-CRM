@@ -2393,7 +2393,9 @@
         "err_website": "Incluye la dirección completa, empezando con http:// o https://.",
         "error_forbidden": "Solo un administrador puede cambiar la configuración de la organización.",
         "error_fallback": "No se pudo guardar esta configuración."
-      }
+      },
+      "tax_id_cl": "RUT",
+      "tax_id_cl_hint": "Rol Único Tributario, el identificador tributario de la empresa en Chile."
     },
     "custom_fields": {
       "title": "Campos personalizados",

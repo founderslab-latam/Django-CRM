@@ -2393,7 +2393,9 @@
         "err_website": "Include the full address, starting with http:// or https://.",
         "error_forbidden": "Only an admin can change organization settings.",
         "error_fallback": "Could not save these settings."
-      }
+      },
+      "tax_id_cl": "RUT",
+      "tax_id_cl_hint": "Rol Único Tributario, the Chilean company tax ID."
     },
     "custom_fields": {
       "title": "Custom fields",

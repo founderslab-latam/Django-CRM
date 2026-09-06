@@ -61,6 +61,13 @@
   /** The registry entry matching `org.vertical`, or null if unapplied / unknown. */
   let appliedPack = $derived(packs.find((/** @type {any} */ p) => p.id === org.vertical) ?? null);
 
+  // Chile's company tax ID is the RUT; elsewhere the generic label stands.
+  let taxIdLabel = $derived(
+    org.country === 'CL'
+      ? $_('settings.organization.tax_id_cl')
+      : $_('settings.organization.read.tax_id')
+  );
+
   let address = $derived(
     [org.address_line, org.city, org.state, org.postcode, org.country].filter(Boolean).join(', ')
   );
@@ -140,7 +147,7 @@
             <dd>{org.name}</dd>
             <dt>{$_('settings.organization.read.address')}</dt>
             <dd>{address || '—'}</dd>
-            <dt>{$_('settings.organization.read.tax_id')}</dt>
+            <dt>{taxIdLabel}</dt>
             <dd class="v2-num" style="font-size:12px">{org.tax_id || '—'}</dd>
             <dt>{$_('settings.organization.read.email')}</dt>
             <dd>{org.email || '—'}</dd>
