@@ -1,6 +1,7 @@
 <script>
   import { resolve } from '$app/paths';
   import { asInternalPath } from '$lib/utils/paths.js';
+  import { _ } from '$lib/i18n/index.js';
   import '../../app.css';
   import '$lib/v2/styles/v2.css';
   import { page } from '$app/state';
@@ -73,7 +74,7 @@
         class="v2-btn v2-btn-quiet"
         type="button"
         onclick={() => (menuOpen = true)}
-        aria-label="Open menu"
+        aria-label={$_('common.nav.aria_open_menu')}
         aria-expanded={menuOpen}
       >
         <Menu />
@@ -85,7 +86,7 @@
         type="button"
         style="margin-left:auto"
         onclick={() => (paletteOpen = true)}
-        aria-label="Search"
+        aria-label={$_('common.nav.aria_search')}
       >
         <Search />
       </button>
@@ -93,7 +94,7 @@
 
     {@render children()}
 
-    <nav class="v2-tabbar" aria-label="Sections">
+    <nav class="v2-tabbar" aria-label={$_('common.nav.aria_sections')}>
       {#each TABS as tab (tab.href)}
         <a
           href={resolve(asInternalPath(tab.href))}
@@ -108,7 +109,7 @@
 
   <!-- Both live inside .v2-root so they inherit the scoped tokens; both are
        position:fixed, so the shell's overflow:hidden does not clip them. -->
-  <a class="v2-fab" href={resolve('/pipeline/new')} aria-label="New deal"><Plus size={21} /></a>
+  <a class="v2-fab" href={resolve('/pipeline/new')} aria-label={$_('common.nav.aria_new_deal')}><Plus size={21} /></a>
 
   <!-- Mobile navigation drawer. Only openable from the mobile top bar, so it
        never surfaces on desktop; a backdrop click, Escape, or navigating all
@@ -125,7 +126,7 @@
         class="v2-drawer"
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation"
+        aria-label={$_('common.nav.aria_navigation')}
         tabindex="-1"
         use:autofocus
         onkeydown={(e) => {

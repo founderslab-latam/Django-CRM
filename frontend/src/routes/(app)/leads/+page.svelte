@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { _ } from '$lib/i18n/index.js';
+  import { leadStatusKey, leadSourceKey } from '$lib/leads/status-source-labels.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
@@ -105,8 +106,8 @@
                 <div>{l.company_name}</div>
                 <div class="v2-table-secondary" data-m="hide">{l.industry}</div>
               </td>
-              <td data-m="tag"><Pill tone={LEAD_STATUS_TONE[l.status]}>{l.status}</Pill></td>
-              <td class="v2-muted" data-m="hide" style="font-size:12.5px">{l.source}</td>
+              <td data-m="tag"><Pill tone={LEAD_STATUS_TONE[l.status]}>{$_(leadStatusKey(l.status))}</Pill></td>
+              <td class="v2-muted" data-m="hide" style="font-size:12.5px">{l.source ? $_(leadSourceKey(l.source)) : "—"}</td>
               <td class="v2-r v2-num"
                 >{l.opportunity_amount ? money(l.opportunity_amount, l.currency) : '—'}</td
               >

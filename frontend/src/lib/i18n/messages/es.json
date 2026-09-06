@@ -46,7 +46,12 @@
       "confirm": "Confirmar"
     },
     "nav": {
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "aria_open_menu": "Abrir menú",
+      "aria_search": "Buscar",
+      "aria_sections": "Secciones",
+      "aria_new_deal": "Nuevo negocio",
+      "aria_navigation": "Navegación"
     },
     "enums": {
       "role": {
@@ -90,6 +95,32 @@
         "download_app": "Descargar la app",
         "sign_out": "Cerrar sesión"
       }
+    },
+    "search": {
+      "placeholder": "Busca negocios, cuentas, personas, tickets, facturas…",
+      "aria": "Buscar",
+      "results_aria": "Resultados",
+      "empty": "Nada coincide con “{query}”. Prueba con el nombre de una cuenta, un negocio o un número de factura.",
+      "foot_move": "moverse",
+      "foot_open": "abrir",
+      "foot_close": "cerrar",
+      "found": "{count} encontrados",
+      "input_placeholder": "Buscar…",
+      "kind": {
+        "actions": "Acciones",
+        "leads": "Prospectos",
+        "deals": "Negocios",
+        "accounts": "Cuentas",
+        "contacts": "Contactos",
+        "tickets": "Tickets",
+        "invoices": "Facturas",
+        "knowledge_base": "Base de conocimientos"
+      },
+      "action_new_deal": "Nuevo negocio",
+      "action_new_deal_meta": "Flujo de ventas",
+      "action_go_today": "Ir a Hoy",
+      "action_go_tasks": "Ir a Tareas",
+      "action_go_invoices": "Ir a Facturas"
     }
   },
   "auth": {

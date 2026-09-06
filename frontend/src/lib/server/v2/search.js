@@ -10,14 +10,14 @@ import { apiRequest } from '$lib/api-helpers.js';
 
 /** Backend `type` → palette group label + detail route. */
 const MAP = {
-  lead: { kind: 'Leads', href: (/** @type {string} */ id) => `/leads/${id}` },
-  deal: { kind: 'Deals', href: (/** @type {string} */ id) => `/pipeline/${id}` },
-  account: { kind: 'Accounts', href: (/** @type {string} */ id) => `/accounts/${id}` },
-  contact: { kind: 'Contacts', href: (/** @type {string} */ id) => `/contacts/${id}` },
-  ticket: { kind: 'Tickets', href: (/** @type {string} */ id) => `/tickets/${id}` },
-  invoice: { kind: 'Invoices', href: (/** @type {string} */ id) => `/invoices/${id}` },
+  lead: { kind: 'leads', href: (/** @type {string} */ id) => `/leads/${id}` },
+  deal: { kind: 'deals', href: (/** @type {string} */ id) => `/pipeline/${id}` },
+  account: { kind: 'accounts', href: (/** @type {string} */ id) => `/accounts/${id}` },
+  contact: { kind: 'contacts', href: (/** @type {string} */ id) => `/contacts/${id}` },
+  ticket: { kind: 'tickets', href: (/** @type {string} */ id) => `/tickets/${id}` },
+  invoice: { kind: 'invoices', href: (/** @type {string} */ id) => `/invoices/${id}` },
   solution: {
-    kind: 'Knowledge base',
+    kind: 'knowledge_base',
     href: (/** @type {string} */ id) => `/solutions/${id}`
   }
 };

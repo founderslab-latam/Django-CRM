@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 07:40+0000\n"
+"POT-Creation-Date: 2026-09-06 15:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1644,6 +1644,42 @@ msgstr "No se encontró el campo personalizado."
 
 msgid "Custom field deactivated"
 msgstr "Campo personalizado desactivado."
+
+msgid "Overdue"
+msgstr "Vencido"
+
+msgid "Today"
+msgstr "Hoy"
+
+msgid "Reply"
+msgstr "Responder"
+
+msgid "Send a reminder"
+msgstr "Enviar un recordatorio"
+
+msgid "Stalled"
+msgstr "Estancado"
+
+msgid "Aging"
+msgstr "Envejeciendo"
+
+msgid "Open the deal"
+msgstr "Abrir el negocio"
+
+msgid "Open the task"
+msgstr "Abrir la tarea"
+
+msgid "tickets awaiting a reply"
+msgstr "tickets a la espera de respuesta"
+
+msgid "overdue invoices"
+msgstr "facturas vencidas"
+
+msgid "quiet deals"
+msgstr "negocios inactivos"
+
+msgid "tasks due"
+msgstr "tareas por vencer"
 
 msgid "Document Created Successfully"
 msgstr "Documento creado correctamente."

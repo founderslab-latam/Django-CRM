@@ -1,5 +1,6 @@
 <script>
   import { resolve } from '$app/paths';
+  import { _ } from '$lib/i18n/index.js';
   import { goto } from '$app/navigation';
   import {
     Search,
@@ -28,50 +29,50 @@
    */
   let { open = false, onclose } = $props();
 
-  const ACTIONS = [
+  let ACTIONS = $derived([
     {
-      kind: 'Actions',
+      kind: 'actions',
       id: 'act-deal',
-      title: 'New deal',
-      meta: 'Pipeline',
+      title: $_('common.search.action_new_deal'),
+      meta: $_('common.search.action_new_deal_meta'),
       href: '/pipeline/new',
       icon: Plus
     },
     {
-      kind: 'Actions',
+      kind: 'actions',
       id: 'act-today',
-      title: 'Go to Today',
+      title: $_('common.search.action_go_today'),
       meta: '',
       href: '/',
       icon: Columns3
     },
     {
-      kind: 'Actions',
+      kind: 'actions',
       id: 'act-tasks',
-      title: 'Go to Tasks',
+      title: $_('common.search.action_go_tasks'),
       meta: '',
       href: '/tasks',
       icon: Columns3
     },
     {
-      kind: 'Actions',
+      kind: 'actions',
       id: 'act-invoices',
-      title: 'Go to Invoices',
+      title: $_('common.search.action_go_invoices'),
       meta: '',
       href: '/invoices',
       icon: Receipt
     }
-  ];
+  ]);
 
   const ICON = {
-    Deals: Columns3,
-    Accounts: Building2,
-    Contacts: Users,
-    Leads: Target,
-    Tickets: LifeBuoy,
-    Invoices: Receipt,
-    'Knowledge base': BookOpen,
-    Actions: Plus
+    deals: Columns3,
+    accounts: Building2,
+    contacts: Users,
+    leads: Target,
+    tickets: LifeBuoy,
+    invoices: Receipt,
+    knowledge_base: BookOpen,
+    actions: Plus
   };
 
   let query = $state('');
@@ -164,7 +165,7 @@
       class="v2-palette"
       role="dialog"
       aria-modal="true"
-      aria-label="Search"
+      aria-label={$_('common.search.aria')}
       tabindex="-1"
       {onkeydown}
     >
@@ -174,8 +175,8 @@
           bind:this={input}
           bind:value={query}
           type="text"
-          placeholder="Search deals, accounts, people, tickets, invoices…"
-          aria-label="Search"
+          placeholder={$_('common.search.placeholder')}
+          aria-label={$_('common.search.aria')}
           aria-autocomplete="list"
           autocomplete="off"
           spellcheck="false"
@@ -183,9 +184,9 @@
         <kbd class="v2-kbd">esc</kbd>
       </div>
 
-      <div class="v2-palette-list" role="listbox" aria-label="Results">
+      <div class="v2-palette-list" role="listbox" aria-label={$_('common.search.results_aria')}>
         {#each groups as group (group.kind)}
-          <div class="v2-palette-group v2-label">{group.kind}</div>
+          <div class="v2-palette-group v2-label">{$_(`common.search.kind.${group.kind}`)}</div>
           {#each group.rows as row (row.id)}
             {@const i = rows.indexOf(row)}
             {@const Icon = row.icon ?? ICON[row.kind] ?? Search}
@@ -206,17 +207,17 @@
           {/each}
         {:else}
           <p class="v2-sub" style="padding:22px 15px;text-align:center;margin:0">
-            Nothing matches “{query}”. Try an account name, a deal, or an invoice number.
+            {$_('common.search.empty', { values: { query } })}
           </p>
         {/each}
       </div>
 
       <div class="v2-palette-foot">
-        <span><kbd class="v2-kbd">↑</kbd> <kbd class="v2-kbd">↓</kbd> move</span>
-        <span><CornerDownLeft size={11} style="vertical-align:-1px" /> open</span>
-        <span><kbd class="v2-kbd">esc</kbd> close</span>
+        <span><kbd class="v2-kbd">↑</kbd> <kbd class="v2-kbd">↓</kbd> {$_('common.search.foot_move')}</span>
+        <span><CornerDownLeft size={11} style="vertical-align:-1px" /> {$_('common.search.foot_open')}</span>
+        <span><kbd class="v2-kbd">esc</kbd> {$_('common.search.foot_close')}</span>
         {#if query.trim()}
-          <span style="margin-left:auto" class="v2-num">{hits.length} found</span>
+          <span style="margin-left:auto" class="v2-num">{$_('common.search.found', { values: { count: hits.length } })}</span>
         {/if}
       </div>
     </div>

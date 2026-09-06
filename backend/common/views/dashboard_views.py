@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db.models import DecimalField, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -461,10 +462,10 @@ class ApiTodayView(APIView):
                     "_rank": 0 if breached else 3,
                     "id": f"case-{c.id}",
                     "tone": "rust" if (hot or breached) else "clay",
-                    "due": "Overdue" if breached else "Today",
+                    "due": _("Overdue") if breached else _("Today"),
                     "title": c.name,
                     "detail": f"{c.priority} · {c.account.name if c.account_id else 'No account'} · awaiting first reply",
-                    "action": "Reply",
+                    "action": _("Reply"),
                     "href": f"/tickets/{c.id}",
                 }
             )
@@ -478,10 +479,10 @@ class ApiTodayView(APIView):
                     "_rank": 1,
                     "id": f"invoice-{inv.id}",
                     "tone": "clay",
-                    "due": "Overdue",
+                    "due": _("Overdue"),
                     "title": inv.invoice_title or inv.invoice_number,
                     "detail": f"{_fmt_money(inv.total_amount, inv.currency)} · {inv.account.name if inv.account_id else 'No account'} · due {_fmt_date(inv.due_date)}",
-                    "action": "Send a reminder",
+                    "action": _("Send a reminder"),
                     "href": f"/invoices/{inv.id}",
                 }
             )
@@ -500,10 +501,10 @@ class ApiTodayView(APIView):
                     "_rank": 2 if rotten else 6,
                     "id": f"deal-{opp.id}",
                     "tone": "rust" if rotten else "clay",
-                    "due": "Stalled" if rotten else "Aging",
+                    "due": _("Stalled") if rotten else _("Aging"),
                     "title": opp.name,
                     "detail": f"No movement for {days} days · {_fmt_money(opp.amount, opp.currency)} · {stage_labels.get(opp.stage, opp.stage)}",
-                    "action": "Open the deal",
+                    "action": _("Open the deal"),
                     "href": f"/pipeline/{opp.id}",
                 }
             )
@@ -516,14 +517,14 @@ class ApiTodayView(APIView):
                     "_rank": 4 if overdue else 5,
                     "id": f"task-{t.id}",
                     "tone": "clay" if overdue else "slate",
-                    "due": "Overdue" if overdue else "Today",
+                    "due": _("Overdue") if overdue else _("Today"),
                     "title": t.title,
                     "detail": (
                         f"Due {_fmt_date(t.due_date)} · {t.priority}"
                         if t.due_date
                         else t.priority
                     ),
-                    "action": "Open the task",
+                    "action": _("Open the task"),
                     "href": f"/tasks/{t.id}",
                 }
             )
@@ -543,17 +544,17 @@ class ApiTodayView(APIView):
         # to go. The hrefs are literals built here, never stored values.
         sources = [
             {
-                "label": "tickets awaiting a reply",
+                "label": _("tickets awaiting a reply"),
                 "count": awaiting_cases.count(),
                 "href": "/tickets",
             },
             {
-                "label": "overdue invoices",
+                "label": _("overdue invoices"),
                 "count": invoices.count(),
                 "href": "/invoices",
             },
-            {"label": "quiet deals", "count": quiet_deals, "href": "/pipeline"},
-            {"label": "tasks due", "count": tasks.count(), "href": "/tasks"},
+            {"label": _("quiet deals"), "count": quiet_deals, "href": "/pipeline"},
+            {"label": _("tasks due"), "count": tasks.count(), "href": "/tasks"},
         ]
         sources = [s for s in sources if s["count"]]
         total_urgent = sum(s["count"] for s in sources)

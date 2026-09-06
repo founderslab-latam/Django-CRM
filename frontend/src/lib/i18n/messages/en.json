@@ -46,7 +46,12 @@
       "confirm": "Confirm"
     },
     "nav": {
-      "settings": "Settings"
+      "settings": "Settings",
+      "aria_open_menu": "Open menu",
+      "aria_search": "Search",
+      "aria_sections": "Sections",
+      "aria_new_deal": "New deal",
+      "aria_navigation": "Navigation"
     },
     "enums": {
       "role": {
@@ -90,6 +95,32 @@
         "download_app": "Download app",
         "sign_out": "Sign out"
       }
+    },
+    "search": {
+      "placeholder": "Search deals, accounts, people, tickets, invoices…",
+      "aria": "Search",
+      "results_aria": "Results",
+      "empty": "Nothing matches “{query}”. Try an account name, a deal, or an invoice number.",
+      "foot_move": "move",
+      "foot_open": "open",
+      "foot_close": "close",
+      "found": "{count} found",
+      "input_placeholder": "Search…",
+      "kind": {
+        "actions": "Actions",
+        "leads": "Leads",
+        "deals": "Deals",
+        "accounts": "Accounts",
+        "contacts": "Contacts",
+        "tickets": "Tickets",
+        "invoices": "Invoices",
+        "knowledge_base": "Knowledge base"
+      },
+      "action_new_deal": "New deal",
+      "action_new_deal_meta": "Pipeline",
+      "action_go_today": "Go to Today",
+      "action_go_tasks": "Go to Tasks",
+      "action_go_invoices": "Go to Invoices"
     }
   },
   "auth": {
