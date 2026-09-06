@@ -2,6 +2,7 @@ from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -171,7 +172,7 @@ class TagsListView(APIView, LimitOffsetPagination):
         # Admin only for create
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can create tags"},
+                {"error": True, "errors": gettext_lazy("Only admins can create tags")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -180,7 +181,10 @@ class TagsListView(APIView, LimitOffsetPagination):
 
         if not name:
             return Response(
-                {"error": True, "errors": {"name": ["This field is required."]}},
+                {
+                    "error": True,
+                    "errors": {"name": [gettext_lazy("This field is required.")]},
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -199,7 +203,7 @@ class TagsListView(APIView, LimitOffsetPagination):
                 return Response(
                     {
                         "error": False,
-                        "message": "Tag reactivated successfully",
+                        "message": gettext_lazy("Tag reactivated successfully"),
                         "tag": TagsSerializer(existing).data,
                     },
                     status=status.HTTP_200_OK,
@@ -207,7 +211,9 @@ class TagsListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": True,
-                    "errors": {"name": ["A tag with this name already exists."]},
+                    "errors": {
+                        "name": [gettext_lazy("A tag with this name already exists.")]
+                    },
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -233,7 +239,7 @@ class TagsListView(APIView, LimitOffsetPagination):
         return Response(
             {
                 "error": False,
-                "message": "Tag Created Successfully",
+                "message": gettext_lazy("Tag Created Successfully"),
                 "tag": TagsSerializer(tag).data,
             },
             status=status.HTTP_201_CREATED,
@@ -263,7 +269,7 @@ class TagsDetailView(APIView):
             tag_obj = self.get_object(pk)
         except Tags.DoesNotExist:
             return Response(
-                {"error": True, "errors": "Tag not found."},
+                {"error": True, "errors": gettext_lazy("Tag not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response({"tag": TagsSerializer(tag_obj).data})
@@ -289,7 +295,7 @@ class TagsDetailView(APIView):
         # Admin only
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can update tags"},
+                {"error": True, "errors": gettext_lazy("Only admins can update tags")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -297,7 +303,7 @@ class TagsDetailView(APIView):
             tag_obj = self.get_object(pk)
         except Tags.DoesNotExist:
             return Response(
-                {"error": True, "errors": "Tag not found."},
+                {"error": True, "errors": gettext_lazy("Tag not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -306,7 +312,10 @@ class TagsDetailView(APIView):
 
         if not name:
             return Response(
-                {"error": True, "errors": {"name": ["This field is required."]}},
+                {
+                    "error": True,
+                    "errors": {"name": [gettext_lazy("This field is required.")]},
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -321,7 +330,9 @@ class TagsDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": {"name": ["A tag with this name already exists."]},
+                    "errors": {
+                        "name": [gettext_lazy("A tag with this name already exists.")]
+                    },
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -346,7 +357,7 @@ class TagsDetailView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Tag Updated Successfully",
+                "message": gettext_lazy("Tag Updated Successfully"),
                 "tag": TagsSerializer(tag_obj).data,
             },
             status=status.HTTP_200_OK,
@@ -371,7 +382,7 @@ class TagsDetailView(APIView):
         # Admin only
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can archive tags"},
+                {"error": True, "errors": gettext_lazy("Only admins can archive tags")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -379,7 +390,7 @@ class TagsDetailView(APIView):
             tag_obj = self.get_object(pk)
         except Tags.DoesNotExist:
             return Response(
-                {"error": True, "errors": "Tag not found."},
+                {"error": True, "errors": gettext_lazy("Tag not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -389,7 +400,7 @@ class TagsDetailView(APIView):
         tag_obj.save()
 
         return Response(
-            {"error": False, "message": "Tag archived successfully"},
+            {"error": False, "message": gettext_lazy("Tag archived successfully")},
             status=status.HTTP_200_OK,
         )
 
@@ -419,7 +430,7 @@ class TagsRestoreView(APIView):
         # Admin only
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can restore tags"},
+                {"error": True, "errors": gettext_lazy("Only admins can restore tags")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -427,7 +438,7 @@ class TagsRestoreView(APIView):
             tag_obj = Tags.objects.get(pk=pk, org=request.profile.org)
         except Tags.DoesNotExist:
             return Response(
-                {"error": True, "errors": "Tag not found."},
+                {"error": True, "errors": gettext_lazy("Tag not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -438,7 +449,7 @@ class TagsRestoreView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Tag restored successfully",
+                "message": gettext_lazy("Tag restored successfully"),
                 "tag": TagsSerializer(tag_obj).data,
             },
             status=status.HTTP_200_OK,
@@ -486,7 +497,7 @@ class TagsMergeView(APIView):
         """Merge the tag at `pk` into the tag named by `into` (admin only)."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can merge tags"},
+                {"error": True, "errors": gettext_lazy("Only admins can merge tags")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -502,7 +513,10 @@ class TagsMergeView(APIView):
         into = request.data.get("into")
         if not into:
             return Response(
-                {"error": True, "errors": {"into": ["This field is required."]}},
+                {
+                    "error": True,
+                    "errors": {"into": [gettext_lazy("This field is required.")]},
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         target = get_scoped_or_404(Tags, into, org)
@@ -511,7 +525,9 @@ class TagsMergeView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": {"into": ["A tag cannot merge into itself."]},
+                    "errors": {
+                        "into": [gettext_lazy("A tag cannot merge into itself.")]
+                    },
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -523,7 +539,11 @@ class TagsMergeView(APIView):
                 {
                     "error": True,
                     "errors": {
-                        "into": ["Restore that tag before merging records onto it."]
+                        "into": [
+                            gettext_lazy(
+                                "Restore that tag before merging records onto it."
+                            )
+                        ]
                     },
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -552,10 +572,14 @@ class TagsMergeView(APIView):
         return Response(
             {
                 "error": False,
-                "message": (
-                    f"Merged {source.name!r} into {target.name!r}. "
-                    f"{moved} record(s) moved."
-                ),
+                "message": gettext_lazy(
+                    "Merged %(source)s into %(target)s. %(moved)s record(s) moved."
+                )
+                % {
+                    "source": repr(source.name),
+                    "target": repr(target.name),
+                    "moved": moved,
+                },
                 "tag": TagsSerializer(target).data,
                 "moved": moved,
             },

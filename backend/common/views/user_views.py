@@ -3,6 +3,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, ProtectedError, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -102,7 +103,7 @@ class UsersListView(APIView, LimitOffsetPagination):
             and not self.request.user.is_superuser
         ):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         params = request.data
@@ -156,15 +157,15 @@ class UsersListView(APIView, LimitOffsetPagination):
                     )
             except IntegrityError:
                 return Response(
-                    {"error": True, "errors": "User already in organization"},
+                    {"error": True, "errors": _("User already in organization")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             return Response(
-                {"error": False, "message": "User Created Successfully"},
+                {"error": False, "message": _("User Created Successfully")},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            {"error": True, "errors": "Invalid request"},
+            {"error": True, "errors": _("Invalid request")},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -188,7 +189,7 @@ class UsersListView(APIView, LimitOffsetPagination):
         # Check if profile exists and user has permission
         if not self.request.profile:
             return Response(
-                {"error": True, "errors": "Organization context required"},
+                {"error": True, "errors": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -197,7 +198,7 @@ class UsersListView(APIView, LimitOffsetPagination):
             and not self.request.user.is_superuser
         ):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         queryset = Profile.objects.filter(org=request.profile.org).order_by("-id")
@@ -320,7 +321,7 @@ class UserDetailView(APIView):
             and self.request.profile.id != profile_obj.id
         ):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         # Org check now handled by get_object_or_404 in get_object()
@@ -377,13 +378,16 @@ class UserDetailView(APIView):
             and self.request.profile.id != profile.id
         ):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         if profile.org != request.profile.org:
             return Response(
-                {"error": True, "errors": "User company doesnot match with header...."},
+                {
+                    "error": True,
+                    "errors": _("User company doesnot match with header...."),
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
         serializer = CreateUserSerializer(
@@ -421,7 +425,7 @@ class UserDetailView(APIView):
         if profile_serializer.is_valid():
             profile = profile_serializer.save()
             return Response(
-                {"error": False, "message": "User Updated Successfully"},
+                {"error": False, "message": _("User Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -454,7 +458,7 @@ class UserDetailView(APIView):
             and self.request.profile.id != profile.id
         ):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -462,7 +466,7 @@ class UserDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "User company does not match with header....",
+                    "errors": _("User company does not match with header...."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -490,7 +494,7 @@ class UserDetailView(APIView):
         if profile_serializer.is_valid():
             profile = profile_serializer.save()
             return Response(
-                {"error": False, "message": "User Updated Successfully"},
+                {"error": False, "message": _("User Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -510,13 +514,13 @@ class UserDetailView(APIView):
     def delete(self, request, pk, format=None):
         if not is_org_admin(self.request.profile):
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         self.object = self.get_object(pk)
         if self.object.id == request.profile.id:
             return Response(
-                {"error": True, "errors": "Permission Denied"},
+                {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         deleted_by = self.request.profile.user.email
@@ -532,8 +536,10 @@ class UserDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "This user can't be deleted while they still have "
-                    "time entries or approvals linked to them.",
+                    "errors": _(
+                        "This user can't be deleted while they still have "
+                        "time entries or approvals linked to them."
+                    ),
                 },
                 status=status.HTTP_409_CONFLICT,
             )
@@ -567,7 +573,7 @@ class UserStatusView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You do not have permission to perform this action",
+                    "errors": _("You do not have permission to perform this action"),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -597,14 +603,16 @@ class UserStatusView(APIView):
                     return Response(
                         {
                             "error": True,
-                            "errors": "The organization must keep at least one active admin.",
+                            "errors": _(
+                                "The organization must keep at least one active admin."
+                            ),
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 profile.is_active = False
             else:
                 return Response(
-                    {"error": True, "errors": "Please enter Valid Status for user"},
+                    {"error": True, "errors": _("Please enter Valid Status for user")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             profile.save()

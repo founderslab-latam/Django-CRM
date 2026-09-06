@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -227,7 +228,7 @@ class DocumentListView(APIView, LimitOffsetPagination):
                     doc.teams.add(*teams)
 
             return Response(
-                {"error": False, "message": "Document Created Successfully"},
+                {"error": False, "message": _("Document Created Successfully")},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
@@ -281,7 +282,7 @@ class DocumentDetailView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You do not have Permission to perform this action",
+                "errors": _("You do not have Permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -344,7 +345,7 @@ class DocumentDetailView(APIView):
             return self._forbidden()
         document.delete()
         return Response(
-            {"error": False, "message": "Document deleted Successfully"},
+            {"error": False, "message": _("Document deleted Successfully")},
             status=status.HTTP_200_OK,
         )
 
@@ -398,7 +399,7 @@ class DocumentDetailView(APIView):
                 if teams:
                     doc.teams.add(*teams)
             return Response(
-                {"error": False, "message": "Document Updated Successfully"},
+                {"error": False, "message": _("Document Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -435,7 +436,7 @@ class DocumentDetailView(APIView):
                 org=request.profile.org,
             )
             return Response(
-                {"error": False, "message": "Document Updated Successfully"},
+                {"error": False, "message": _("Document Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -475,7 +476,7 @@ class DocumentDownloadView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You do not have Permission to perform this action",
+                    "errors": _("You do not have Permission to perform this action"),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )

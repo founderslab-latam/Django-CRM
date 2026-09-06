@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 03:30+0000\n"
+"POT-Creation-Date: 2026-09-06 03:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1057,6 +1057,27 @@ msgstr "Enlace inválido o vencido."
 msgid "Invalid or expired code"
 msgstr "Código inválido o vencido."
 
+msgid "Admin access required"
+msgstr "Se requiere acceso de administrador."
+
+msgid "Custom field not found"
+msgstr "No se encontró el campo personalizado."
+
+msgid "Custom field deactivated"
+msgstr "Campo personalizado desactivado."
+
+msgid "Document Created Successfully"
+msgstr "Documento creado correctamente."
+
+msgid "You do not have Permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "Document deleted Successfully"
+msgstr "Documento eliminado correctamente."
+
+msgid "Document Updated Successfully"
+msgstr "Documento actualizado correctamente."
+
 msgid "Organization context required"
 msgstr "Se requiere contexto de organización."
 
@@ -1093,6 +1114,109 @@ msgstr "Si este correo electrónico es válido, recibirás un código de acceso.
 
 msgid "That code is not valid any more. Request a new one."
 msgstr "Ese código ya no es válido. Solicita uno nuevo."
+
+msgid "API key added sucessfully"
+msgstr "Clave de API agregada correctamente."
+
+msgid "API setting Updated sucessfully"
+msgstr "Configuración de API actualizada correctamente."
+
+msgid "API setting Updated successfully"
+msgstr "Configuración de API actualizada correctamente."
+
+msgid "API setting deleted sucessfully"
+msgstr "Configuración de API eliminada correctamente."
+
+msgid "Only admins can create tags"
+msgstr "Solo los administradores pueden crear etiquetas."
+
+msgid "This field is required."
+msgstr "Este campo es obligatorio."
+
+msgid "Tag reactivated successfully"
+msgstr "Etiqueta reactivada correctamente."
+
+msgid "A tag with this name already exists."
+msgstr "Ya existe una etiqueta con este nombre."
+
+msgid "Tag Created Successfully"
+msgstr "Etiqueta creada correctamente."
+
+msgid "Tag not found."
+msgstr "No se encontró la etiqueta."
+
+msgid "Only admins can update tags"
+msgstr "Solo los administradores pueden actualizar etiquetas."
+
+msgid "Tag Updated Successfully"
+msgstr "Etiqueta actualizada correctamente."
+
+msgid "Only admins can archive tags"
+msgstr "Solo los administradores pueden archivar etiquetas."
+
+msgid "Tag archived successfully"
+msgstr "Etiqueta archivada correctamente."
+
+msgid "Only admins can restore tags"
+msgstr "Solo los administradores pueden restaurar etiquetas."
+
+msgid "Tag restored successfully"
+msgstr "Etiqueta restaurada correctamente."
+
+msgid "Only admins can merge tags"
+msgstr "Solo los administradores pueden combinar etiquetas."
+
+msgid "A tag cannot merge into itself."
+msgstr "Una etiqueta no puede combinarse consigo misma."
+
+msgid "Restore that tag before merging records onto it."
+msgstr "Restaura esa etiqueta antes de combinar registros en ella."
+
+#, python-format
+msgid "Merged %(source)s into %(target)s. %(moved)s record(s) moved."
+msgstr "Se combinó %(source)s en %(target)s. %(moved)s registro(s) movido(s)."
+
+msgid "You don't have permission to perform this action."
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "Team Created Successfully"
+msgstr "Equipo creado correctamente."
+
+msgid "Team Updated Successfully"
+msgstr "Equipo actualizado correctamente."
+
+msgid "Team Deleted Successfully"
+msgstr "Equipo eliminado correctamente."
+
+msgid "Permission Denied"
+msgstr "Permiso denegado."
+
+msgid "User already in organization"
+msgstr "El usuario ya pertenece a la organización."
+
+msgid "User Created Successfully"
+msgstr "Usuario creado correctamente."
+
+msgid "User company doesnot match with header...."
+msgstr "La empresa del usuario no coincide con el encabezado...."
+
+msgid "User Updated Successfully"
+msgstr "Usuario actualizado correctamente."
+
+msgid "User company does not match with header...."
+msgstr "La empresa del usuario no coincide con el encabezado...."
+
+msgid "This user can't be deleted while they still have time entries or approvals linked to them."
+msgstr "No se puede eliminar este usuario mientras tenga registros de tiempo o aprobaciones vinculados a él."
+
+msgid "You do not have permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "The organization must keep at least one active admin."
+msgstr "La organización debe conservar al menos un administrador activo."
+
+msgid "Please enter Valid Status for user"
+msgstr "Ingresa un estado válido para el usuario."
 
 msgid "First name"
 msgstr ""

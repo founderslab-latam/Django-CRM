@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -85,7 +86,7 @@ class TeamsListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -112,7 +113,7 @@ class TeamsListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -129,7 +130,7 @@ class TeamsListView(APIView, LimitOffsetPagination):
                 if profiles:
                     team_obj.users.add(*profiles)
             return Response(
-                {"error": False, "message": "Team Created Successfully"},
+                {"error": False, "message": _("Team Created Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -160,7 +161,7 @@ class TeamsDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -189,7 +190,7 @@ class TeamsDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -218,7 +219,7 @@ class TeamsDetailView(APIView):
                     removed_users.append(user)
             remove_users.delay(removed_users, pk, str(request.profile.org.id))
             return Response(
-                {"error": False, "message": "Team Updated Successfully"},
+                {"error": False, "message": _("Team Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -247,7 +248,7 @@ class TeamsDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -259,7 +260,7 @@ class TeamsDetailView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"error": False, "message": "Team Updated Successfully"},
+                {"error": False, "message": _("Team Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -286,13 +287,13 @@ class TeamsDetailView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You don't have permission to perform this action.",
+                    "errors": _("You don't have permission to perform this action."),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
         self.team_obj = self.get_object(pk)
         self.team_obj.delete()
         return Response(
-            {"error": False, "message": "Team Deleted Successfully"},
+            {"error": False, "message": _("Team Deleted Successfully")},
             status=status.HTTP_200_OK,
         )

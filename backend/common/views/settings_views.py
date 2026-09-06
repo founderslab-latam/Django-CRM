@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -18,7 +19,7 @@ from common.serializer import (
 
 def _admin_required():
     return Response(
-        {"error": True, "errors": "Admin access required"},
+        {"error": True, "errors": _("Admin access required")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -101,7 +102,7 @@ class DomainList(APIView):
             if assign_to_list:
                 settings_obj.lead_assigned_to.add(*assign_to_list)
             return Response(
-                {"error": False, "message": "API key added sucessfully"},
+                {"error": False, "message": _("API key added sucessfully")},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
@@ -181,7 +182,7 @@ class DomainDetailView(APIView):
             if assign_to_list:
                 api_setting.lead_assigned_to.add(*assign_to_list)
             return Response(
-                {"error": False, "message": "API setting Updated sucessfully"},
+                {"error": False, "message": _("API setting Updated sucessfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -216,7 +217,7 @@ class DomainDetailView(APIView):
         if serializer.is_valid():
             api_setting = serializer.save()
             return Response(
-                {"error": False, "message": "API setting Updated successfully"},
+                {"error": False, "message": _("API setting Updated successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -245,6 +246,6 @@ class DomainDetailView(APIView):
         if api_setting:
             api_setting.delete()
         return Response(
-            {"error": False, "message": "API setting deleted sucessfully"},
+            {"error": False, "message": _("API setting deleted sucessfully")},
             status=status.HTTP_200_OK,
         )
