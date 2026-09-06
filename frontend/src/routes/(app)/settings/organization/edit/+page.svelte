@@ -50,6 +50,7 @@
     { value: 'AE', label: 'United Arab Emirates' },
     { value: 'BR', label: 'Brazil' },
     { value: 'MX', label: 'Mexico' },
+    { value: 'CL', label: 'Chile' },
     { value: 'CH', label: 'Switzerland' },
     { value: 'NL', label: 'Netherlands' },
     { value: 'ES', label: 'Spain' },
