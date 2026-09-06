@@ -3,6 +3,13 @@
     "app": {
       "name": "BottleCRM"
     },
+    "tax_id": {
+      "generic_label": "Identificación fiscal",
+      "cl_label": "RUT",
+      "cl_hint": "Rol Único Tributario. Se valida con su dígito verificador y se guarda como 12.345.678-5.",
+      "cl_invalid": "El dígito verificador de ese RUT no coincide. Revisa el número.",
+      "cl_placeholder": "12.345.678-5"
+    },
     "language_switcher": {
       "label": "Idioma",
       "english": "Inglés",
@@ -2392,7 +2399,7 @@
         "crumb_organization": "Organización",
         "server_error_heading": "El servidor rechazó este cambio",
         "one_field": "Un campo por revisar",
-        "two_fields": "Dos campos por revisar",
+        "two_fields": "Algunos campos por revisar",
         "nothing_saved": "Todavía no se ha guardado nada.",
         "section_customers": "Lo que ven los clientes",
         "customers_note": "Se imprime en cada factura y estimación. Los cambios aplican de ahora en adelante; los documentos ya enviados conservan lo que se envió.",
@@ -2433,9 +2440,7 @@
         "err_website": "Incluye la dirección completa, empezando con http:// o https://.",
         "error_forbidden": "Solo un administrador puede cambiar la configuración de la organización.",
         "error_fallback": "No se pudo guardar esta configuración."
-      },
-      "tax_id_cl": "RUT",
-      "tax_id_cl_hint": "Rol Único Tributario, el identificador tributario de la empresa en Chile."
+      }
     },
     "custom_fields": {
       "title": "Campos personalizados",

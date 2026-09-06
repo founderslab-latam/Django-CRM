@@ -25,6 +25,8 @@
   import SettingsCrumb from '$lib/v2/components/SettingsCrumb.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import { _ } from '$lib/i18n/index.js';
+  import { isValidRut } from '$lib/common/rut.js';
+  import { taxIdLabel, taxIdHint } from '$lib/common/tax-id-label.js';
   import { CURRENCY_CODES } from '$lib/constants/filters.js';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
 
@@ -97,6 +99,10 @@
     // here saves a server round-trip; the serializer is the actual rule.
     if (form.website && !/^https?:\/\/.+\..+/.test(form.website))
       e.website = $_('settings.organization.edit.err_website');
+    // A Chilean org's tax ID is a RUT, and the serializer rejects one whose
+    // check digit does not match. Mirror that here so the field can say so.
+    if (form.country === 'CL' && form.tax_id && !isValidRut(form.tax_id))
+      e.tax_id = $_('common.tax_id.cl_invalid');
     return e;
   });
 
@@ -105,14 +111,8 @@
   // The company tax ID is called different things by country. Chile's is the
   // RUT; everywhere else the generic label stands. The field and its stored
   // value do not change, only what it is called.
-  let taxIdLabel = $derived(
-    form.country === 'CL'
-      ? $_('settings.organization.tax_id_cl')
-      : $_('settings.organization.edit.tax_id')
-  );
-  let taxIdHint = $derived(
-    form.country === 'CL' ? $_('settings.organization.tax_id_cl_hint') : ''
-  );
+  let taxLabel = $derived(taxIdLabel(form.country, $_));
+  let taxHint = $derived(taxIdHint(form.country, $_));
   const show = (/** @type {string} */ field) => (touched[field] || submitted) && errors[field];
 
   /**
@@ -226,16 +226,21 @@
 
       <div class="pair">
         <div class="v2-field">
-          <label for="f-tax">{taxIdLabel}</label>
+          <label for="f-tax">{taxLabel}</label>
           <input
             id="f-tax"
             name="tax_id"
             class="v2-input"
             maxlength="50"
             bind:value={form.tax_id}
+            placeholder={form.country === 'CL' ? $_('common.tax_id.cl_placeholder') : undefined}
+            onblur={() => (touched.tax_id = true)}
+            aria-invalid={show('tax_id') ? 'true' : undefined}
           />
-          {#if taxIdHint}
-            <p class="v2-hint">{taxIdHint}</p>
+          {#if show('tax_id')}
+            <p class="v2-error">{errors.tax_id}</p>
+          {:else if taxHint}
+            <p class="v2-hint">{taxHint}</p>
           {/if}
         </div>
         <div class="v2-field">

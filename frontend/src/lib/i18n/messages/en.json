@@ -3,6 +3,13 @@
     "app": {
       "name": "BottleCRM"
     },
+    "tax_id": {
+      "generic_label": "Tax ID",
+      "cl_label": "RUT",
+      "cl_hint": "Rol Único Tributario. Checked against its verification digit and stored as 12.345.678-5.",
+      "cl_invalid": "That RUT's check digit doesn't match. Check the number.",
+      "cl_placeholder": "12.345.678-5"
+    },
     "language_switcher": {
       "label": "Language",
       "english": "English",
@@ -2392,7 +2399,7 @@
         "crumb_organization": "Organization",
         "server_error_heading": "The server refused this change",
         "one_field": "One field to check",
-        "two_fields": "Two fields to check",
+        "two_fields": "A few fields to check",
         "nothing_saved": "Nothing has been saved yet.",
         "section_customers": "What customers see",
         "customers_note": "Printed on every invoice and estimate. Changes apply from now on; documents already sent keep what they were sent with.",
@@ -2433,9 +2440,7 @@
         "err_website": "Include the full address, starting with http:// or https://.",
         "error_forbidden": "Only an admin can change organization settings.",
         "error_fallback": "Could not save these settings."
-      },
-      "tax_id_cl": "RUT",
-      "tax_id_cl_hint": "Rol Único Tributario, the Chilean company tax ID."
+      }
     },
     "custom_fields": {
       "title": "Custom fields",

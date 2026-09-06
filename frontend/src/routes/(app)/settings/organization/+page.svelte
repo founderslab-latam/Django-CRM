@@ -49,6 +49,7 @@
   import Pill from '$lib/v2/components/Pill.svelte';
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import { _ } from '$lib/i18n/index.js';
+  import { taxIdLabel as taxIdLabelFor } from '$lib/common/tax-id-label.js';
   import { count, shortDate } from '$lib/v2/format.js';
   import { FileText, ShieldAlert, Pencil, Trash2 } from '@lucide/svelte';
   import { enhance } from '$app/forms';
@@ -62,11 +63,7 @@
   let appliedPack = $derived(packs.find((/** @type {any} */ p) => p.id === org.vertical) ?? null);
 
   // Chile's company tax ID is the RUT; elsewhere the generic label stands.
-  let taxIdLabel = $derived(
-    org.country === 'CL'
-      ? $_('settings.organization.tax_id_cl')
-      : $_('settings.organization.read.tax_id')
-  );
+  let taxIdLabel = $derived(taxIdLabelFor(org.country, $_));
 
   let address = $derived(
     [org.address_line, org.city, org.state, org.postcode, org.country].filter(Boolean).join(', ')
