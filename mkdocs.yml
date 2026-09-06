@@ -105,6 +105,7 @@ nav:
       - Repository layout: contributing/repo-layout.md
       - Testing: contributing/testing.md
       - Code style: contributing/code-style.md
+      - Internationalization: contributing/internationalization.md
       - Adding an org-scoped model: contributing/adding-an-org-scoped-model.md
       - Security rules: contributing/security-rules.md
       - Pull requests: contributing/pull-requests.md

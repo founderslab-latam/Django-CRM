@@ -83,6 +83,17 @@ point `CACHE_URL` at the Redis you already run for Celery (a separate database, 
 `redis://localhost:6379/1`). `WEBFORM_THROTTLE_IP` and `WEBFORM_THROTTLE_GLOBAL` set those limits
 and both have working defaults.
 
+## Language
+
+`LANGUAGE_CODE` (default `en-us`) is the fallback locale for API responses and emails when a
+request carries no usable `Accept-Language`. The frontend sends that header from the signed-in
+user's language choice, so per-request localization needs no configuration. `LANGUAGES` in
+`crm/settings.py` lists what is available (`en`, `es`); translations live in
+`backend/locale/<lang>/LC_MESSAGES/` and are compiled to `.mo` on container start
+(`docker/backend/entrypoint.sh` runs `compilemessages`; a non-Docker deployment must run it
+itself). See [Internationalization](../contributing/internationalization.md) for how the two
+runtimes localize and how to add a language.
+
 ## Full reference
 
 Every variable this project reads, its default, and the file that reads it is tabulated in full in
