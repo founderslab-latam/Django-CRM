@@ -253,3 +253,68 @@ def validate_iana_timezone(value: str) -> None:
     """
     if value not in available_timezones():
         raise DjangoValidationError(f"{value!r} is not a valid IANA timezone.")
+
+
+# Chilean RUT (Rol Único Tributario): a 7-8 digit body plus a modulo-11 check
+# digit that is 0-9 or K. A Chilean invoice is only valid if it carries a
+# well-formed RUT for both parties, so anywhere a Chilean org, account, lead or
+# contact stores a tax id it is run through `validate_rut` and stored in the one
+# canonical shape, `12.345.678-5`.
+_RUT_NON_BODY_RE = re.compile(r"[^0-9kK]")
+
+
+def normalize_rut(raw: str) -> str:
+    """Strip dots, dashes and spaces from a RUT and upper-case the check digit.
+
+    ``" 12.345.678-k "`` becomes ``"12345678K"``. An empty value normalises to
+    ``""`` so a blank optional field stays blank rather than becoming invalid.
+    """
+    if not raw:
+        return ""
+    return _RUT_NON_BODY_RE.sub("", str(raw)).upper()
+
+
+def rut_check_digit(body: str) -> str:
+    """The modulo-11 check digit ("DV") for a RUT body (the digits without it).
+
+    Weights cycle 2..7 from the rightmost digit; a remainder of 11 is ``0`` and
+    a remainder of 10 is ``K``.
+    """
+    total = sum(int(d) * (i % 6 + 2) for i, d in enumerate(reversed(body)))
+    remainder = 11 - (total % 11)
+    if remainder == 11:
+        return "0"
+    if remainder == 10:
+        return "K"
+    return str(remainder)
+
+
+def format_rut(value: str) -> str:
+    """Canonical presentation form, ``"12.345.678-5"``, from any accepted input.
+
+    Assumes ``value`` already passed :func:`validate_rut`; it only re-groups.
+    """
+    cleaned = normalize_rut(value)
+    body, dv = cleaned[:-1], cleaned[-1:]
+    grouped = f"{int(body):,}".replace(",", ".")
+    return f"{grouped}-{dv}"
+
+
+def validate_rut(value: str) -> str:
+    """Return the RUT in canonical ``12.345.678-5`` form, or raise.
+
+    Accepts ``12.345.678-5``, ``12345678-5`` and ``123456785`` alike. Raises
+    ``django.core.exceptions.ValidationError`` on a bad shape or a check digit
+    that does not match -- DRF's ``to_internal_value`` catches that class from a
+    serializer ``validate_*`` method, so it renders as a 400, and it is also the
+    class a model-field validator is expected to raise.
+    """
+    cleaned = normalize_rut(value)
+    if not re.fullmatch(r"\d{7,8}[0-9K]", cleaned):
+        raise DjangoValidationError(_("Enter a valid RUT, for example 12.345.678-5."))
+    body, dv = cleaned[:-1], cleaned[-1]
+    if rut_check_digit(body) != dv:
+        raise DjangoValidationError(
+            _("That RUT's check digit does not match. Check the number.")
+        )
+    return format_rut(cleaned)

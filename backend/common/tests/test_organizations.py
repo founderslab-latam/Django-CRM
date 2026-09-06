@@ -415,6 +415,49 @@ class TestOrgSettingsView:
         org_a.refresh_from_db()
         assert org_a.company_name == "ACME Corp"
 
+    # ── Chilean RUT: the tax id is validated only when country is CL ─────────
+
+    def test_patch_org_settings_cl_rejects_invalid_rut(self, admin_client, org_a):
+        """A Chilean org's tax id must be a well-formed RUT (check digit and all)."""
+        response = admin_client.patch(
+            self.url,
+            {"country": "CL", "tax_id": "12.345.678-9"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "tax_id" in response.data
+
+    def test_patch_org_settings_cl_stores_rut_canonically(self, admin_client, org_a):
+        """A valid RUT is accepted in any shape and stored as 12.345.678-5."""
+        response = admin_client.patch(
+            self.url,
+            {"country": "CL", "tax_id": "123456785"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        org_a.refresh_from_db()
+        assert org_a.tax_id == "12.345.678-5"
+
+    def test_patch_org_settings_cl_allows_blank_tax_id(self, admin_client, org_a):
+        """A Chilean org may leave the tax id blank and fill it in later."""
+        response = admin_client.patch(
+            self.url,
+            {"country": "CL", "tax_id": ""},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_patch_org_settings_non_cl_tax_id_is_not_a_rut(self, admin_client, org_a):
+        """Outside Chile the same field is a free-form tax/VAT number."""
+        response = admin_client.patch(
+            self.url,
+            {"country": "US", "tax_id": "EIN 12-3456789"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        org_a.refresh_from_db()
+        assert org_a.tax_id == "EIN 12-3456789"
+
     # ── Reads: what the settings page shows, and what it must never show ──────
 
     def test_get_org_settings_member_can_read(self, user_client, org_a, user_profile):

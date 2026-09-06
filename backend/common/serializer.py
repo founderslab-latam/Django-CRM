@@ -1,6 +1,7 @@
 import re
 
 from disposable_email_domains import blocklist as disposable_domains
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -29,7 +30,7 @@ from common.models import (
 )
 from common.permissions import is_org_admin
 from common.utils import CURRENCY_SYMBOLS
-from common.validators import flexible_phone_validator
+from common.validators import flexible_phone_validator, validate_rut
 
 # Safe at module level: contacts.models imports common.models and common.base,
 # never common.serializer, so this does not close a cycle.
@@ -201,6 +202,26 @@ class OrgSettingsSerializer(serializers.ModelSerializer):
         # Active members in this org, for the settings header. Naturally
         # org-scoped: obj is always request.profile.org.
         return obj.profiles.filter(is_active=True).count()
+
+    def validate(self, attrs):
+        """A Chilean org's tax id must be a valid RUT, and is stored canonically.
+
+        The check is conditional on `country`, so it cannot be a plain field
+        validator: the same string is a perfectly good generic tax id for an org
+        in any other country. A blank value stays allowed -- an org may fill it
+        in later -- but a non-blank one on a `country == "CL"` org is rejected
+        unless its modulo-11 check digit matches, and is rewritten to
+        `12.345.678-5` form so invoices render one consistent shape.
+        """
+        attrs = super().validate(attrs)
+        country = attrs.get("country", getattr(self.instance, "country", ""))
+        tax_id = attrs.get("tax_id", getattr(self.instance, "tax_id", ""))
+        if country == "CL" and tax_id:
+            try:
+                attrs["tax_id"] = validate_rut(tax_id)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError({"tax_id": list(exc.messages)})
+        return attrs
 
 
 class TagsSerializer(serializers.ModelSerializer):
