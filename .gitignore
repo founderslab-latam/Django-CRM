@@ -93,3 +93,4 @@ frontend/.pnpm-store/
 # where per-machine tweaks live (host ports, an alternate entrypoint, extra
 # services); it must not be committed so it can differ per developer.
 docker-compose.override.yml
+.env.prod

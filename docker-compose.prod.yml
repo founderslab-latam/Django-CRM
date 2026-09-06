@@ -1,0 +1,147 @@
+# Production stack for the Hostinger KVM VPS, behind the Traefik that already
+# runs there for other projects (same pattern as the Wagtail deploy).
+#
+#   - No service publishes a host port. `backend` and `frontend` announce
+#     themselves to Traefik via labels + the external `n8n_default` network;
+#     `db` and `redis` stay on the internal network only.
+#   - TWO hostnames, because the SvelteKit app and Django both own `/api/*`:
+#       crm.founderslab.dev      -> frontend  (SvelteKit / adapter-node, :3000)
+#       api.crm.founderslab.dev  -> backend   (Django / gunicorn, :8000)
+#   - Persistent data is bind-mounted under $DATA_DIR (default
+#     /opt/crm-founderslab-data), OUTSIDE the repo, so a `git clean` or a fresh
+#     checkout can never touch it. Back up with tar/rsync:
+#       $DATA_DIR/postgres     the database
+#       $DATA_DIR/media        uploads (attachments, org logo)
+#       $DATA_DIR/staticfiles  collected static assets (regenerated on every boot)
+#
+# Deploy:  docker compose -f docker-compose.prod.yml up -d --build
+# Config:  .env.prod  (copy from .env.prod.example, never commit)
+
+name: bottlecrm
+
+services:
+  db:
+    # Pinned to 16: BottleCRM's RLS policies and migrations are only tested on
+    # PostgreSQL 16 (docs/self-hosting/requirements.md). Its own container and
+    # its own data dir, so it does not clash with the PG 18 the other stack on
+    # this host runs.
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env.prod
+    volumes:
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init-rls-user.prod.sh:/docker-entrypoint-initdb.d/init-rls-user.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No published port on purpose -- only services on this compose's internal
+    # network reach Postgres.
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Celery broker + result backend only; nothing here needs to survive a
+    # restart, so persistence is off.
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    image: bottlecrm-app:local
+    restart: unless-stopped
+    env_file: .env.prod
+    command: ["/bin/bash", "/entrypoint.prod.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./docker/backend/entrypoint.prod.sh:/entrypoint.prod.sh:ro
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/media:/app/media
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/staticfiles:/app/staticfiles
+    expose:
+      - "8000"
+    networks:
+      - default
+      - n8n_default
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz/').status == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      # `backend` is on two networks (default -> db/redis, n8n_default -> Traefik).
+      # Without this label Traefik may pick the wrong one and hang on 504.
+      - "traefik.docker.network=n8n_default"
+      - "traefik.http.routers.crm-api.rule=Host(`api.crm.founderslab.dev`)"
+      - "traefik.http.routers.crm-api.entrypoints=websecure"
+      - "traefik.http.routers.crm-api.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
+
+  celery-worker:
+    build: .
+    image: bottlecrm-app:local
+    restart: unless-stopped
+    env_file: .env.prod
+    command: ["celery", "-A", "crm", "worker", "--loglevel=info", "--concurrency=2"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # PDF rendering and outbound-mail attachments read/write here.
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/media:/app/media
+
+  celery-beat:
+    build: .
+    image: bottlecrm-app:local
+    restart: unless-stopped
+    env_file: .env.prod
+    command: ["celery", "-A", "crm", "beat", "--loglevel=info"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      # The last stage of frontend/Dockerfile: a built bundle on node, :3000.
+      target: runtime
+    restart: unless-stopped
+    env_file: .env.prod
+    depends_on:
+      - backend
+    expose:
+      - "3000"
+    networks:
+      - default
+      - n8n_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=n8n_default"
+      - "traefik.http.routers.crm-web.rule=Host(`crm.founderslab.dev`)"
+      - "traefik.http.routers.crm-web.entrypoints=websecure"
+      - "traefik.http.routers.crm-web.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.crm-web.loadbalancer.server.port=3000"
+
+networks:
+  # Created by the n8n stack; Traefik is attached to it. Same external network
+  # the Wagtail deploy uses.
+  n8n_default:
+    external: true
