@@ -103,6 +103,16 @@ class Lead(AssignableMixin, BaseModel):
     country = models.CharField(
         _("Country"), max_length=3, choices=COUNTRIES, blank=True, null=True
     )
+    tax_id = models.CharField(
+        _("Tax ID"),
+        max_length=50,
+        blank=True,
+        default="",
+        help_text=(
+            "Tax ID / VAT number. When country is CL this is a Chilean RUT and "
+            "is validated (modulo-11 check digit), stored as 12.345.678-5."
+        ),
+    )
 
     # Assignment
     assigned_to = models.ManyToManyField(Profile, related_name="lead_assigned_users")

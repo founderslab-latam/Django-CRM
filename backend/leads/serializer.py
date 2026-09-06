@@ -5,6 +5,7 @@ from common.serializer import (
     LeadCommentSerializer,
     ProfileSerializer,
     TagsSerializer,
+    TaxIdCountryValidationMixin,
     TeamsSerializer,
     UserSerializer,
 )
@@ -52,6 +53,7 @@ class LeadSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Assignment
             "assigned_to",
             "teams",
@@ -85,7 +87,7 @@ class LeadSerializer(serializers.ModelSerializer):
         read_only_fields = ("is_sample",)
 
 
-class LeadCreateSerializer(serializers.ModelSerializer):
+class LeadCreateSerializer(TaxIdCountryValidationMixin, serializers.ModelSerializer):
     probability = serializers.IntegerField(
         max_value=100, required=False, allow_null=True
     )
@@ -203,6 +205,7 @@ class LeadCreateSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Activity
             "last_contacted",
             "next_follow_up",
@@ -251,6 +254,7 @@ class LeadCreateSwaggerSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Assignment & Related
             "assigned_to",
             "teams",

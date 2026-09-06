@@ -318,3 +318,21 @@ def validate_rut(value: str) -> str:
             _("That RUT's check digit does not match. Check the number.")
         )
     return format_rut(cleaned)
+
+
+def validate_tax_id_for_country(country: str, tax_id: str) -> str:
+    """Normalise a tax id for the country it belongs to, for a serializer.
+
+    Only Chile (``CL``) constrains the format today: a non-blank value must be a
+    valid RUT and comes back canonicalised to ``12.345.678-5``. Every other
+    country -- and a blank value -- is returned unchanged, because the same
+    column is a free-form tax/VAT number everywhere else. Raises
+    ``django.core.exceptions.ValidationError`` on a bad Chilean RUT.
+
+    Callers key off the record's OWN ``country``; there is deliberately no
+    fallback to the org's country, so setting an org to Chilean never
+    retroactively invalidates a customer whose country was left blank.
+    """
+    if country == "CL" and tax_id:
+        return validate_rut(tax_id)
+    return tax_id

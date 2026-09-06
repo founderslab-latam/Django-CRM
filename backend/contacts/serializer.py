@@ -6,6 +6,7 @@ from common.serializer import (
     AttachmentsSerializer,
     OrganizationSerializer,
     ProfileSerializer,
+    TaxIdCountryValidationMixin,
     TeamsSerializer,
 )
 from contacts.models import Contact
@@ -77,6 +78,7 @@ class ContactSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Assignment
             "assigned_to",
             "teams",
@@ -99,7 +101,9 @@ class ContactSerializer(serializers.ModelSerializer):
         )
 
 
-class CreateContactSerializer(serializers.ModelSerializer):
+class CreateContactSerializer(
+    TaxIdCountryValidationMixin, serializers.ModelSerializer
+):
     """Serializer for creating/updating Contact data"""
 
     def __init__(self, *args, **kwargs):
@@ -165,6 +169,7 @@ class CreateContactSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Notes
             "description",
             # Account

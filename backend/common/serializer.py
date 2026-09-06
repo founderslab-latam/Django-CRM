@@ -30,7 +30,10 @@ from common.models import (
 )
 from common.permissions import is_org_admin
 from common.utils import CURRENCY_SYMBOLS
-from common.validators import flexible_phone_validator, validate_rut
+from common.validators import (
+    flexible_phone_validator,
+    validate_tax_id_for_country,
+)
 
 # Safe at module level: contacts.models imports common.models and common.base,
 # never common.serializer, so this does not close a cycle.
@@ -112,7 +115,28 @@ class OrganizationSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
-class OrgSettingsSerializer(serializers.ModelSerializer):
+class TaxIdCountryValidationMixin:
+    """Country-aware validation of a `tax_id` field on a `ModelSerializer`.
+
+    The serializer's model must expose `country` and `tax_id`. When the record's
+    own `country` is `CL`, a non-blank `tax_id` must be a valid Chilean RUT and
+    is rewritten to canonical `12.345.678-5` form; for every other country it is
+    left exactly as sent. Mix it in *before* `serializers.ModelSerializer` so
+    this `validate` runs and still calls up the chain.
+    """
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        country = attrs.get("country", getattr(self.instance, "country", "") or "")
+        tax_id = attrs.get("tax_id", getattr(self.instance, "tax_id", "") or "")
+        try:
+            attrs["tax_id"] = validate_tax_id_for_country(country, tax_id)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"tax_id": list(exc.messages)})
+        return attrs
+
+
+class OrgSettingsSerializer(TaxIdCountryValidationMixin, serializers.ModelSerializer):
     """The org's own settings: company profile, locale, and case-handling switches.
 
     This is the ONLY writable representation of the org an admin edits through the
@@ -202,26 +226,6 @@ class OrgSettingsSerializer(serializers.ModelSerializer):
         # Active members in this org, for the settings header. Naturally
         # org-scoped: obj is always request.profile.org.
         return obj.profiles.filter(is_active=True).count()
-
-    def validate(self, attrs):
-        """A Chilean org's tax id must be a valid RUT, and is stored canonically.
-
-        The check is conditional on `country`, so it cannot be a plain field
-        validator: the same string is a perfectly good generic tax id for an org
-        in any other country. A blank value stays allowed -- an org may fill it
-        in later -- but a non-blank one on a `country == "CL"` org is rejected
-        unless its modulo-11 check digit matches, and is rewritten to
-        `12.345.678-5` form so invoices render one consistent shape.
-        """
-        attrs = super().validate(attrs)
-        country = attrs.get("country", getattr(self.instance, "country", ""))
-        tax_id = attrs.get("tax_id", getattr(self.instance, "tax_id", ""))
-        if country == "CL" and tax_id:
-            try:
-                attrs["tax_id"] = validate_rut(tax_id)
-            except DjangoValidationError as exc:
-                raise serializers.ValidationError({"tax_id": list(exc.messages)})
-        return attrs
 
 
 class TagsSerializer(serializers.ModelSerializer):

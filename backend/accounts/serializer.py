@@ -8,6 +8,7 @@ from common.serializer import (
     OrganizationSerializer,
     ProfileSerializer,
     TagsSerializer,
+    TaxIdCountryValidationMixin,
     TeamsSerializer,
     UserSerializer,
 )
@@ -97,6 +98,7 @@ class AccountSerializer(serializers.ModelSerializer):
             "postcode",
             "country",
             "country_display",
+            "tax_id",
             # Assignment
             "assigned_to",
             "teams",
@@ -191,11 +193,14 @@ class AccountWriteSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             "description",
         ]
 
 
-class AccountCreateSerializer(serializers.ModelSerializer):
+class AccountCreateSerializer(
+    TaxIdCountryValidationMixin, serializers.ModelSerializer
+):
     """Serializer for creating/updating Account data"""
 
     def __init__(self, *args, **kwargs):
@@ -251,6 +256,7 @@ class AccountCreateSerializer(serializers.ModelSerializer):
             "state",
             "postcode",
             "country",
+            "tax_id",
             # Notes
             "description",
             # Status
