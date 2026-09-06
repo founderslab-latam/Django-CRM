@@ -23,6 +23,7 @@ import logging
 
 from django.db import connection
 from django.http import JsonResponse
+from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +225,11 @@ class RequireOrgContext:
 
             if not hasattr(request, "org") or request.org is None:
                 return JsonResponse(
-                    {"detail": "Organization context is required. Please login again."},
+                    {
+                        "detail": _(
+                            "Organization context is required. Please login again."
+                        )
+                    },
                     status=403,
                 )
 

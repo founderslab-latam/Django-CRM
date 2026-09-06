@@ -1,5 +1,6 @@
 import secrets
 
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -54,7 +55,7 @@ class OrgProfileCreateView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "New Org is Created.",
+                    "message": _("New Org is Created."),
                     "org": self.serializer_class(org_obj).data,
                     "status": status.HTTP_201_CREATED,
                 }
@@ -108,13 +109,17 @@ class OrgUpdateView(APIView):
         """Return (org, None) for an admin of this org, or (None, Response)."""
         if not request.profile:
             return None, Response(
-                {"error": True, "errors": "Organization context required"},
+                {"error": True, "errors": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if str(request.profile.org.id) != str(pk):
             return None, Response(
-                {"error": True, "errors": f"Cannot {verb} a different organization"},
+                {
+                    "error": True,
+                    "errors": _("Cannot %(verb)s a different organization")
+                    % {"verb": verb},
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -122,7 +127,9 @@ class OrgUpdateView(APIView):
             return None, Response(
                 {
                     "error": True,
-                    "errors": "Only organization admins can update organization details",
+                    "errors": _(
+                        "Only organization admins can update organization details"
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -130,7 +137,7 @@ class OrgUpdateView(APIView):
         org = Org.objects.filter(id=pk).first()
         if org is None:
             return None, Response(
-                {"error": True, "errors": "Organization not found"},
+                {"error": True, "errors": _("Organization not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -161,7 +168,7 @@ class OrgUpdateView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Organization updated successfully",
+                "message": _("Organization updated successfully"),
                 "org": update.data,
             },
             status=status.HTTP_200_OK,
@@ -226,7 +233,7 @@ class OrgApiKeyView(APIView):
         """Return (org, None) for org admins, or (None, error Response)."""
         if not request.profile:
             return None, Response(
-                {"error": True, "errors": "Organization context required"},
+                {"error": True, "errors": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -234,7 +241,7 @@ class OrgApiKeyView(APIView):
             return None, Response(
                 {
                     "error": True,
-                    "errors": "Only organization admins can access the API key",
+                    "errors": _("Only organization admins can access the API key"),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -287,7 +294,7 @@ class OrgApiKeyView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "API key rotated. The previous key is no longer valid.",
+                "message": _("API key rotated. The previous key is no longer valid."),
                 "api_key": org.api_key,
             },
             status=status.HTTP_200_OK,
@@ -313,7 +320,7 @@ class ProfileView(APIView):
         profile = request.profile
         if profile is None:
             return Response(
-                {"error": "Organization context required"},
+                {"error": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user_obj = ProfileSerializer(profile).data
@@ -342,7 +349,7 @@ class ProfileView(APIView):
         profile = request.profile
         if profile is None:
             return Response(
-                {"error": "Organization context required"},
+                {"error": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -369,7 +376,7 @@ class ProfileView(APIView):
 
         return Response(
             {
-                "message": "Profile updated successfully",
+                "message": _("Profile updated successfully"),
                 "user_obj": ProfileSerializer(profile).data,
             },
             status=status.HTTP_200_OK,
@@ -402,7 +409,7 @@ class ProfileDetailView(APIView):
         # carries no org, which is what `/api/org/` is for.
         if not hasattr(request, "profile") or request.profile is None:
             return Response(
-                {"error": "Organization context required"},
+                {"error": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

@@ -16,6 +16,7 @@ from datetime import timedelta
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -32,7 +33,7 @@ MAX_CODE_ATTEMPTS = 5
 # One sentence for every outcome. A different message, a different status code,
 # or a different amount of work done all leak the same fact: whether this
 # address is a customer of this org.
-GENERIC_MESSAGE = "If this email is valid, you will receive a sign-in code."
+GENERIC_MESSAGE = _("If this email is valid, you will receive a sign-in code.")
 
 
 class PortalLoginRequestSerializer(serializers.Serializer):
@@ -166,7 +167,7 @@ class PortalLoginVerifyView(APIView):
 
     def post(self, request, org_id):
         invalid = Response(
-            {"error": "That code is not valid any more. Request a new one."},
+            {"error": _("That code is not valid any more. Request a new one.")},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

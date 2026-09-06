@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -23,7 +24,7 @@ class OrgSettingsView(APIView):
         """Get current organization settings."""
         if not request.profile:
             return Response(
-                {"error": "Organization context required"},
+                {"error": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         org = request.profile.org
@@ -34,12 +35,12 @@ class OrgSettingsView(APIView):
         """Update organization settings (admin only)."""
         if not request.profile:
             return Response(
-                {"error": "Organization context required"},
+                {"error": _("Organization context required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Only admins can update organization settings"},
+                {"error": _("Only admins can update organization settings")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

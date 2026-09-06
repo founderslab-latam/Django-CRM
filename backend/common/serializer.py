@@ -1,6 +1,7 @@
 import re
 
 from disposable_email_domains import blocklist as disposable_domains
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -326,7 +327,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             content_type = ContentType.objects.get(model=content_type_str.lower())
         except ContentType.DoesNotExist as exc:
             raise serializers.ValidationError(
-                f"Invalid content type: {content_type_str}"
+                _("Invalid content type: %(type)s") % {"type": content_type_str}
             ) from exc
 
         validated_data["content_type"] = content_type
@@ -395,16 +396,17 @@ class CustomFieldDefinitionSerializer(serializers.ModelSerializer):
     def validate_target_model(self, value):
         if not is_supported_target(value):
             raise serializers.ValidationError(
-                f"target_model {value!r} is not yet wired for custom fields"
+                _("target_model %(model)s is not yet wired for custom fields")
+                % {"model": repr(value)}
             )
         return value
 
     def validate_key(self, value):
         if not value:
-            raise serializers.ValidationError("key is required")
+            raise serializers.ValidationError(_("key is required"))
         if not re.fullmatch(r"[a-z][a-z0-9_]*", value):
             raise serializers.ValidationError(
-                "key must be a lowercase slug starting with a letter (a-z, 0-9, _)"
+                _("key must be a lowercase slug starting with a letter (a-z, 0-9, _)")
             )
         return value
 
@@ -413,7 +415,10 @@ class CustomFieldDefinitionSerializer(serializers.ModelSerializer):
             for frozen in ("key", "target_model", "field_type"):
                 if frozen in attrs and getattr(self.instance, frozen) != attrs[frozen]:
                     raise serializers.ValidationError(
-                        {frozen: f"{frozen} cannot be changed after creation"}
+                        {
+                            frozen: _("%(field)s cannot be changed after creation")
+                            % {"field": frozen}
+                        }
                     )
             field_type = attrs.get("field_type", self.instance.field_type)
         else:
@@ -435,7 +440,10 @@ class CustomFieldDefinitionSerializer(serializers.ModelSerializer):
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise serializers.ValidationError(
-                    {"key": f"a {target_model} field with key {key!r} already exists"}
+                    {
+                        "key": _("a %(model)s field with key %(key)s already exists")
+                        % {"model": target_model, "key": repr(key)}
+                    }
                 )
 
         return attrs
@@ -498,11 +506,11 @@ class OrgProfileCreateSerializer(serializers.ModelSerializer):
     def validate_name(self, name):
         if bool(re.search(r"[~\!@#\$%\^&\*\(\)\+{}\":;'/\[\]]", name)):
             raise serializers.ValidationError(
-                "organization name should not contain any special characters"
+                _("organization name should not contain any special characters")
             )
         if Org.objects.filter(name=name).exists():
             raise serializers.ValidationError(
-                "Organization already exists with this name"
+                _("Organization already exists with this name")
             )
         return name
 
@@ -579,15 +587,15 @@ class CreateUserSerializer(serializers.ModelSerializer):
                 .exclude(pk=self.instance.pk)
                 .exists()
             ):
-                raise serializers.ValidationError("Email already exists")
+                raise serializers.ValidationError(_("Email already exists"))
             if Profile.objects.filter(user__email__iexact=email, org=self.org).exists():
-                raise serializers.ValidationError("Email already exists")
+                raise serializers.ValidationError(_("Email already exists"))
             return email
         # Creating a membership: an account owned elsewhere is reused by the
         # view, so only same-org duplicates are rejected here.
         if not Profile.objects.filter(user__email__iexact=email, org=self.org).exists():
             return email.lower()
-        raise serializers.ValidationError("Given Email id already exists")
+        raise serializers.ValidationError(_("Given Email id already exists"))
 
 
 class CreateProfileSerializer(serializers.ModelSerializer):
@@ -786,7 +794,7 @@ class AttachmentsCreateSerializer(serializers.ModelSerializer):
             content_type = ContentType.objects.get(model=content_type_str.lower())
         except ContentType.DoesNotExist as exc:
             raise serializers.ValidationError(
-                f"Invalid content type: {content_type_str}"
+                _("Invalid content type: %(type)s") % {"type": content_type_str}
             ) from exc
 
         validated_data["content_type"] = content_type
@@ -854,12 +862,12 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
                 .exists()
             ):
                 raise serializers.ValidationError(
-                    "Document with this Title already exists"
+                    _("Document with this Title already exists")
                 )
         else:
             if Document.objects.filter(title__iexact=title, org=self.org).exists():
                 raise serializers.ValidationError(
-                    "Document with this Title already exists"
+                    _("Document with this Title already exists")
                 )
         return title
 
@@ -895,10 +903,12 @@ class APISettingsSerializer(serializers.ModelSerializer):
         if website and not (
             website.startswith("http://") or website.startswith("https://")
         ):
-            raise serializers.ValidationError("Please provide valid schema")
+            raise serializers.ValidationError(_("Please provide valid schema"))
         if not len(find_urls(website)) > 0:
             raise serializers.ValidationError(
-                "Please provide a valid URL with schema and without trailing slash - Example: http://google.com"
+                _(
+                    "Please provide a valid URL with schema and without trailing slash - Example: http://google.com"
+                )
             )
         return website
 
@@ -1027,7 +1037,7 @@ class MagicLinkRequestSerializer(serializers.Serializer):
         domain = value.rsplit("@", 1)[-1].lower()
         if domain in disposable_domains:
             raise serializers.ValidationError(
-                "Disposable email addresses are not allowed."
+                _("Disposable email addresses are not allowed.")
             )
         return value
 
@@ -1197,10 +1207,14 @@ class TeamCreateSerializer(serializers.ModelSerializer):
                 .exclude(id=self.instance.id)
                 .exists()
             ):
-                raise serializers.ValidationError("Team already exists with this name")
+                raise serializers.ValidationError(
+                    _("Team already exists with this name")
+                )
         else:
             if Teams.objects.filter(name__iexact=name, org=self.org).exists():
-                raise serializers.ValidationError("Team already exists with this name")
+                raise serializers.ValidationError(
+                    _("Team already exists with this name")
+                )
         return name
 
     class Meta:
@@ -1249,9 +1263,9 @@ class PersonalAccessTokenCreateSerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         value = (value or "").strip()
         if not value:
-            raise serializers.ValidationError("Name is required.")
+            raise serializers.ValidationError(_("Name is required."))
         if len(value) > 255:
-            raise serializers.ValidationError("Name too long (max 255).")
+            raise serializers.ValidationError(_("Name too long (max 255)."))
         return value
 
     def validate_scopes(self, value):
@@ -1271,9 +1285,9 @@ class PersonalAccessTokenCreateSerializer(serializers.ModelSerializer):
         if value in (None, ""):
             return []
         if not isinstance(value, list) or not all(isinstance(s, str) for s in value):
-            raise serializers.ValidationError("scopes must be a list of strings.")
+            raise serializers.ValidationError(_("scopes must be a list of strings."))
         if len(value) > 32:
-            raise serializers.ValidationError("Too many scopes (max 32).")
+            raise serializers.ValidationError(_("Too many scopes (max 32)."))
 
         seen = []
         for raw in value:
@@ -1289,5 +1303,5 @@ class PersonalAccessTokenCreateSerializer(serializers.ModelSerializer):
         from django.utils import timezone
 
         if value is not None and value <= timezone.now():
-            raise serializers.ValidationError("expires_at must be in the future.")
+            raise serializers.ValidationError(_("expires_at must be in the future."))
         return value

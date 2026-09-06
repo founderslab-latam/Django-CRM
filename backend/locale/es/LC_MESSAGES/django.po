@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 02:38+0000\n"
+"POT-Creation-Date: 2026-09-06 03:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -123,6 +123,9 @@ msgstr ""
 msgid "Inbound Address"
 msgstr ""
 
+msgid "Organization context is required. Please login again."
+msgstr "Se requiere contexto de organización. Inicia sesión nuevamente."
+
 msgid "email address"
 msgstr ""
 
@@ -137,6 +140,70 @@ msgstr ""
 
 msgid "Post/Zip-code"
 msgstr ""
+
+#, python-format
+msgid "Invalid content type: %(type)s"
+msgstr "Tipo de contenido inválido: %(type)s"
+
+#, python-format
+msgid "target_model %(model)s is not yet wired for custom fields"
+msgstr "target_model %(model)s aún no está habilitado para campos personalizados"
+
+msgid "key is required"
+msgstr "key es obligatorio"
+
+msgid "key must be a lowercase slug starting with a letter (a-z, 0-9, _)"
+msgstr "key debe ser un slug en minúsculas que empiece con una letra (a-z, 0-9, _)"
+
+#, python-format
+msgid "%(field)s cannot be changed after creation"
+msgstr "%(field)s no se puede cambiar después de la creación"
+
+#, python-format
+msgid "a %(model)s field with key %(key)s already exists"
+msgstr "ya existe un campo de %(model)s con la clave %(key)s"
+
+msgid "organization name should not contain any special characters"
+msgstr "el nombre de la organización no debe contener caracteres especiales"
+
+msgid "Organization already exists with this name"
+msgstr "Ya existe una organización con este nombre"
+
+msgid "Email already exists"
+msgstr "El correo electrónico ya existe"
+
+msgid "Given Email id already exists"
+msgstr "El correo electrónico indicado ya existe"
+
+msgid "Document with this Title already exists"
+msgstr "Ya existe un documento con este título"
+
+msgid "Please provide valid schema"
+msgstr "Proporciona un esquema válido"
+
+msgid "Please provide a valid URL with schema and without trailing slash - Example: http://google.com"
+msgstr "Proporciona una URL válida con esquema y sin barra final. Ejemplo: http://google.com"
+
+msgid "Disposable email addresses are not allowed."
+msgstr "No se permiten direcciones de correo electrónico desechables."
+
+msgid "Team already exists with this name"
+msgstr "Ya existe un equipo con este nombre"
+
+msgid "Name is required."
+msgstr "El nombre es obligatorio."
+
+msgid "Name too long (max 255)."
+msgstr "El nombre es demasiado largo (máximo 255)."
+
+msgid "scopes must be a list of strings."
+msgstr "scopes debe ser una lista de cadenas de texto."
+
+msgid "Too many scopes (max 32)."
+msgstr "Demasiados scopes (máximo 32)."
+
+msgid "expires_at must be in the future."
+msgstr "expires_at debe ser una fecha futura."
 
 msgid "United Kingdom"
 msgstr ""
@@ -923,6 +990,109 @@ msgstr ""
 
 msgid "Enter a valid phone number (7-25 characters, digits and separators only)"
 msgstr ""
+
+msgid "User account is disabled"
+msgstr "La cuenta de usuario está deshabilitada."
+
+msgid "Missing required parameters"
+msgstr "Faltan parámetros obligatorios."
+
+msgid "Failed to communicate with Google"
+msgstr "No se pudo establecer comunicación con Google."
+
+msgid "Token exchange failed"
+msgstr "Falló el intercambio del token."
+
+msgid "No ID token received"
+msgstr "No se recibió ningún token de ID."
+
+msgid "Invalid ID token format"
+msgstr "El formato del token de ID no es válido."
+
+msgid "No email in token"
+msgstr "El token no contiene ningún correo electrónico."
+
+msgid "Google account email is not verified"
+msgstr "El correo electrónico de la cuenta de Google no está verificado."
+
+msgid "Missing idToken"
+msgstr "Falta el idToken."
+
+msgid "Invalid token"
+msgstr "Token inválido."
+
+msgid "Refresh token is required"
+msgstr "Se requiere el token de actualización."
+
+msgid "Organization membership revoked. Please login again."
+msgstr "Se revocó la membresía en la organización. Inicia sesión nuevamente."
+
+msgid "Invalid or expired token"
+msgstr "Token inválido o vencido."
+
+msgid "User not found"
+msgstr "No se encontró el usuario."
+
+msgid "Signed out."
+msgstr "Sesión cerrada."
+
+msgid "org_id is required"
+msgstr "El campo org_id es obligatorio."
+
+msgid "org_id must be a valid UUID"
+msgstr "El campo org_id debe ser un UUID válido."
+
+msgid "User does not have access to this organization"
+msgstr "El usuario no tiene acceso a esta organización."
+
+msgid "If this email is valid, you will receive a sign-in link."
+msgstr "Si este correo electrónico es válido, recibirás un enlace de acceso."
+
+msgid "Invalid request"
+msgstr "Solicitud inválida."
+
+msgid "Invalid or expired link"
+msgstr "Enlace inválido o vencido."
+
+msgid "Invalid or expired code"
+msgstr "Código inválido o vencido."
+
+msgid "Organization context required"
+msgstr "Se requiere contexto de organización."
+
+msgid "Only admins can update organization settings"
+msgstr "Solo los administradores pueden actualizar la configuración de la organización."
+
+msgid "New Org is Created."
+msgstr "Se creó la organización."
+
+#, python-format
+msgid "Cannot %(verb)s a different organization"
+msgstr "No se puede %(verb)s una organización diferente."
+
+msgid "Only organization admins can update organization details"
+msgstr "Solo los administradores de la organización pueden actualizar los datos de la organización."
+
+msgid "Organization not found"
+msgstr "No se encontró la organización."
+
+msgid "Organization updated successfully"
+msgstr "Organización actualizada correctamente."
+
+msgid "Only organization admins can access the API key"
+msgstr "Solo los administradores de la organización pueden acceder a la clave de API."
+
+msgid "API key rotated. The previous key is no longer valid."
+msgstr "Se rotó la clave de API. La clave anterior ya no es válida."
+
+msgid "Profile updated successfully"
+msgstr "Perfil actualizado correctamente."
+
+msgid "If this email is valid, you will receive a sign-in code."
+msgstr "Si este correo electrónico es válido, recibirás un código de acceso."
+
+msgid "That code is not valid any more. Request a new one."
+msgstr "Ese código ya no es válido. Solicita uno nuevo."
 
 msgid "First name"
 msgstr ""
