@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.db.models.functions import Coalesce, TruncDate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -342,7 +343,7 @@ class LeadListView(APIView, LimitOffsetPagination):
                 return Response(
                     {
                         "error": True,
-                        "errors": "A lead with these details already exists.",
+                        "errors": _("A lead with these details already exists."),
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -414,7 +415,7 @@ class LeadListView(APIView, LimitOffsetPagination):
                 return Response(
                     {
                         "error": False,
-                        "message": "Lead Converted Successfully",
+                        "message": _("Lead Converted Successfully"),
                         "account_id": str(account.id),
                         "contact_id": str(contact.id) if contact else None,
                         "opportunity_id": str(opportunity.id) if opportunity else None,
@@ -422,7 +423,7 @@ class LeadListView(APIView, LimitOffsetPagination):
                     status=status.HTTP_200_OK,
                 )
             return Response(
-                {"error": False, "message": "Lead Created Successfully"},
+                {"error": False, "message": _("Lead Created Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -613,7 +614,9 @@ class LeadDetailView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "You do not have Permission to perform this action",
+                        "errors": _(
+                            "You do not have Permission to perform this action"
+                        ),
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
@@ -820,7 +823,7 @@ class LeadDetailView(APIView):
                 return Response(
                     {
                         "error": False,
-                        "message": "Lead Converted Successfully",
+                        "message": _("Lead Converted Successfully"),
                         "account_id": str(account.id),
                         "contact_id": str(contact.id) if contact else None,
                         "opportunity_id": str(opportunity.id) if opportunity else None,
@@ -828,7 +831,7 @@ class LeadDetailView(APIView):
                     status=status.HTTP_200_OK,
                 )
             return Response(
-                {"error": False, "message": "Lead updated Successfully"},
+                {"error": False, "message": _("Lead updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -877,7 +880,9 @@ class LeadDetailView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "You do not have Permission to perform this action",
+                        "errors": _(
+                            "You do not have Permission to perform this action"
+                        ),
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
@@ -966,7 +971,7 @@ class LeadDetailView(APIView):
             return Response(
                 {
                     "error": False,
-                    "message": "Lead Converted Successfully",
+                    "message": _("Lead Converted Successfully"),
                     "account_id": str(account.id),
                     "contact_id": str(contact.id) if contact else None,
                     "opportunity_id": str(opportunity.id) if opportunity else None,
@@ -1065,7 +1070,7 @@ class LeadDetailView(APIView):
                     )
 
             return Response(
-                {"error": False, "message": "Lead updated Successfully"},
+                {"error": False, "message": _("Lead updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -1100,10 +1105,13 @@ class LeadDetailView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Lead deleted Successfully"},
+                {"error": False, "message": _("Lead deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
-            {"error": True, "errors": "you don't have permission to delete this lead"},
+            {
+                "error": True,
+                "errors": _("you don't have permission to delete this lead"),
+            },
             status=status.HTTP_403_FORBIDDEN,
         )

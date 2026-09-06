@@ -4,15 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('opportunity', '0016_salesgoal_type_weights_alter_salesgoal_goal_type'),
+        ("opportunity", "0016_salesgoal_type_weights_alter_salesgoal_goal_type"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='opportunity',
-            name='currency',
-            field=models.CharField(blank=True, choices=[('USD', 'USD, Dollar'), ('EUR', 'EUR, Euro'), ('GBP', 'GBP, Pound'), ('INR', 'INR, Rupee'), ('CAD', 'CAD, Dollar'), ('AUD', 'AUD, Dollar'), ('JPY', 'JPY, Yen'), ('CNY', 'CNY, Yuan'), ('CHF', 'CHF, Franc'), ('SGD', 'SGD, Dollar'), ('AED', 'AED, Dirham'), ('BRL', 'BRL, Real'), ('MXN', 'MXN, Peso'), ('CLP', 'CLP, Peso')], max_length=3, null=True, verbose_name='Currency'),
+            model_name="opportunity",
+            name="currency",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("USD", "USD, Dollar"),
+                    ("EUR", "EUR, Euro"),
+                    ("GBP", "GBP, Pound"),
+                    ("INR", "INR, Rupee"),
+                    ("CAD", "CAD, Dollar"),
+                    ("AUD", "AUD, Dollar"),
+                    ("JPY", "JPY, Yen"),
+                    ("CNY", "CNY, Yuan"),
+                    ("CHF", "CHF, Franc"),
+                    ("SGD", "SGD, Dollar"),
+                    ("AED", "AED, Dirham"),
+                    ("BRL", "BRL, Real"),
+                    ("MXN", "MXN, Peso"),
+                    ("CLP", "CLP, Peso"),
+                ],
+                max_length=3,
+                null=True,
+                verbose_name="Currency",
+            ),
         ),
     ]

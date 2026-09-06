@@ -2,6 +2,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -71,7 +72,7 @@ class LeadUploadView(APIView):
     def post(self, request, *args, **kwargs):
         if not _can_import(request.profile):
             return Response(
-                {"error": True, "errors": "Admin access required"},
+                {"error": True, "errors": _("Admin access required")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         # The cap is measured against the bytes actually read, not against
@@ -83,7 +84,7 @@ class LeadUploadView(APIView):
             upload.seek(0)
             if len(file_bytes) > MAX_UPLOAD_BYTES:
                 return Response(
-                    {"error": True, "errors": "File exceeds the 5 MB upload limit"},
+                    {"error": True, "errors": _("File exceeds the 5 MB upload limit")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         lead_form = LeadListForm(request.POST, request.FILES)
@@ -96,7 +97,7 @@ class LeadUploadView(APIView):
                 request.profile.org.id,
             )
             return Response(
-                {"error": False, "message": "Leads created Successfully"},
+                {"error": False, "message": _("Leads created Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -138,7 +139,7 @@ class LeadCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Submitted"},
+                    {"error": False, "message": _("Comment Submitted")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -148,7 +149,7 @@ class LeadCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action",
+                "errors": _("You don't have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -181,7 +182,7 @@ class LeadCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Updated"},
+                    {"error": False, "message": _("Comment Updated")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -191,7 +192,7 @@ class LeadCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action",
+                "errors": _("You don't have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -218,14 +219,14 @@ class LeadCommentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Comment Deleted Successfully"},
+                {"error": False, "message": _("Comment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
 
         return Response(
             {
                 "error": True,
-                "errors": "You do not have permission to perform this action",
+                "errors": _("You do not have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -262,13 +263,13 @@ class LeadAttachmentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Attachment Deleted Successfully"},
+                {"error": False, "message": _("Attachment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action",
+                "errors": _("You don't have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -364,7 +365,9 @@ class CreateLeadFromSite(APIView):
             return Response(
                 {
                     "error": True,
-                    "message": "You don't have permission, please contact the admin!.",
+                    "message": _(
+                        "You don't have permission, please contact the admin!."
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -387,7 +390,7 @@ class CreateLeadFromSite(APIView):
             # parse it. Field-level errors are not folded in, because that
             # would change the response shape of a deprecated endpoint.
             return Response(
-                {"error": True, "message": "Invalid data"},
+                {"error": True, "message": _("Invalid data")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -407,7 +410,7 @@ class CreateLeadFromSite(APIView):
         self._attach_contact(api_setting, form, submission, serializer)
 
         return Response(
-            {"error": False, "message": "Lead Created sucessfully."},
+            {"error": False, "message": _("Lead Created sucessfully.")},
             status=status.HTTP_200_OK,
         )
 

@@ -6,6 +6,7 @@ Supports both status-based (default) and custom pipeline-based kanban boards.
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -233,7 +234,7 @@ class LeadMoveView(APIView):
                 or request.profile in lead.assigned_to.all()
             ):
                 return Response(
-                    {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                    {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
                 )
 
         serializer = LeadMoveSerializer(data=request.data)
@@ -292,7 +293,7 @@ class LeadMoveView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Lead moved successfully",
+                "message": _("Lead moved successfully"),
                 "lead": LeadKanbanCardSerializer(lead).data,
             }
         )
@@ -338,7 +339,7 @@ class LeadPipelineListCreateView(APIView):
         # Only admins can create pipelines
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Only admins can create pipelines"},
+                {"error": _("Only admins can create pipelines")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -431,7 +432,7 @@ class LeadPipelineDetailView(APIView):
         """Update pipeline."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -451,7 +452,7 @@ class LeadPipelineDetailView(APIView):
         """Delete pipeline (soft delete by setting is_active=False)."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -485,7 +486,7 @@ class LeadStageCreateView(APIView):
         """Add a new stage to pipeline."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -516,7 +517,7 @@ class LeadStageDetailView(APIView):
         """Update stage."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(LeadStage, pk=pk, org=request.profile.org)
@@ -536,7 +537,7 @@ class LeadStageDetailView(APIView):
         """Delete stage."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(LeadStage, pk=pk, org=request.profile.org)
@@ -572,7 +573,7 @@ class LeadStageReorderView(APIView):
         """Reorder stages by providing ordered list of stage IDs."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -584,7 +585,7 @@ class LeadStageReorderView(APIView):
         stages = LeadStage.objects.filter(pipeline=pipeline, id__in=stage_ids)
         if stages.count() != len(stage_ids):
             return Response(
-                {"error": "Invalid stage IDs provided"},
+                {"error": _("Invalid stage IDs provided")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -592,4 +593,4 @@ class LeadStageReorderView(APIView):
         for order, stage_id in enumerate(stage_ids):
             LeadStage.objects.filter(id=stage_id).update(order=order)
 
-        return Response({"message": "Stages reordered successfully"})
+        return Response({"message": _("Stages reordered successfully")})

@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import DecimalField, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -390,7 +391,7 @@ class OpportunityListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Opportunity Created Successfully",
+                    "message": _("Opportunity Created Successfully"),
                     "id": str(opportunity_obj.id),
                 },
                 status=status.HTTP_200_OK,
@@ -438,7 +439,7 @@ class OpportunityDetailView(APIView):
         opportunity_object = self.get_object(pk=pk)
         if not opportunity_object:
             return Response(
-                {"error": True, "errors": "Opportunity not found."},
+                {"error": True, "errors": _("Opportunity not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         self.assert_deal_access(opportunity_object)
@@ -531,7 +532,7 @@ class OpportunityDetailView(APIView):
                 str(request.profile.org.id),
             )
             return Response(
-                {"error": False, "message": "Opportunity Updated Successfully"},
+                {"error": False, "message": _("Opportunity Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -557,12 +558,15 @@ class OpportunityDetailView(APIView):
         self.object = self.get_object(pk)
         if not self.object:
             return Response(
-                {"error": True, "errors": "Opportunity not found."},
+                {"error": True, "errors": _("Opportunity not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         if self.object.org != request.profile.org:
             return Response(
-                {"error": True, "errors": "User company doesnot match with header...."},
+                {
+                    "error": True,
+                    "errors": _("User company doesnot match with header...."),
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
         if (
@@ -573,13 +577,15 @@ class OpportunityDetailView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "You do not have Permission to perform this action",
+                        "errors": _(
+                            "You do not have Permission to perform this action"
+                        ),
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
         self.object.delete()
         return Response(
-            {"error": False, "message": "Opportunity Deleted Successfully."},
+            {"error": False, "message": _("Opportunity Deleted Successfully.")},
             status=status.HTTP_200_OK,
         )
 
@@ -609,7 +615,7 @@ class OpportunityDetailView(APIView):
         self.opportunity = self.get_object(pk=pk)
         if not self.opportunity:
             return Response(
-                {"error": True, "errors": "Opportunity not found."},
+                {"error": True, "errors": _("Opportunity not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         self.assert_deal_access(self.opportunity)
@@ -707,7 +713,7 @@ class OpportunityDetailView(APIView):
         self.opportunity_obj = self.get_object(pk=pk)
         if not self.opportunity_obj:
             return Response(
-                {"error": True, "errors": "Opportunity not found."},
+                {"error": True, "errors": _("Opportunity not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         self.assert_deal_access(self.opportunity_obj)
@@ -777,7 +783,7 @@ class OpportunityDetailView(APIView):
         opportunity_object = self.get_object(pk=pk)
         if not opportunity_object:
             return Response(
-                {"error": True, "errors": "Opportunity not found."},
+                {"error": True, "errors": _("Opportunity not found.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         self.assert_deal_access(opportunity_object)
@@ -863,7 +869,7 @@ class OpportunityDetailView(APIView):
                 opportunity_object.save()
 
             return Response(
-                {"error": False, "message": "Opportunity Updated Successfully"},
+                {"error": False, "message": _("Opportunity Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(

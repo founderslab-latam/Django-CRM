@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -50,7 +51,7 @@ class OpportunityCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Submitted"},
+                    {"error": False, "message": _("Comment Submitted")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -60,7 +61,7 @@ class OpportunityCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -93,7 +94,7 @@ class OpportunityCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Updated"},
+                    {"error": False, "message": _("Comment Updated")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -103,7 +104,7 @@ class OpportunityCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -130,13 +131,13 @@ class OpportunityCommentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Comment Deleted Successfully"},
+                {"error": False, "message": _("Comment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You do not have permission to perform this action",
+                "errors": _("You do not have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -182,13 +183,13 @@ class OpportunityAttachmentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Attachment Deleted Successfully"},
+                {"error": False, "message": _("Attachment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )

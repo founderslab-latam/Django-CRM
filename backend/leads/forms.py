@@ -2,6 +2,7 @@ import csv
 import re
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 email_regex = r"^[_a-zA-Z0-9-]+(\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,4})$"
 
@@ -61,7 +62,7 @@ def import_document_validator(document):
         document.seek(0, 0)
         return csv_doc_validate(document)
     except Exception:
-        return {"error": True, "message": "Not a valid CSV file"}
+        return {"error": True, "message": _("Not a valid CSV file")}
 
 
 class LeadListForm(forms.Form):
@@ -91,5 +92,5 @@ class LeadListForm(forms.Form):
             self.validated_rows = data.get("validated_rows", [])
             self.invalid_rows = data.get("invalid_rows", [])
             if len(self.validated_rows) == 0:
-                raise forms.ValidationError("All the leads in the file are invalid.")
+                raise forms.ValidationError(_("All the leads in the file are invalid."))
         return document

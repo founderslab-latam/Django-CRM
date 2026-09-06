@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -42,7 +43,10 @@ class StageAgingConfigView(APIView):
         """Bulk upsert stage aging configs (admin only)."""
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": True, "errors": "Only admins can update aging config"},
+                {
+                    "error": True,
+                    "errors": gettext_lazy("Only admins can update aging config"),
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -50,7 +54,10 @@ class StageAgingConfigView(APIView):
         configs_data = request.data
         if not isinstance(configs_data, list):
             return Response(
-                {"error": True, "errors": "Expected a list of stage configs"},
+                {
+                    "error": True,
+                    "errors": gettext_lazy("Expected a list of stage configs"),
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -87,6 +94,10 @@ class StageAgingConfigView(APIView):
             results.append(StageAgingConfigSerializer(config).data)
 
         return Response(
-            {"error": False, "message": "Aging config updated", "configs": results},
+            {
+                "error": False,
+                "message": gettext_lazy("Aging config updated"),
+                "configs": results,
+            },
             status=status.HTTP_200_OK,
         )

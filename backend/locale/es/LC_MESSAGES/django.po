@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 04:05+0000\n"
+"POT-Creation-Date: 2026-09-06 07:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1676,6 +1676,12 @@ msgstr ""
 msgid "Change Details"
 msgstr ""
 
+msgid "Not a valid CSV file"
+msgstr "No es un archivo CSV válido."
+
+msgid "All the leads in the file are invalid."
+msgstr "Todos los prospectos del archivo son inválidos."
+
 msgid "Salutation"
 msgstr ""
 
@@ -1708,6 +1714,48 @@ msgstr ""
 
 msgid "Default Win Probability %"
 msgstr ""
+
+msgid "Lead moved successfully"
+msgstr "Prospecto movido correctamente."
+
+msgid "Only admins can create pipelines"
+msgstr "Solo los administradores pueden crear flujos."
+
+msgid "Invalid stage IDs provided"
+msgstr "Se proporcionaron IDs de etapa inválidos."
+
+msgid "Stages reordered successfully"
+msgstr "Etapas reordenadas correctamente."
+
+msgid "Leads created Successfully"
+msgstr "Prospectos creados correctamente."
+
+msgid "You don't have permission, please contact the admin!."
+msgstr "No tienes permiso; contacta al administrador."
+
+msgid "Invalid data"
+msgstr "Datos inválidos."
+
+msgid "Lead Created sucessfully."
+msgstr "Prospecto creado correctamente."
+
+msgid "A lead with these details already exists."
+msgstr "Ya existe un prospecto con estos datos."
+
+msgid "Lead Converted Successfully"
+msgstr "Prospecto convertido correctamente."
+
+msgid "Lead Created Successfully"
+msgstr "Prospecto creado correctamente."
+
+msgid "Lead updated Successfully"
+msgstr "Prospecto actualizado correctamente."
+
+msgid "Lead deleted Successfully"
+msgstr "Prospecto eliminado correctamente."
+
+msgid "you don't have permission to delete this lead"
+msgstr "no tienes permiso para eliminar este prospecto"
 
 msgid "Opportunity Name"
 msgstr ""
@@ -1762,6 +1810,72 @@ msgstr ""
 
 msgid "Deal Type Weights"
 msgstr ""
+
+msgid "Only admins can update aging config"
+msgstr "Solo los administradores pueden actualizar la configuración de antigüedad."
+
+msgid "Expected a list of stage configs"
+msgstr "Se esperaba una lista de configuraciones de etapa."
+
+msgid "Aging config updated"
+msgstr "Configuración de antigüedad actualizada."
+
+msgid "Only admins can create goals."
+msgstr "Solo los administradores pueden crear metas."
+
+msgid "Goal Created Successfully"
+msgstr "Meta creada correctamente."
+
+msgid "Goal not found."
+msgstr "No se encontró la meta."
+
+msgid "You do not have permission."
+msgstr "No tienes permiso."
+
+msgid "Only admins can update goals."
+msgstr "Solo los administradores pueden actualizar metas."
+
+msgid "Goal Updated Successfully"
+msgstr "Meta actualizada correctamente."
+
+msgid "Only admins can delete goals."
+msgstr "Solo los administradores pueden eliminar metas."
+
+msgid "Goal Deleted Successfully"
+msgstr "Meta eliminada correctamente."
+
+msgid "Opportunity moved successfully"
+msgstr "Oportunidad movida correctamente."
+
+msgid "Opportunity not found"
+msgstr "No se encontró la oportunidad."
+
+msgid "You do not have permission to access this opportunity"
+msgstr "No tienes permiso para acceder a esta oportunidad."
+
+msgid "Line item created successfully"
+msgstr "Partida creada correctamente."
+
+msgid "Line item not found"
+msgstr "No se encontró la partida."
+
+msgid "Line item updated successfully"
+msgstr "Partida actualizada correctamente."
+
+msgid "Line item deleted successfully"
+msgstr "Partida eliminada correctamente."
+
+msgid "Opportunity Created Successfully"
+msgstr "Oportunidad creada correctamente."
+
+msgid "Opportunity not found."
+msgstr "No se encontró la oportunidad."
+
+msgid "Opportunity Updated Successfully"
+msgstr "Oportunidad actualizada correctamente."
+
+msgid "Opportunity Deleted Successfully."
+msgstr "Oportunidad eliminada correctamente."
 
 msgid "Order Name"
 msgstr ""
