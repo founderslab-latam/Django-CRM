@@ -1,4 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import {
   getDocumentForEdit,
   updateDocument,
@@ -24,7 +26,7 @@ export async function load(event) {
     return await getDocumentForEdit(event, event.params.id);
   } catch (/** @type {any} */ err) {
     if (err?.status === 404) {
-      error(404, 'That document does not exist, or it belongs to another org.');
+      error(404, get(_)('documents.edit.error_404'));
     }
     throw err;
   }
@@ -49,18 +51,18 @@ export const actions = {
     const file = picked instanceof File && picked.size > 0 ? picked : null;
 
     if (!title) {
-      return fail(400, { values, error: 'Give the document a title.' });
+      return fail(400, { values, error: get(_)('documents.edit.error_title_server') });
     }
 
     try {
       await updateDocument(event, event.params.id, { ...values, file });
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { values, error: 'Only the owner or an admin can change this document.' });
+        return fail(403, { values, error: get(_)('documents.edit.error_forbidden_save') });
       }
       return fail(400, {
         values,
-        error: readableError(err, 'Could not save this document.')
+        error: readableError(err, get(_)('documents.edit.error_fallback_save'))
       });
     }
 
@@ -72,11 +74,13 @@ export const actions = {
       await deleteDocument(event, event.params.id);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
-        return fail(403, { error: 'Only the owner or an admin can delete this document.' });
+        return fail(403, { error: get(_)('documents.edit.error_forbidden_delete') });
       }
       // Already gone is the outcome the caller wanted; treat 404 as done.
       if (err?.status === 404) redirect(303, '/documents');
-      return fail(400, { error: readableError(err, 'Could not delete this document.') });
+      return fail(400, {
+        error: readableError(err, get(_)('documents.edit.error_fallback_delete'))
+      });
     }
 
     redirect(303, '/documents');

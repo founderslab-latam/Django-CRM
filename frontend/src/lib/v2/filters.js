@@ -347,8 +347,12 @@ export const FILTERS = {
     // archived documents come back alongside the live ones on a bare URL,
     // which undoes the only thing archiving does.
     presets: [
-      { key: 'active', label: 'Active documents', params: {} },
-      { key: 'all', label: 'Including archived', params: { archived: '1' } }
+      { key: 'active', label: () => get($i18n)('documents.filters.preset_active'), params: {} },
+      {
+        key: 'all',
+        label: () => get($i18n)('documents.filters.preset_all'),
+        params: { archived: '1' }
+      }
     ],
     // `tags` and `created_by` are deliberately absent: `DocumentListView.get`
     // (backend/common/views/document_views.py:71-79) reads only `title`,
@@ -356,7 +360,15 @@ export const FILTERS = {
     // `shared_to` is passed straight to `json.loads`, so a plain
     // `?shared_to=<uuid>` throws `JSONDecodeError` and answers 500. Status is
     // the only filter this endpoint actually honours.
-    fields: [{ key: 'status', label: 'Status', type: 'select', options: DOCUMENT_STATUSES }]
+    fields: [
+      {
+        key: 'status',
+        label: () => get($i18n)('documents.filters.field_status'),
+        type: 'select',
+        options: DOCUMENT_STATUSES,
+        labelFor: (v) => get($i18n)(`documents.filters.status_option.${v}`)
+      }
+    ]
   },
 
   recurring: {

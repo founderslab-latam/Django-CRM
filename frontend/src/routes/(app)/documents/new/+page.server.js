@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getUploadOptions, uploadDocument, STATUS_CHOICES } from '$lib/server/v2/documents.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -38,21 +40,21 @@ export const actions = {
     // Mirror the server's required-field checks so an obvious miss does not cost
     // a round trip. The serializer enforces both regardless.
     if (!title) {
-      return fail(400, { values, error: 'Give the document a title.' });
+      return fail(400, { values, error: get(_)('documents.new.error_title_server') });
     }
     if (!(file instanceof File) || file.size === 0) {
-      return fail(400, { values, error: 'Choose a file to upload.' });
+      return fail(400, { values, error: get(_)('documents.new.error_file_server') });
     }
 
     try {
       await uploadDocument(event.cookies, { title, status, file, shared_to, teams });
     } catch (/** @type {any} */ err) {
       if (err?.status === 401 || err?.status === 403) {
-        return fail(err.status, { values, error: 'You do not have permission to upload here.' });
+        return fail(err.status, { values, error: get(_)('documents.new.error_forbidden') });
       }
       return fail(400, {
         values,
-        error: readableError(err, 'Could not upload this document.')
+        error: readableError(err, get(_)('documents.new.error_fallback'))
       });
     }
 

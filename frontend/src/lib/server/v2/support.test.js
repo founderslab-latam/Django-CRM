@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupI18n } from '$lib/i18n/index.js';
 
 const apiRequest = vi.fn();
 vi.mock('$lib/api-helpers.js', () => ({ apiRequest: (...args) => apiRequest(...args) }));
@@ -10,6 +11,11 @@ const {
   loadHelpPage,
   replyToSupportTicket
 } = await import('./support.js');
+
+// `getSupportTicket` turns a 404 into `error(404, get(_)('help.detail.error_404'))`,
+// which needs the i18n store initialised or `get(_)` throws before the 404 does.
+// Same fix filters.test.js uses for its locale-resolving descriptors.
+beforeAll(() => setupI18n('en'));
 
 const event = /** @type {any} */ ({ cookies: { get: () => 'token' } });
 

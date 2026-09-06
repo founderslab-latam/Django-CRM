@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { getTimesheet, stopTimer } from '$lib/server/v2/timesheet.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -23,7 +25,7 @@ export const actions = {
     try {
       await stopTimer(event, entryId);
     } catch (/** @type {any} */ err) {
-      return fail(400, { error: readableError(err, 'Could not stop the timer.') });
+      return fail(400, { error: readableError(err, get(_)('timesheet.week.error_stop')) });
     }
 
     return { stopped: true };

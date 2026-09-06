@@ -27,6 +27,7 @@
   import FilterBar from '$lib/v2/components/FilterBar.svelte';
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import { count, relativeDays } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { FileText, FileSpreadsheet, File, Users, Upload, Lock, Pencil } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -60,53 +61,62 @@
    */
   function reachLabel(d) {
     const names = d.shared_to.map((p) => p.name.split(' ')[0]);
-    if (!names.length) return d.teams.length ? '' : 'Nobody yet';
-    if (names.length <= 2) return names.join(' and ');
-    return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+    if (!names.length) return d.teams.length ? '' : $_('documents.list.reach_nobody');
+    if (names.length <= 2) return names.join(` ${$_('documents.list.reach_and')} `);
+    return `${names.slice(0, 2).join(', ')} ${$_('documents.list.reach_more', {
+      values: { count: names.length - 2 }
+    })}`;
   }
 </script>
 
-<PageHeader title="Documents">
+<PageHeader title={$_('documents.list.title')}>
   {#snippet sub()}
-    <span class="v2-num">{count(totals.active)}</span> active ·
-    <span class="v2-num">{count(totals.inactive)}</span> archived
+    <span class="v2-num">{count(totals.active)}</span>
+    {$_('documents.list.sub_active')} ·
+    <span class="v2-num">{count(totals.inactive)}</span>
+    {$_('documents.list.sub_archived')}
   {/snippet}
   {#snippet actions()}
-    <a class="v2-btn v2-btn-primary" href={resolve('/documents/new')}><Upload />Upload</a>
+    <a class="v2-btn v2-btn-primary" href={resolve('/documents/new')}
+      ><Upload />{$_('documents.list.upload_button')}</a
+    >
   {/snippet}
 </PageHeader>
 
 {#if page.url.search}
   <p class="v2-sub" style="font-size:11.5px;margin:8px 0 0">
-    These numbers describe the filtered list.
+    {$_('documents.list.filtered_note')}
   </p>
 {/if}
 
 <div class="v2-pad" style="padding-top:14px;flex:none">
   <div class="v2-stats">
     <StatCard
-      label="Given to nobody"
+      label={$_('documents.list.stat_unshared')}
       value={count(totals.unshared)}
       tone={totals.unshared ? 'clay' : 'slate'}
-      detail="Only the uploader and admins"
+      detail={$_('documents.list.stat_unshared_detail')}
     />
-    <StatCard label="Active" value={count(totals.active)} tone="ink" />
-    <StatCard label="Archived" value={count(totals.inactive)} tone="slate" />
-    <StatCard label="Total" value={count(totals.count)} tone="slate" />
+    <StatCard label={$_('documents.list.stat_active')} value={count(totals.active)} tone="ink" />
+    <StatCard
+      label={$_('documents.list.stat_archived')}
+      value={count(totals.inactive)}
+      tone="slate"
+    />
+    <StatCard label={$_('documents.list.stat_total')} value={count(totals.count)} tone="slate" />
   </div>
 </div>
 
-<FilterBar page="documents" url={page.url} meta="Newest first" />
+<FilterBar page="documents" url={page.url} meta={$_('documents.list.filter_meta')} />
 
 <div class="v2-scroll">
   {#if documents.length === 0}
-    <EmptyState
-      title="No documents yet"
-      body="Contracts, runbooks, price sheets. The things you send people often enough to stop hunting for. Share each one with the people or the team who need it; an unshared upload is visible only to you and to admins."
-    >
+    <EmptyState title={$_('documents.list.empty_title')} body={$_('documents.list.empty_body')}>
       {#snippet icon()}<FileText size={21} />{/snippet}
       {#snippet actions()}
-        <a class="v2-btn v2-btn-primary" href={resolve('/documents/new')}>Upload a document</a>
+        <a class="v2-btn v2-btn-primary" href={resolve('/documents/new')}
+          >{$_('documents.list.empty_action')}</a
+        >
       {/snippet}
     </EmptyState>
   {:else}
@@ -114,11 +124,11 @@
       <table class="v2-table">
         <thead>
           <tr>
-            <th>Document</th>
-            <th>Who can open it</th>
-            <th>Uploaded by</th>
-            <th class="v2-r">Size</th>
-            <th class="v2-r">Added</th>
+            <th>{$_('documents.list.col_document')}</th>
+            <th>{$_('documents.list.col_reach')}</th>
+            <th>{$_('documents.list.col_uploaded_by')}</th>
+            <th class="v2-r">{$_('documents.list.col_size')}</th>
+            <th class="v2-r">{$_('documents.list.col_added')}</th>
             <th></th>
           </tr>
         </thead>
@@ -180,7 +190,7 @@
                   <a
                     class="edit"
                     href={resolve(`/documents/${d.id}/edit`)}
-                    title="Manage this document"
+                    title={$_('documents.list.edit_title')}
                   >
                     <Pencil size={13} />
                   </a>
@@ -193,7 +203,8 @@
     </div>
 
     <p class="v2-sub v2-pad" style="font-size:12px;padding-bottom:24px">
-      Showing <span class="v2-num">{documents.length}</span> of
+      {$_('documents.list.showing_prefix')} <span class="v2-num">{documents.length}</span>
+      {$_('documents.list.showing_of')}
       <span class="v2-num">{count(totals.count)}</span>
     </p>
   {/if}

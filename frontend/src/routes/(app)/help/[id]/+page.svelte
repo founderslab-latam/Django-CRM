@@ -4,6 +4,7 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import { shortDate } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { Paperclip, Send } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -22,7 +23,9 @@
 
 <PageHeader title={ticket.subject} center width="840px">
   {#snippet sub()}
-    {ticket.reference} · {ticket.categoryLabel} · opened {shortDate(ticket.createdAt)}
+    {ticket.reference} · {ticket.categoryLabel} · {$_('help.detail.opened', {
+      values: { date: shortDate(ticket.createdAt) }
+    })}
   {/snippet}
   {#snippet actions()}
     <Pill tone={STATUS_TONE[ticket.status]}>{ticket.statusLabel}</Pill>
@@ -34,19 +37,19 @@
     class="v2-pad"
     style="padding-top:18px;padding-bottom:32px;max-width:840px;margin-inline:auto"
   >
-    <a class="back" href={resolve('/help')}>Back to help</a>
+    <a class="back" href={resolve('/help')}>{$_('help.detail.back')}</a>
 
     <div class="summary v2-card">
-      <span><b>Status</b>{ticket.statusLabel}</span>
-      <span><b>Priority</b>{ticket.priorityLabel}</span>
+      <span><b>{$_('help.detail.label_status')}</b>{ticket.statusLabel}</span>
+      <span><b>{$_('help.detail.label_priority')}</b>{ticket.priorityLabel}</span>
       <span
-        ><b>Assigned</b>{ticket.assigned
-          ? 'Support agent assigned'
-          : 'Waiting for assignment'}</span
+        ><b>{$_('help.detail.label_assigned')}</b>{ticket.assigned
+          ? $_('help.detail.assigned_yes')
+          : $_('help.detail.assigned_no')}</span
       >
     </div>
 
-    <div class="v2-label" style="margin:22px 0 10px">Conversation</div>
+    <div class="v2-label" style="margin:22px 0 10px">{$_('help.detail.section_conversation')}</div>
     <div class="conversation">
       {#each ticket.messages as message (message.id)}
         <article class:staff={message.authorType === 'staff'} class="message v2-card">
@@ -65,12 +68,12 @@
     </div>
 
     {#if form?.error}<p class="v2-card error">{form.error}</p>{/if}
-    {#if form?.sent}<p class="v2-card sent">Your reply was sent.</p>{/if}
+    {#if form?.sent}<p class="v2-card sent">{$_('help.detail.reply_sent')}</p>{/if}
 
     {#if ticket.status === 'closed'}
       <div class="v2-card closed">
-        This ticket is closed. Open a new ticket if you still need help.
-        <a class="v2-btn" href={resolve('/help/new')}>New ticket</a>
+        {$_('help.detail.closed_notice')}
+        <a class="v2-btn" href={resolve('/help/new')}>{$_('help.detail.new_ticket')}</a>
       </div>
     {:else}
       <form
@@ -87,21 +90,25 @@
         }}
       >
         <div class="v2-field">
-          <label for="reply">Reply</label>
+          <label for="reply">{$_('help.detail.field_reply')}</label>
           <textarea
             id="reply"
             class="v2-input"
             name="body"
             rows="5"
             maxlength="10000"
-            placeholder="Add any details that will help us investigate."
-            >{form?.body ?? ''}</textarea
+            placeholder={$_('help.detail.placeholder_reply')}>{form?.body ?? ''}</textarea
           >
         </div>
         <div class="compose-actions">
-          <input class="v2-input" type="file" name="attachment" aria-label="Attach a file" />
+          <input
+            class="v2-input"
+            type="file"
+            name="attachment"
+            aria-label={$_('help.detail.attach_aria')}
+          />
           <button class="v2-btn v2-btn-primary" type="submit" disabled={submitting}
-            ><Send />{submitting ? 'Sending…' : 'Send reply'}</button
+            ><Send />{submitting ? $_('help.detail.sending') : $_('help.detail.send')}</button
           >
         </div>
       </form>

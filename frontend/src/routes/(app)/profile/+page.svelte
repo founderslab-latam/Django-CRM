@@ -20,6 +20,7 @@
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import { relativeDays, shortDate, count } from '$lib/v2/format.js';
   import { ROLE_LABEL, ROLE_TONE } from '$lib/v2/enums.js';
+  import { _ } from '$lib/i18n/index.js';
   import { KeyRound, Lock, ArrowLeftRight } from '@lucide/svelte';
   import LanguageSwitcher from '$lib/v2/components/LanguageSwitcher.svelte';
 
@@ -67,11 +68,15 @@
 
 <PageHeader title={name} record>
   {#snippet sub()}
-    {ROLE_LABEL[p.role]} · {data.org.name} · joined {shortDate(p.joined_at)}
+    {ROLE_LABEL[p.role]} · {data.org.name} · {$_('profile.main.joined', {
+      values: { date: shortDate(p.joined_at) }
+    })}
   {/snippet}
   {#snippet actions()}
     {#if !editing}
-      <button class="v2-btn v2-btn-primary" onclick={openEdit}>Edit details</button>
+      <button class="v2-btn v2-btn-primary" onclick={openEdit}
+        >{$_('profile.main.edit_details')}</button
+      >
     {/if}
   {/snippet}
 </PageHeader>
@@ -80,7 +85,7 @@
   <div class="v2-pad" style="padding-top:18px;padding-bottom:32px">
     <div class="v2-split">
       <div>
-        <div class="v2-label" style="margin-bottom:10px">You</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('profile.main.section_you')}</div>
 
         {#if editing}
           <form
@@ -91,7 +96,7 @@
             style="padding:17px 18px;margin-bottom:20px"
           >
             <div class="v2-field">
-              <label for="f-name">Full name</label>
+              <label for="f-name">{$_('profile.main.field_name')}</label>
               <input
                 id="f-name"
                 name="name"
@@ -101,7 +106,7 @@
               />
             </div>
             <div class="v2-field" style="margin-top:12px">
-              <label for="f-phone">Phone</label>
+              <label for="f-phone">{$_('profile.main.field_phone')}</label>
               <input
                 id="f-phone"
                 name="phone"
@@ -109,14 +114,16 @@
                 bind:value={editPhone}
                 placeholder="+44 20 7946 0100"
               />
-              <p class="v2-hint">Digits and separators only. Leave blank to remove it.</p>
+              <p class="v2-hint">{$_('profile.main.hint_phone')}</p>
             </div>
             {#if editError}
               <p class="v2-error" style="margin-top:10px">{editError}</p>
             {/if}
             <div style="display:flex;gap:8px;margin-top:16px">
-              <button class="v2-btn v2-btn-primary" type="submit">Save</button>
-              <button class="v2-btn" type="button" onclick={() => (editing = false)}>Cancel</button>
+              <button class="v2-btn v2-btn-primary" type="submit">{$_('profile.main.save')}</button>
+              <button class="v2-btn" type="button" onclick={() => (editing = false)}
+                >{$_('profile.main.cancel')}</button
+              >
             </div>
           </form>
         {:else}
@@ -129,37 +136,44 @@
               </div>
             </div>
             <dl class="v2-kv">
-              <dt>Phone</dt>
+              <dt>{$_('profile.main.field_phone')}</dt>
               <dd class="v2-num" style="font-size:12px">{p.phone || '—'}</dd>
-              <dt>Teams</dt>
+              <dt>{$_('profile.main.kv_teams')}</dt>
               <dd>{p.teams.join(', ') || '—'}</dd>
-              <dt>Joined</dt>
+              <dt>{$_('profile.main.kv_joined')}</dt>
               <dd>{shortDate(p.joined_at)}</dd>
-              <dt>Last signed in</dt>
+              <dt>{$_('profile.main.kv_last_login')}</dt>
               <dd>{relativeDays(p.last_login)}</dd>
             </dl>
           </div>
         {/if}
 
-        <div class="v2-label" style="margin-bottom:10px">Organisations</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('profile.main.section_orgs')}</div>
         <div class="v2-card" style="overflow:hidden">
           {#each p.orgs as o (o.id)}
             <div class="v2-setting">
               <div class="v2-setting-body">
                 <b>{o.name}</b>
                 <span class="v2-sub" style="font-size:11.5px">
-                  You are {ROLE_LABEL[o.role] === 'Admin' ? 'an admin' : 'a member'} here
+                  {$_('profile.main.org_you_are', {
+                    values: {
+                      role:
+                        ROLE_LABEL[o.role] === 'Admin'
+                          ? $_('profile.main.org_role_admin')
+                          : $_('profile.main.org_role_member')
+                    }
+                  })}
                 </span>
               </div>
               {#if o.is_current}
-                <Pill tone="ink" dot>Current</Pill>
+                <Pill tone="ink" dot>{$_('profile.main.org_current')}</Pill>
               {:else}
                 <!-- Switching org re-issues the token; it does not edit a field
                      on this page. The action swaps the cookies and reloads. -->
                 <form method="POST" action="?/switchOrg" use:enhance class="v2-inline-form">
                   <input type="hidden" name="org_id" value={o.id} />
                   <button class="v2-btn v2-btn-sm" type="submit">
-                    <ArrowLeftRight size={12} />Switch
+                    <ArrowLeftRight size={12} />{$_('profile.main.org_switch')}
                   </button>
                 </form>
               {/if}
@@ -170,20 +184,19 @@
           <p class="v2-error" style="margin-top:9px">{switchError}</p>
         {/if}
         <p class="v2-sub" style="font-size:11.5px;margin-top:11px">
-          Switching organisation signs you in again with a new token. Which org you are in decides
-          which records exist for you at all, so it is not a filter you can toggle.
+          {$_('profile.main.orgs_note')}
         </p>
       </div>
 
       <div>
-        <div class="v2-label" style="margin-bottom:10px">Access</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('profile.main.section_access')}</div>
         <div class="v2-card" style="overflow:hidden;margin-bottom:20px">
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Role</b>
+              <b>{$_('profile.main.access_role')}</b>
               <!-- Displayed, never editable from here. -->
               <span class="v2-sub" style="font-size:11.5px">
-                Set by an admin. You cannot change your own role.
+                {$_('profile.main.access_role_note')}
               </span>
             </div>
             <Lock size={14} style="color:var(--v2-slate);flex:none" />
@@ -194,9 +207,9 @@
                to lead most of the people who clicked it to "Admins only". -->
           <a class="v2-setting" href={resolve('/profile/tokens')}>
             <div class="v2-setting-body">
-              <b>API tokens</b>
+              <b>{$_('profile.main.access_tokens')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                Each one signs in as you, with your role.
+                {$_('profile.main.access_tokens_note')}
               </span>
             </div>
             <KeyRound size={14} style="color:var(--v2-slate);flex:none" />
@@ -206,14 +219,13 @@
           </a>
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Sign-in method</b>
+              <b>{$_('profile.main.access_signin')}</b>
               <!-- It used to say "Google, on <email>", which is false for
                    anyone who signed in with an emailed code. Nothing in the
                    payload says which was used, so this states what holds for
                    both rather than guessing. -->
               <span class="v2-sub" style="font-size:11.5px">
-                {p.user_details.email}, by Google or an emailed code. There is no password to
-                change.
+                {$_('profile.main.access_signin_note', { values: { email: p.user_details.email } })}
               </span>
             </div>
           </div>
@@ -225,37 +237,45 @@
              in the global nav. Cookie-based today (see LanguageSwitcher.svelte),
              not yet a real column on Profile — see PLAN.md's roadmap for
              persisting it server-side. -->
-        <div class="v2-label" style="margin-bottom:10px">Preferences</div>
+        <div class="v2-label" style="margin-bottom:10px">
+          {$_('profile.main.section_preferences')}
+        </div>
         <div class="v2-card" style="overflow:hidden;margin-bottom:20px">
           <div class="v2-setting">
             <div class="v2-setting-body">
-              <b>Language</b>
+              <b>{$_('profile.main.pref_language')}</b>
               <span class="v2-sub" style="font-size:11.5px">
-                Changes what this browser shows you. Not yet shared across devices.
+                {$_('profile.main.pref_language_note')}
               </span>
             </div>
             <LanguageSwitcher />
           </div>
         </div>
 
-        <div class="v2-label" style="margin-bottom:10px">Where your work shows up</div>
+        <div class="v2-label" style="margin-bottom:10px">{$_('profile.main.section_work')}</div>
         <div class="v2-card" style="overflow:hidden">
           <a class="v2-setting" href={resolve('/goals')}>
             <div class="v2-setting-body">
-              <b>Goals</b>
-              <span class="v2-sub" style="font-size:11.5px">Your quota and how it is pacing</span>
+              <b>{$_('profile.main.work_goals')}</b>
+              <span class="v2-sub" style="font-size:11.5px"
+                >{$_('profile.main.work_goals_note')}</span
+              >
             </div>
           </a>
           <a class="v2-setting" href={resolve('/timesheet')}>
             <div class="v2-setting-body">
-              <b>Timesheet</b>
-              <span class="v2-sub" style="font-size:11.5px">Hours you have logged this week</span>
+              <b>{$_('profile.main.work_timesheet')}</b>
+              <span class="v2-sub" style="font-size:11.5px"
+                >{$_('profile.main.work_timesheet_note')}</span
+              >
             </div>
           </a>
           <a class="v2-setting" href={resolve('/tasks')}>
             <div class="v2-setting-body">
-              <b>Tasks</b>
-              <span class="v2-sub" style="font-size:11.5px">What is assigned to you</span>
+              <b>{$_('profile.main.work_tasks')}</b>
+              <span class="v2-sub" style="font-size:11.5px"
+                >{$_('profile.main.work_tasks_note')}</span
+              >
             </div>
           </a>
         </div>

@@ -1,5 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { apiRequest } from '$lib/api-helpers.js';
+import { _ } from '$lib/i18n/index.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 import { getProfile } from '$lib/server/v2/profile.js';
 
@@ -31,7 +33,7 @@ export const actions = {
     } catch (/** @type {any} */ err) {
       return fail(err?.status === 400 ? 400 : 500, {
         values: body,
-        message: readableError(err, 'Could not save your profile.')
+        message: readableError(err, get(_)('profile.main.error_save'))
       });
     }
 
@@ -50,7 +52,7 @@ export const actions = {
     const orgId = form.get('org_id')?.toString() ?? '';
 
     if (!UUID_RE.test(orgId)) {
-      return fail(400, { scope: 'switch', message: 'Invalid organisation.' });
+      return fail(400, { scope: 'switch', message: get(_)('profile.main.error_invalid_org') });
     }
 
     // Sent so the backend retires the token we are replacing; it belongs to the
@@ -72,8 +74,8 @@ export const actions = {
       // 403 is the honest one: you asked for an org you are not a member of.
       const message =
         err?.status === 403
-          ? 'You are not a member of that organisation.'
-          : readableError(err, 'Could not switch organisation.');
+          ? get(_)('profile.main.error_not_member')
+          : readableError(err, get(_)('profile.main.error_switch'));
       return fail(err?.status === 403 ? 403 : 500, { scope: 'switch', message });
     }
 

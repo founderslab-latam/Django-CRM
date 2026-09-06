@@ -1,4 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { _ } from '$lib/i18n/index.js';
 import { createSupportTicket, SUPPORT_CATEGORIES } from '$lib/server/v2/support.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
 
@@ -22,7 +24,7 @@ export const actions = {
         subject,
         category,
         body,
-        error: 'Add a subject, choose a category, and describe what you need help with.'
+        error: get(_)('help.new.error_incomplete')
       });
     }
 
@@ -39,8 +41,8 @@ export const actions = {
         body,
         error:
           error?.status === 404
-            ? 'This deployment has no BottleCRM support queue. The help page lists the ways to reach us.'
-            : readableError(error, 'Could not open this support ticket.')
+            ? get(_)('help.new.error_no_queue')
+            : readableError(error, get(_)('help.new.error_fallback'))
       });
     }
     redirect(303, `/help/${ticket.id}`);

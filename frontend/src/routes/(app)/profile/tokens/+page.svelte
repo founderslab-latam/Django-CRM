@@ -29,7 +29,9 @@
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
   import { Plus, KeyRound, ShieldAlert, Copy, Check } from '@lucide/svelte';
-  import { tokenStatus, staleness, scopeSummary, EXPIRY_CHOICES } from '$lib/v2/token-rules.js';
+  import { tokenStatus, EXPIRY_CHOICES } from '$lib/v2/token-rules.js';
+  import { _ } from '$lib/i18n/index.js';
+  import { tokenStateKey, tokenStalenessDescriptor, tokenExpiryKey } from '$lib/settings/labels.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -55,6 +57,23 @@
     };
   };
 
+  /**
+   * What a token may do, in the words this page uses. Mirrors `scopeSummary`
+   * (`$lib/v2/token-rules.js`) but with the self-service page's "you" phrasing,
+   * so it stays under `profile.tokens.*` rather than borrowing the settings
+   * copy that names the owner.
+   *
+   * @param {any} t
+   */
+  function scopeText(t) {
+    const scopes = t?.scopes ?? [];
+    if (scopes.length === 0) return $_('profile.tokens.scope_everything_you');
+    if (scopes.every((/** @type {string} */ s) => s.endsWith(':read'))) {
+      return $_('profile.tokens.scope_read_only');
+    }
+    return $_('profile.tokens.scope_list', { values: { scopes: scopes.join(', ') } });
+  }
+
   /** @param {string} value */
   async function copyToken(value) {
     try {
@@ -68,15 +87,17 @@
   }
 </script>
 
-<PageHeader title="Your API tokens">
-  {#snippet crumb()}<a href={resolve('/profile')}>Profile</a> ›{/snippet}
+<PageHeader title={$_('profile.tokens.title')}>
+  {#snippet crumb()}<a href={resolve('/profile')}>{$_('profile.tokens.crumb')}</a> ›{/snippet}
   {#snippet sub()}
     <span class="v2-num">{count(data.live)}</span>
-    live of <span class="v2-num">{count(data.tokens.length)}</span> you have issued
+    {$_('profile.tokens.sub_live_of')}
+    <span class="v2-num">{count(data.tokens.length)}</span>
+    {$_('profile.tokens.sub_issued')}
   {/snippet}
   {#snippet actions()}
     <button class="v2-btn v2-btn-primary" onclick={() => (creating = !creating)}>
-      <Plus />New token
+      <Plus />{$_('profile.tokens.new_button')}
     </button>
   {/snippet}
 </PageHeader>
@@ -90,11 +111,10 @@
         style="padding:15px 16px;margin-bottom:18px;border-color:color-mix(in srgb, var(--v2-moss) 40%, var(--v2-line))"
       >
         <div style="font-weight:650;font-size:13px">
-          “{form.created.name}” created, copy it now
+          {$_('profile.tokens.created_heading', { values: { name: form.created.name } })}
         </div>
         <p class="v2-sub" style="font-size:12px;margin:4px 0 10px">
-          This is the only time the full token is shown. Store it somewhere safe; it cannot be
-          retrieved again.
+          {$_('profile.tokens.created_body')}
         </p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <code
@@ -104,7 +124,9 @@
             {form.created.token}
           </code>
           <button class="v2-btn v2-btn-sm" onclick={() => copyToken(form.created.token)}>
-            {#if copied}<Check size={13} />Copied{:else}<Copy size={13} />Copy{/if}
+            {#if copied}<Check size={13} />{$_('profile.tokens.copied')}{:else}<Copy
+                size={13}
+              />{$_('profile.tokens.copy')}{/if}
           </button>
         </div>
       </div>
@@ -112,7 +134,7 @@
 
     {#if form?.error}
       <div style="margin-bottom:16px">
-        <NextAction label="That did not work" text={form.error} tone="rust" />
+        <NextAction label={$_('profile.tokens.error_label')} text={form.error} tone="rust" />
       </div>
     {/if}
 
@@ -126,7 +148,7 @@
       >
         <div style="flex:1;min-width:200px">
           <label class="v2-label" for="token-name" style="display:block;margin-bottom:4px">
-            What is this token for?
+            {$_('profile.tokens.form_name_label')}
           </label>
           <input
             id="token-name"
@@ -135,33 +157,35 @@
             maxlength="255"
             class="v2-input"
             style="width:100%"
-            placeholder="e.g. My export script"
+            placeholder={$_('profile.tokens.form_name_placeholder')}
           />
         </div>
         <div style="flex:1;min-width:160px">
           <label class="v2-label" for="token-access" style="display:block;margin-bottom:4px">
-            Access
+            {$_('profile.tokens.form_access_label')}
           </label>
           <select id="token-access" name="access" class="v2-input" style="width:100%">
-            <option value="read" selected>Read only</option>
+            <option value="read" selected>{$_('profile.tokens.access_read')}</option>
             <!-- "Everything you can", not "everything": a token acts as you and
                  inherits your role, so it can never reach past what you can. -->
-            <option value="full">Everything you can</option>
+            <option value="full">{$_('profile.tokens.access_full')}</option>
           </select>
         </div>
         <div style="flex:1;min-width:140px">
           <label class="v2-label" for="token-expiry" style="display:block;margin-bottom:4px">
-            Expires
+            {$_('profile.tokens.form_expiry_label')}
           </label>
           <select id="token-expiry" name="expiry" class="v2-input" style="width:100%">
             {#each EXPIRY_CHOICES as choice (choice.value)}
-              <option value={choice.value}>{choice.label}</option>
+              <option value={choice.value}>{$_(tokenExpiryKey(choice.value))}</option>
             {/each}
           </select>
         </div>
-        <button class="v2-btn v2-btn-primary" disabled={busy}>Create token</button>
+        <button class="v2-btn v2-btn-primary" disabled={busy}
+          >{$_('profile.tokens.form_submit')}</button
+        >
         <button type="button" class="v2-btn" disabled={busy} onclick={() => (creating = false)}>
-          Cancel
+          {$_('profile.tokens.form_cancel')}
         </button>
         {#if form?.create?.error}
           <p
@@ -175,14 +199,11 @@
     {/if}
 
     {#if data.tokens.length === 0}
-      <EmptyState
-        title="No tokens yet"
-        body="A token lets a script, an integration or an agent call the API as you, with your role and your org. Create one when you need it, and revoke it the moment you do not."
-      >
+      <EmptyState title={$_('profile.tokens.empty_title')} body={$_('profile.tokens.empty_body')}>
         {#snippet icon()}<KeyRound size={21} />{/snippet}
         {#snippet actions()}
           <button class="v2-btn v2-btn-primary" onclick={() => (creating = true)}>
-            Create your first token
+            {$_('profile.tokens.empty_action')}
           </button>
         {/snippet}
       </EmptyState>
@@ -191,17 +212,17 @@
         <table class="v2-table">
           <thead>
             <tr>
-              <th>Token</th>
-              <th data-m="hide">Can do</th>
-              <th data-m="hide">Last used</th>
-              <th data-m="hide">Expires</th>
-              <th class="v2-r">State</th>
+              <th>{$_('profile.tokens.col_token')}</th>
+              <th data-m="hide">{$_('profile.tokens.col_can_do')}</th>
+              <th data-m="hide">{$_('profile.tokens.col_last_used')}</th>
+              <th data-m="hide">{$_('profile.tokens.col_expires')}</th>
+              <th class="v2-r">{$_('profile.tokens.col_state')}</th>
             </tr>
           </thead>
           <tbody>
             {#each data.tokens as t (t.id)}
               {@const s = tokenStatus(t)}
-              {@const stale = staleness(t)}
+              {@const stale = tokenStalenessDescriptor(t)}
               <tr style={t.is_live ? '' : 'opacity:.55'}>
                 <td data-m="title">
                   <span class="v2-table-primary">{t.name}</span>
@@ -212,21 +233,21 @@
                 </td>
                 <td data-m="meta">
                   <span class="v2-sub" style="font-size:12px">
-                    {scopeSummary(t, { ownerLabel: 'you' })}
+                    {scopeText(t)}
                   </span>
                 </td>
                 <td data-m="meta">
                   {#if t.last_used_at}
                     {relativeDays(t.last_used_at)}
                   {:else}
-                    <span class="v2-muted">never used</span>
+                    <span class="v2-muted">{$_('profile.tokens.last_used_never')}</span>
                   {/if}
                   {#if stale}
                     <span
                       class="v2-table-secondary"
                       style="display:block;color:var(--v2-clay);font-weight:600"
                     >
-                      {stale}
+                      {$_(stale.key, { values: stale.values })}
                     </span>
                   {/if}
                 </td>
@@ -234,16 +255,18 @@
                   {#if t.expires_at}
                     {shortDate(t.expires_at)}
                   {:else}
-                    <span class="v2-sub">never expires</span>
+                    <span class="v2-sub">{$_('profile.tokens.never_expires')}</span>
                   {/if}
                 </td>
                 <td class="v2-r" data-m="tag">
                   <span style="display:inline-flex;gap:7px;align-items:center">
-                    <Pill tone={s.tone}>{s.label}</Pill>
+                    <Pill tone={s.tone}>{$_(tokenStateKey(t))}</Pill>
                     {#if t.is_live}
                       <form method="POST" action="?/revoke" use:enhance={working}>
                         <input type="hidden" name="id" value={t.id} />
-                        <button class="v2-btn v2-btn-sm" disabled={busy}>Revoke</button>
+                        <button class="v2-btn v2-btn-sm" disabled={busy}
+                          >{$_('profile.tokens.revoke_button')}</button
+                        >
                       </form>
                     {/if}
                   </span>
@@ -260,11 +283,9 @@
     >
       <ShieldAlert size={16} style="color:var(--v2-clay);flex:none;margin-top:1px" />
       <div>
-        <div style="font-weight:600;font-size:13px">A token is you</div>
+        <div style="font-weight:600;font-size:13px">{$_('profile.tokens.warn_title')}</div>
         <p class="v2-sub" style="font-size:12px;margin:4px 0 0">
-          It authenticates as your profile and inherits your role and your org, so anyone holding it
-          can do what you can. Keep it out of shared repositories and screenshots, and revoke it
-          here the moment it is not needed. An admin can see and revoke it too.
+          {$_('profile.tokens.warn_body')}
         </p>
       </div>
     </div>

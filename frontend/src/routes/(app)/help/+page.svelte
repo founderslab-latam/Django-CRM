@@ -31,6 +31,7 @@
   import EmptyState from '$lib/v2/components/EmptyState.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import { relativeTime } from '$lib/v2/format.js';
+  import { _ } from '$lib/i18n/index.js';
   import { BookOpen, LifeBuoy, Plus, Bug, Mail, ArrowUpRight, ClipboardList } from '@lucide/svelte';
 
   /** @type {{ data: any }} */
@@ -45,24 +46,9 @@
   };
 
   const SELF_SERVE = [
-    {
-      href: '/solutions',
-      icon: BookOpen,
-      title: 'Knowledge base',
-      body: 'The answers your team has already written down, including the ones customers can read.'
-    },
-    {
-      href: '/tickets',
-      icon: LifeBuoy,
-      title: 'Your tickets',
-      body: 'Everything open, and who it is waiting on. Most "no one replied" turns out to be a ticket assigned to nobody.'
-    },
-    {
-      href: '/settings',
-      icon: ClipboardList,
-      title: 'Settings',
-      body: 'Routing, escalation, business hours and inbound email. Each page reports what its rules are actually doing, not just what they are set to.'
-    }
+    { href: '/solutions', icon: BookOpen, key: 'kb' },
+    { href: '/tickets', icon: LifeBuoy, key: 'tickets' },
+    { href: '/settings', icon: ClipboardList, key: 'settings' }
   ];
 
   /**
@@ -79,15 +65,13 @@
     {
       href: 'https://github.com/django-crm/Django-CRM/issues',
       icon: Bug,
-      title: 'Report a bug',
-      body: 'Public issue tracker. Fastest route for anything reproducible.',
+      key: 'bug',
       newTab: true
     },
     {
       href: 'mailto:support@bottlecrm.io',
       icon: Mail,
-      title: 'Email support',
-      body: 'For anything involving your data, billing or an account you cannot get into.',
+      key: 'email',
       newTab: false
     }
   ];
@@ -103,18 +87,22 @@
     if (data.available) return;
     const ua = navigator.userAgent;
     const m = ua.match(/(Firefox|Edg|Chrome|Safari)\/([\d.]+)/);
-    browser = m ? `${m[1] === 'Edg' ? 'Edge' : m[1]} ${m[2].split('.')[0]}` : 'Unknown browser';
+    browser = m
+      ? `${m[1] === 'Edg' ? 'Edge' : m[1]} ${m[2].split('.')[0]}`
+      : $_('help.home.unknown_browser');
     windowSize = `${window.innerWidth}×${window.innerHeight}`;
   });
 </script>
 
-<PageHeader title="Help" center width="920px">
+<PageHeader title={$_('help.home.title')} center width="920px">
   {#snippet sub()}
-    Fix it yourself, or reach someone who can
+    {$_('help.home.sub')}
   {/snippet}
   {#snippet actions()}
     {#if data.available}
-      <a class="v2-btn v2-btn-primary" href={resolve('/help/new')}><Plus />New ticket</a>
+      <a class="v2-btn v2-btn-primary" href={resolve('/help/new')}
+        ><Plus />{$_('help.home.new_ticket')}</a
+      >
     {/if}
   {/snippet}
 </PageHeader>
@@ -124,29 +112,28 @@
     class="v2-pad"
     style="padding-top:18px;padding-bottom:32px;max-width:920px;margin-inline:auto"
   >
-    <div class="v2-label" style="margin-bottom:10px">Start here</div>
+    <div class="v2-label" style="margin-bottom:10px">{$_('help.home.section_start')}</div>
     <div class="cards">
       {#each SELF_SERVE as card (card.href)}
         <a class="v2-card card" href={resolve(asInternalPath(card.href))}>
           <card.icon size={17} />
           <div>
-            <b>{card.title}</b>
-            <p>{card.body}</p>
+            <b>{$_(`help.home.card_${card.key}_title`)}</b>
+            <p>{$_(`help.home.card_${card.key}_body`)}</p>
           </div>
         </a>
       {/each}
     </div>
 
     {#if data.available}
-      <div class="v2-label" style="margin:26px 0 10px">Your support tickets</div>
+      <div class="v2-label" style="margin:26px 0 10px">{$_('help.home.section_tickets')}</div>
       {#if data.tickets.length === 0}
-        <EmptyState
-          title="No support tickets"
-          body="When you need help with BottleCRM, open a ticket here. Replies and status changes stay attached to it."
-        >
+        <EmptyState title={$_('help.home.empty_title')} body={$_('help.home.empty_body')}>
           {#snippet icon()}<LifeBuoy size={21} />{/snippet}
           {#snippet actions()}
-            <a class="v2-btn v2-btn-primary" href={resolve('/help/new')}>Open a ticket</a>
+            <a class="v2-btn v2-btn-primary" href={resolve('/help/new')}
+              >{$_('help.home.empty_action')}</a
+            >
           {/snippet}
         </EmptyState>
       {:else}
@@ -154,11 +141,11 @@
           <table class="v2-table">
             <thead>
               <tr>
-                <th>Ticket</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Messages</th>
-                <th class="v2-r">Updated</th>
+                <th>{$_('help.home.col_ticket')}</th>
+                <th>{$_('help.home.col_category')}</th>
+                <th>{$_('help.home.col_status')}</th>
+                <th>{$_('help.home.col_messages')}</th>
+                <th class="v2-r">{$_('help.home.col_updated')}</th>
               </tr>
             </thead>
             <tbody>
@@ -185,7 +172,7 @@
         </div>
       {/if}
     {:else}
-      <div class="v2-label" style="margin:26px 0 10px">If that did not do it</div>
+      <div class="v2-label" style="margin:26px 0 10px">{$_('help.home.section_contact')}</div>
       <div class="cards">
         {#each CONTACT as card (card.href)}
           <a
@@ -197,35 +184,36 @@
             <card.icon size={17} />
             <div>
               <b>
-                {card.title}{#if card.newTab}<ArrowUpRight size={12} class="ext" />{/if}
+                {$_(`help.home.card_${card.key}_title`)}{#if card.newTab}<ArrowUpRight
+                    size={12}
+                    class="ext"
+                  />{/if}
               </b>
-              <p>{card.body}</p>
+              <p>{$_(`help.home.card_${card.key}_body`)}</p>
             </div>
           </a>
         {/each}
       </div>
 
-      <div class="v2-label" style="margin:26px 0 10px">What to include when you write</div>
+      <div class="v2-label" style="margin:26px 0 10px">{$_('help.home.section_include')}</div>
       <div class="v2-card" style="padding:16px 18px">
         <p class="lead">
-          Four things turn a two-day exchange into one message. The first two are already known.
+          {$_('help.home.include_lead')}
         </p>
         <dl class="facts">
-          <dt>Browser</dt>
+          <dt>{$_('help.home.fact_browser')}</dt>
           <dd class="v2-num">{browser}</dd>
-          <dt>Window size</dt>
+          <dt>{$_('help.home.fact_window')}</dt>
           <dd class="v2-num">{windowSize}</dd>
-          <dt>What you expected</dt>
-          <dd>The thing you were trying to do, in one sentence.</dd>
-          <dt>What happened instead</dt>
+          <dt>{$_('help.home.fact_expected')}</dt>
+          <dd>{$_('help.home.fact_expected_body')}</dd>
+          <dt>{$_('help.home.fact_happened')}</dt>
           <dd>
-            The exact wording of any error. "It didn't work" and "Something went wrong" are the same
-            message to us.
+            {$_('help.home.fact_happened_body')}
           </dd>
         </dl>
         <p class="fine">
-          Please do not paste screenshots containing an invoice link, an API token or a survey URL.
-          Each of those is a working credential for whoever ends up holding it.
+          {$_('help.home.fine_print')}
         </p>
       </div>
     {/if}

@@ -7,8 +7,10 @@
  * enterprise `platform_support` API says support.
  */
 import { error } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 
 import { apiRequest } from '$lib/api-helpers.js';
+import { _ } from '$lib/i18n/index.js';
 
 export const SUPPORT_CATEGORIES = [
   { value: 'technical', label: 'Technical issue' },
@@ -101,7 +103,7 @@ export async function getSupportTicket({ cookies }, id) {
     // deliberate: a 403 here would confirm the id is real. Without this the
     // page answered 500, which every other v2 detail page already avoids.
     if (err?.status === 404) {
-      error(404, 'That request does not exist, or somebody else opened it.');
+      error(404, get(_)('help.detail.error_404'));
     }
     throw err;
   }

@@ -4,6 +4,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { enhance } from '$app/forms';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
+  import { _ } from '$lib/i18n/index.js';
   import { TriangleAlert, Upload, Users, Lock } from '@lucide/svelte';
 
   /** @type {{ data: any, form: any }} */
@@ -43,8 +44,8 @@
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
-    if (!title.trim()) e.title = 'Give the document a title you would recognise in a list.';
-    if (!fileName) e.file = 'Choose a file to upload.';
+    if (!title.trim()) e.title = $_('documents.new.error_title');
+    if (!fileName) e.file = $_('documents.new.error_file');
     return e;
   });
 
@@ -77,10 +78,10 @@
   };
 </script>
 
-<PageHeader title="Upload a document" center>
-  {#snippet crumb()}<a href={resolve('/documents')}>Documents</a> ›{/snippet}
+<PageHeader title={$_('documents.new.title')} center>
+  {#snippet crumb()}<a href={resolve('/documents')}>{$_('documents.new.crumb')}</a> ›{/snippet}
   {#snippet sub()}
-    Add a file, then choose who can open it. Nobody sees it until you share it.
+    {$_('documents.new.sub')}
   {/snippet}
 </PageHeader>
 
@@ -101,14 +102,14 @@
       >
         <TriangleAlert size={17} style="color:var(--v2-rust);flex:none" />
         <div class="v2-next-body">
-          <div style="font-weight:600">The server refused this upload</div>
+          <div style="font-weight:600">{$_('documents.new.server_error_heading')}</div>
           <div class="v2-sub" style="margin-top:2px">{result.error}</div>
         </div>
       </div>
     {/if}
 
     <div class="v2-field">
-      <label for="f-title">Title</label>
+      <label for="f-title">{$_('documents.new.field_title')}</label>
       <input
         id="f-title"
         name="title"
@@ -117,19 +118,19 @@
         onblur={() => (touched.title = true)}
         aria-invalid={show('title') ? 'true' : undefined}
         aria-describedby={show('title') ? 'e-title' : 'h-title'}
-        placeholder="Master services agreement (2026 template)"
+        placeholder={$_('documents.new.placeholder_title')}
       />
       {#if show('title')}
         <p class="v2-error" id="e-title">{errors.title}</p>
       {:else}
         <p class="v2-hint" id="h-title">
-          What you would call it out loud. It has to be unique here.
+          {$_('documents.new.hint_title')}
         </p>
       {/if}
     </div>
 
     <div class="v2-field">
-      <label for="f-file">File</label>
+      <label for="f-file">{$_('documents.new.field_file')}</label>
       <input
         id="f-file"
         name="document_file"
@@ -144,25 +145,25 @@
       {:else}
         <p class="v2-hint" id="h-file">
           {fileName
-            ? `Selected: ${fileName}`
-            : 'PDFs, sheets, docs. Whatever you send people often.'}
+            ? $_('documents.new.file_selected', { values: { name: fileName } })
+            : $_('documents.new.hint_file')}
         </p>
       {/if}
     </div>
 
     <fieldset class="v2-field share">
-      <legend>Who can open it</legend>
+      <legend>{$_('documents.new.share_legend')}</legend>
       <p class="v2-hint" style="margin-top:0">
         {#if reach === 0}
-          <span class="unshared"><Lock size={11} /> Only you and admins, until you share it.</span>
+          <span class="unshared"><Lock size={11} /> {$_('documents.new.share_none')}</span>
         {:else}
-          Reaches <span class="v2-num">{reach}</span>
-          {reach === 1 ? 'person or team' : 'people and teams'}, plus admins.
+          {$_('documents.new.share_reach_prefix')} <span class="v2-num">{reach}</span>
+          {$_('documents.new.share_reach_unit', { values: { count: reach } })}
         {/if}
       </p>
 
       {#if data.people?.length}
-        <div class="share-label">People</div>
+        <div class="share-label">{$_('documents.new.share_people')}</div>
         <div class="share-grid">
           {#each data.people as p (p.id)}
             <label class="share-opt">
@@ -180,7 +181,7 @@
       {/if}
 
       {#if data.teams?.length}
-        <div class="share-label"><Users size={12} /> Teams</div>
+        <div class="share-label"><Users size={12} /> {$_('documents.new.share_teams')}</div>
         <div class="share-grid">
           {#each data.teams as t (t.id)}
             <label class="share-opt">
@@ -199,17 +200,20 @@
 
       {#if !data.people?.length && !data.teams?.length}
         <p class="v2-sub" style="font-size:12px">
-          No teammates or teams to share with yet. The document will be visible to you and admins.
+          {$_('documents.new.share_empty')}
         </p>
       {/if}
     </fieldset>
 
     <div style="display:flex;gap:8px;align-items:center;margin-top:22px">
-      <button class="v2-btn v2-btn-primary" type="submit"><Upload size={15} /> Upload</button>
-      <a class="v2-btn" href={resolve('/documents')}>Cancel</a>
+      <button class="v2-btn v2-btn-primary" type="submit"
+        ><Upload size={15} /> {$_('documents.new.submit')}</button
+      >
+      <a class="v2-btn" href={resolve('/documents')}>{$_('documents.new.cancel')}</a>
       <span class="v2-sub" style="margin-left:auto;font-size:12px">
         <span class="v2-num">{REQUIRED.filter((f) => !errors[f]).length}</span>
-        of <span class="v2-num">{REQUIRED.length}</span> required fields done
+        {$_('documents.new.required_of')} <span class="v2-num">{REQUIRED.length}</span>
+        {$_('documents.new.required_suffix')}
       </span>
     </div>
   </form>

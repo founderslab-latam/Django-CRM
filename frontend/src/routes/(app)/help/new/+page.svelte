@@ -2,14 +2,16 @@
   import { enhance } from '$app/forms';
   import { resolve } from '$app/paths';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
+  import { _ } from '$lib/i18n/index.js';
+  import { supportCategoryKey } from '$lib/help/labels.js';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
   let submitting = $state(false);
 </script>
 
-<PageHeader title="New support ticket" center width="720px">
-  {#snippet sub()}Tell us what happened and what you expected instead{/snippet}
+<PageHeader title={$_('help.new.title')} center width="720px">
+  {#snippet sub()}{$_('help.new.sub')}{/snippet}
 </PageHeader>
 
 <div class="v2-scroll">
@@ -34,7 +36,7 @@
       }}
     >
       <div class="v2-field">
-        <label for="subject">Subject</label>
+        <label for="subject">{$_('help.new.field_subject')}</label>
         <input
           id="subject"
           class="v2-input"
@@ -42,24 +44,24 @@
           maxlength="200"
           required
           value={form?.subject ?? ''}
-          placeholder="A short summary of the problem"
+          placeholder={$_('help.new.placeholder_subject')}
         />
       </div>
 
       <div class="v2-field">
-        <label for="category">Category</label>
+        <label for="category">{$_('help.new.field_category')}</label>
         <select id="category" class="v2-input" name="category" required>
-          <option value="">Choose a category</option>
+          <option value="">{$_('help.new.category_placeholder')}</option>
           {#each data.categories as category (category.value)}
             <option value={category.value} selected={form?.category === category.value}
-              >{category.label}</option
+              >{$_(supportCategoryKey(category.value))}</option
             >
           {/each}
         </select>
       </div>
 
       <div class="v2-field">
-        <label for="body">What do you need help with?</label>
+        <label for="body">{$_('help.new.field_body')}</label>
         <textarea
           id="body"
           class="v2-input"
@@ -67,24 +69,21 @@
           rows="8"
           maxlength="10000"
           required
-          placeholder="Include what you tried, what you expected, and the exact error you saw."
-          >{form?.body ?? ''}</textarea
+          placeholder={$_('help.new.placeholder_body')}>{form?.body ?? ''}</textarea
         >
       </div>
 
       <div class="v2-field">
-        <label for="attachment">Attachment (optional)</label>
+        <label for="attachment">{$_('help.new.field_attachment')}</label>
         <input id="attachment" class="v2-input" type="file" name="attachment" />
-        <span class="v2-sub" style="font-size:11.5px"
-          >Up to 25 MB. Remove secrets and personal data before uploading.</span
-        >
+        <span class="v2-sub" style="font-size:11.5px">{$_('help.new.attachment_hint')}</span>
       </div>
 
       <div class="actions">
         <button class="v2-btn v2-btn-primary" type="submit" disabled={submitting}
-          >{submitting ? 'Opening…' : 'Open ticket'}</button
+          >{submitting ? $_('help.new.submitting') : $_('help.new.submit')}</button
         >
-        <a class="v2-btn" href={resolve('/help')}>Cancel</a>
+        <a class="v2-btn" href={resolve('/help')}>{$_('help.new.cancel')}</a>
       </div>
     </form>
   </div>
