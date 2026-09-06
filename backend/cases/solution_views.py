@@ -5,6 +5,7 @@ Solution (Knowledge Base) Views
 import json
 
 from django.db.models import Count, Q
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
@@ -299,7 +300,9 @@ class SolutionPublishView(APIView):
         if solution.status != "approved":
             return Response(
                 {
-                    "error": "Only approved solutions can be published. Please approve it first."
+                    "error": _(
+                        "Only approved solutions can be published. Please approve it first."
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

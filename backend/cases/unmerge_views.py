@@ -15,6 +15,7 @@ from __future__ import annotations
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.utils.dateparse import parse_date
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -54,13 +55,16 @@ class CaseUnmergeView(APIView):
                 source = Case.objects.select_for_update().get(id=pk, org=org)
             except Case.DoesNotExist:
                 return Response(
-                    {"error": True, "errors": "Ticket not found."},
+                    {"error": True, "errors": _("Ticket not found.")},
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
             if source.merged_into_id is None:
                 return Response(
-                    {"error": True, "errors": "This ticket is not currently merged."},
+                    {
+                        "error": True,
+                        "errors": _("This ticket is not currently merged."),
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -86,7 +90,7 @@ class CaseUnmergeView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "Target ticket no longer exists; cannot unmerge.",
+                        "errors": _("Target ticket no longer exists; cannot unmerge."),
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -186,7 +190,7 @@ class CaseUnmergeView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Tickets unmerged",
+                "message": _("Tickets unmerged"),
                 "source_case": CaseSerializer(source).data,
             },
             status=status.HTTP_200_OK,

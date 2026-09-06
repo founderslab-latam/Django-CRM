@@ -12,6 +12,7 @@ versioning, view counts, helpfulness feedback, slugs.
 from __future__ import annotations
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -67,7 +68,7 @@ class SolutionSuggestionsView(APIView):
         org = request.profile.org
         case = Case.objects.filter(pk=pk, org=org).first()
         if case is None:
-            return Response({"error": "Case not found"}, status=404)
+            return Response({"error": _("Case not found")}, status=404)
 
         try:
             limit = int(request.query_params.get("limit", _DEFAULT_LIMIT))

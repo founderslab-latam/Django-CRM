@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 07:21+0000\n"
+"POT-Creation-Date: 2026-09-06 07:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -120,6 +120,175 @@ msgstr "Correo enviado correctamente."
 msgid "Email scheduled successfully"
 msgstr "Correo programado correctamente."
 
+msgid "Admin access required"
+msgstr "Se requiere acceso de administrador."
+
+msgid "only fmt=csv is supported"
+msgstr "Solo se admite fmt=csv."
+
+msgid "Approver is outside this org."
+msgstr "La persona que aprueba está fuera de esta organización."
+
+msgid "Team is outside this org."
+msgstr "El equipo está fuera de esta organización."
+
+msgid "Rule not found"
+msgstr "No se encontró la regla."
+
+msgid "Rule not found or inactive."
+msgstr "No se encontró la regla o está inactiva."
+
+msgid "Rule does not match this case."
+msgstr "La regla no coincide con este ticket."
+
+msgid "No active approval rule matches this case."
+msgstr "Ninguna regla de aprobación activa coincide con este ticket."
+
+msgid "An approval is already pending for this case."
+msgstr "Ya hay una aprobación pendiente para este ticket."
+
+msgid "Approval not found"
+msgstr "No se encontró la aprobación."
+
+#, python-format
+msgid "Approval already %(state)s."
+msgstr "La aprobación ya está %(state)s."
+
+msgid "You are not an approver for this rule."
+msgstr "No eres una persona que aprueba para esta regla."
+
+msgid "You cannot approve your own request; another approver must decide it."
+msgstr "No puedes aprobar tu propia solicitud; otra persona debe decidirla."
+
+msgid "Rejection reason is required."
+msgstr "El motivo del rechazo es obligatorio."
+
+msgid "You cannot reject your own request; another approver must decide it."
+msgstr "No puedes rechazar tu propia solicitud; otra persona debe decidirla."
+
+msgid "Only the requester can cancel."
+msgstr "Solo quien la solicitó puede cancelarla."
+
+msgid "ids required"
+msgstr "Se requieren los ids."
+
+msgid "fields required"
+msgstr "Se requieren los campos."
+
+#, python-format
+msgid "Unsupported fields: %(fields)s"
+msgstr "Campos no admitidos: %(fields)s"
+
+#, python-format
+msgid "Invalid value for '%(field)s'"
+msgstr "Valor inválido para '%(field)s'."
+
+msgid "Invalid value for 'closed_on'"
+msgstr "Valor inválido para 'closed_on'."
+
+msgid "Survey is locked. Edit window has closed."
+msgstr "La encuesta está bloqueada. La ventana de edición se cerró."
+
+#, python-format
+msgid "rating must be an integer %(min)s-%(max)s"
+msgstr "la calificación debe ser un número entero entre %(min)s y %(max)s"
+
+#, python-format
+msgid "rating must be %(min)s..%(max)s"
+msgstr "la calificación debe estar entre %(min)s y %(max)s"
+
+msgid "Escalation policy not found"
+msgstr "No se encontró la política de escalamiento."
+
+msgid "Escalation policy deleted"
+msgstr "Política de escalamiento eliminada."
+
+msgid "No file uploaded (expected field 'file')"
+msgstr "No se subió ningún archivo (se esperaba el campo 'file')."
+
+msgid "File must have a .csv extension"
+msgstr "El archivo debe tener extensión .csv."
+
+msgid "File exceeds the 5 MB upload limit"
+msgstr "El archivo supera el límite de carga de 5 MB."
+
+msgid "Permission denied"
+msgstr "Permiso denegado."
+
+msgid "Signature verification failed"
+msgstr "Falló la verificación de la firma."
+
+msgid "Mailbox not found"
+msgstr "No se encontró el buzón."
+
+#, python-format
+msgid "Provider %(provider)r not yet supported"
+msgstr "El proveedor %(provider)r todavía no está admitido."
+
+msgid "Body is not valid JSON"
+msgstr "El cuerpo no es un JSON válido."
+
+msgid "SubscribeURL fetch failed"
+msgstr "Falló la obtención de SubscribeURL."
+
+#, python-format
+msgid "Unsupported SNS Type: %(type)r"
+msgstr "Tipo de SNS no admitido: %(type)r"
+
+msgid "SNS Message body is empty"
+msgstr "El cuerpo del mensaje SNS está vacío."
+
+msgid "Mailbox deleted"
+msgstr "Buzón eliminado."
+
+#, python-format
+msgid "Stage '%(stage)s' has reached its WIP limit of %(limit)s"
+msgstr "La etapa '%(stage)s' alcanzó su límite de trabajo en curso de %(limit)s."
+
+msgid "Case moved successfully"
+msgstr "Ticket movido correctamente."
+
+msgid "Only admins can create pipelines"
+msgstr "Solo los administradores pueden crear flujos."
+
+#, python-format
+msgid "Cannot delete pipeline with %(count)s cases. Move cases first."
+msgstr "No se puede eliminar un flujo con %(count)s tickets. Muévelos primero."
+
+#, python-format
+msgid "Cannot delete stage with %(count)s cases. Move cases first."
+msgstr "No se puede eliminar una etapa con %(count)s tickets. Muévelos primero."
+
+msgid "Invalid stage IDs provided"
+msgstr "Se proporcionaron IDs de etapa inválidos."
+
+msgid "Stages reordered successfully"
+msgstr "Etapas reordenadas correctamente."
+
+msgid "Only an admin can approve or publish a knowledge-base article."
+msgstr "Solo un administrador puede aprobar o publicar un artículo de la base de conocimientos."
+
+msgid "Case not found"
+msgstr "No se encontró el ticket."
+
+msgid "Cannot merge a ticket into itself."
+msgstr "No se puede combinar un ticket consigo mismo."
+
+msgid "Ticket not found."
+msgstr "No se encontró el ticket."
+
+msgid "Tickets already merged."
+msgstr "Los tickets ya están combinados."
+
+msgid "Source ticket is already merged into a different ticket."
+msgstr "El ticket de origen ya está combinado con otro ticket."
+
+msgid "Target ticket has already been merged elsewhere."
+msgstr "El ticket de destino ya se combinó en otro lado."
+
+msgid "Tickets merged"
+msgstr "Tickets combinados."
+
 msgctxt "Name of the case"
 msgid "Name"
 msgstr ""
@@ -182,6 +351,140 @@ msgstr ""
 
 msgid "Inbound Address"
 msgstr ""
+
+msgid "Not found."
+msgstr "No se encontró."
+
+msgid "Case is not linked to a parent."
+msgstr "El ticket no está vinculado a un ticket padre."
+
+msgid "Cannot close a merged case."
+msgstr "No se puede cerrar un ticket combinado."
+
+msgid "Give the request a short summary."
+msgstr "Dale a la solicitud un resumen breve."
+
+msgid "Write a message before sending."
+msgstr "Escribe un mensaje antes de enviar."
+
+msgid "Unknown status."
+msgstr "Estado desconocido."
+
+msgid "Article not found"
+msgstr "No se encontró el artículo."
+
+msgid "Routing rule not found"
+msgstr "No se encontró la regla de asignación."
+
+msgid "Routing rule deleted"
+msgstr "Regla de asignación eliminada."
+
+msgid "case_id is required"
+msgstr "Se requiere case_id."
+
+msgid "No such account."
+msgstr "No existe esa cuenta."
+
+msgid "Case already exists with this name"
+msgstr "Ya existe un ticket con este nombre."
+
+msgid "Parent case must belong to the same organization."
+msgstr "El ticket padre debe pertenecer a la misma organización."
+
+msgid "reopen_window_days must be between 1 and 365"
+msgstr "reopen_window_days debe estar entre 1 y 365."
+
+msgid "conditions must be a list of objects."
+msgstr "conditions debe ser una lista de objetos."
+
+#, python-format
+msgid "conditions[%(i)s] must be an object."
+msgstr "conditions[%(i)s] debe ser un objeto."
+
+#, python-format
+msgid "conditions[%(i)s].field is required."
+msgstr "conditions[%(i)s].field es obligatorio."
+
+#, python-format
+msgid "conditions[%(i)s].field %(field)r is not supported."
+msgstr "conditions[%(i)s].field %(field)r no está admitido."
+
+#, python-format
+msgid "conditions[%(i)s].op %(op)r is not supported."
+msgstr "conditions[%(i)s].op %(op)r no está admitido."
+
+#, python-format
+msgid "conditions[%(i)s].value is required."
+msgstr "conditions[%(i)s].value es obligatorio."
+
+msgid "Description is required when logging time manually."
+msgstr "La descripción es obligatoria al registrar tiempo manualmente."
+
+msgid "Description cannot be empty."
+msgstr "La descripción no puede estar vacía."
+
+msgid "Either stage_id or status must be provided"
+msgstr "Debe proporcionarse stage_id o status."
+
+msgid "Fix the invalid rows before importing"
+msgstr "Corrige las filas inválidas antes de importar."
+
+msgid "Only approved solutions can be published. Please approve it first."
+msgstr "Solo se pueden publicar soluciones aprobadas. Apruébala primero."
+
+msgid "You already have a running timer."
+msgstr "Ya tienes un cronómetro en marcha."
+
+msgid "Not authorized to edit this entry."
+msgstr "No tienes autorización para editar esta entrada."
+
+msgid "Not authorized to delete this entry."
+msgstr "No tienes autorización para eliminar esta entrada."
+
+msgid "Cannot delete an entry that has been invoiced."
+msgstr "No se puede eliminar una entrada que ya fue facturada."
+
+msgid "Not authorized to stop this entry."
+msgstr "No tienes autorización para detener esta entrada."
+
+msgid "Timer is already stopped."
+msgstr "El cronómetro ya está detenido."
+
+msgid "Only admins can view another profile's timesheet."
+msgstr "Solo los administradores pueden ver el registro de horas de otro perfil."
+
+msgid "end must be on or after start."
+msgstr "end debe ser igual o posterior a start."
+
+msgid "This ticket is not currently merged."
+msgstr "Este ticket no está combinado actualmente."
+
+msgid "Target ticket no longer exists; cannot unmerge."
+msgstr "El ticket de destino ya no existe; no se puede separar."
+
+msgid "Tickets unmerged"
+msgstr "Tickets separados."
+
+msgid "Case Created Successfully"
+msgstr "Ticket creado correctamente."
+
+msgid "Case Updated Successfully"
+msgstr "Ticket actualizado correctamente."
+
+msgid "Case Deleted Successfully."
+msgstr "Ticket eliminado correctamente."
+
+msgid "You don't have permission to perform this action."
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "You do not have permission to perform this action"
+msgstr "No tienes permiso para realizar esta acción."
+
+msgid "solution_id required"
+msgstr "Se requiere solution_id."
+
+msgid "Solution not found"
+msgstr "No se encontró la solución."
 
 msgid "Organization context is required. Please login again."
 msgstr "Se requiere contexto de organización. Inicia sesión nuevamente."
@@ -1117,9 +1420,6 @@ msgstr "Enlace inválido o vencido."
 msgid "Invalid or expired code"
 msgstr "Código inválido o vencido."
 
-msgid "Admin access required"
-msgstr "Se requiere acceso de administrador."
-
 msgid "Custom field not found"
 msgstr "No se encontró el campo personalizado."
 
@@ -1233,9 +1533,6 @@ msgstr "Restaura esa etiqueta antes de combinar registros en ella."
 msgid "Merged %(source)s into %(target)s. %(moved)s record(s) moved."
 msgstr "Se combinó %(source)s en %(target)s. %(moved)s registro(s) movido(s)."
 
-msgid "You don't have permission to perform this action."
-msgstr "No tienes permiso para realizar esta acción."
-
 msgid "Team Created Successfully"
 msgstr "Equipo creado correctamente."
 
@@ -1266,26 +1563,11 @@ msgstr "La empresa del usuario no coincide con el encabezado...."
 msgid "This user can't be deleted while they still have time entries or approvals linked to them."
 msgstr "No se puede eliminar este usuario mientras tenga registros de tiempo o aprobaciones vinculados a él."
 
-msgid "You do not have permission to perform this action"
-msgstr "No tienes permiso para realizar esta acción."
-
 msgid "The organization must keep at least one active admin."
 msgstr "La organización debe conservar al menos un administrador activo."
 
 msgid "Please enter Valid Status for user"
 msgstr "Ingresa un estado válido para el usuario."
-
-msgid "No file uploaded (expected field 'file')"
-msgstr "No se subió ningún archivo (se esperaba el campo 'file')."
-
-msgid "File must have a .csv extension"
-msgstr "El archivo debe tener la extensión .csv."
-
-msgid "File exceeds the 5 MB upload limit"
-msgstr "El archivo supera el límite de subida de 5 MB."
-
-msgid "Permission denied"
-msgstr "Permiso denegado."
 
 msgid "First name"
 msgstr ""
@@ -1307,9 +1589,6 @@ msgstr ""
 
 msgid "LinkedIn URL"
 msgstr ""
-
-msgid "No such account."
-msgstr "No existe esa cuenta."
 
 msgid "Contact already exists with this email"
 msgstr "Ya existe un contacto con este correo electrónico"
@@ -1402,9 +1681,6 @@ msgstr "Supera los %(max)s caracteres"
 
 msgid "Exceeds 64 characters"
 msgstr "Supera los 64 caracteres"
-
-msgid "Fix the invalid rows before importing"
-msgstr "Corrige las filas inválidas antes de importar"
 
 msgid "A contact was created concurrently that conflicts with this import (likely a duplicate email). Re-run preview and try again."
 msgstr "Se creó un contacto de forma concurrente que entra en conflicto con esta importación (probablemente un correo electrónico duplicado). Vuelve a ejecutar la vista previa e inténtalo de nuevo."
@@ -1717,15 +1993,6 @@ msgstr ""
 
 msgid "Lead moved successfully"
 msgstr "Prospecto movido correctamente."
-
-msgid "Only admins can create pipelines"
-msgstr "Solo los administradores pueden crear flujos."
-
-msgid "Invalid stage IDs provided"
-msgstr "Se proporcionaron IDs de etapa inválidos."
-
-msgid "Stages reordered successfully"
-msgstr "Etapas reordenadas correctamente."
 
 msgid "Leads created Successfully"
 msgstr "Prospectos creados correctamente."

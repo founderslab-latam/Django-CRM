@@ -6,6 +6,7 @@ Supports both status-based (default) and custom pipeline-based kanban boards.
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -246,7 +247,7 @@ class CaseMoveView(APIView):
                 or request.profile in case.assigned_to.all()
             ):
                 return Response(
-                    {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                    {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
                 )
 
         serializer = CaseMoveSerializer(data=request.data)
@@ -269,7 +270,10 @@ class CaseMoveView(APIView):
                     if current_count >= stage.wip_limit:
                         return Response(
                             {
-                                "error": f"Stage '{stage.name}' has reached its WIP limit of {stage.wip_limit}"
+                                "error": _(
+                                    "Stage '%(stage)s' has reached its WIP limit of %(limit)s"
+                                )
+                                % {"stage": stage.name, "limit": stage.wip_limit}
                             },
                             status=status.HTTP_400_BAD_REQUEST,
                         )
@@ -302,7 +306,7 @@ class CaseMoveView(APIView):
         return Response(
             {
                 "error": False,
-                "message": "Case moved successfully",
+                "message": _("Case moved successfully"),
                 "case": CaseKanbanCardSerializer(case).data,
             }
         )
@@ -347,7 +351,7 @@ class CasePipelineListCreateView(APIView):
 
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Only admins can create pipelines"},
+                {"error": _("Only admins can create pipelines")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -432,7 +436,7 @@ class CasePipelineDetailView(APIView):
     def put(self, request, pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -451,7 +455,7 @@ class CasePipelineDetailView(APIView):
     def delete(self, request, pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         pipeline = self.get_object(pk, request.profile.org)
@@ -460,7 +464,10 @@ class CasePipelineDetailView(APIView):
         if case_count > 0:
             return Response(
                 {
-                    "error": f"Cannot delete pipeline with {case_count} cases. Move cases first."
+                    "error": _(
+                        "Cannot delete pipeline with %(count)s cases. Move cases first."
+                    )
+                    % {"count": case_count}
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -483,7 +490,7 @@ class CaseStageCreateView(APIView):
     def post(self, request, pipeline_pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -513,7 +520,7 @@ class CaseStageDetailView(APIView):
     def put(self, request, pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(CaseStage, pk=pk, org=request.profile.org)
@@ -532,7 +539,7 @@ class CaseStageDetailView(APIView):
     def delete(self, request, pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         stage = get_object_or_404(CaseStage, pk=pk, org=request.profile.org)
@@ -541,7 +548,10 @@ class CaseStageDetailView(APIView):
         if case_count > 0:
             return Response(
                 {
-                    "error": f"Cannot delete stage with {case_count} cases. Move cases first."
+                    "error": _(
+                        "Cannot delete stage with %(count)s cases. Move cases first."
+                    )
+                    % {"count": case_count}
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -566,7 +576,7 @@ class CaseStageReorderView(APIView):
     def post(self, request, pipeline_pk):
         if not is_org_admin(request.profile) and not request.user.is_superuser:
             return Response(
-                {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN
             )
 
         org = request.profile.org
@@ -577,11 +587,11 @@ class CaseStageReorderView(APIView):
         stages = CaseStage.objects.filter(pipeline=pipeline, id__in=stage_ids)
         if stages.count() != len(stage_ids):
             return Response(
-                {"error": "Invalid stage IDs provided"},
+                {"error": _("Invalid stage IDs provided")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         for order, stage_id in enumerate(stage_ids):
             CaseStage.objects.filter(id=stage_id).update(order=order)
 
-        return Response({"message": "Stages reordered successfully"})
+        return Response({"message": _("Stages reordered successfully")})

@@ -34,6 +34,7 @@ rule here. Approving is the moment an article stops being an internal note.
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
+from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import PermissionDenied
 
 from cases.access import is_org_admin
@@ -81,7 +82,7 @@ def assert_solution_release_access(profile):
     """
     if not is_org_admin(profile):
         raise PermissionDenied(
-            "Only an admin can approve or publish a knowledge-base article."
+            _("Only an admin can approve or publish a knowledge-base article.")
         )
 
 

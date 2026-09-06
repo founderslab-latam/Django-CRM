@@ -4,15 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cases', '0030_escalationpolicy_first_response_hours_and_more'),
+        ("cases", "0030_escalationpolicy_first_response_hours_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='timeentry',
-            name='currency',
-            field=models.CharField(choices=[('USD', 'USD, Dollar'), ('EUR', 'EUR, Euro'), ('GBP', 'GBP, Pound'), ('INR', 'INR, Rupee'), ('CAD', 'CAD, Dollar'), ('AUD', 'AUD, Dollar'), ('JPY', 'JPY, Yen'), ('CNY', 'CNY, Yuan'), ('CHF', 'CHF, Franc'), ('SGD', 'SGD, Dollar'), ('AED', 'AED, Dirham'), ('BRL', 'BRL, Real'), ('MXN', 'MXN, Peso'), ('CLP', 'CLP, Peso')], default='USD', max_length=3),
+            model_name="timeentry",
+            name="currency",
+            field=models.CharField(
+                choices=[
+                    ("USD", "USD, Dollar"),
+                    ("EUR", "EUR, Euro"),
+                    ("GBP", "GBP, Pound"),
+                    ("INR", "INR, Rupee"),
+                    ("CAD", "CAD, Dollar"),
+                    ("AUD", "AUD, Dollar"),
+                    ("JPY", "JPY, Yen"),
+                    ("CNY", "CNY, Yuan"),
+                    ("CHF", "CHF, Franc"),
+                    ("SGD", "SGD, Dollar"),
+                    ("AED", "AED, Dirham"),
+                    ("BRL", "BRL, Real"),
+                    ("MXN", "MXN, Peso"),
+                    ("CLP", "CLP, Peso"),
+                ],
+                default="USD",
+                max_length=3,
+            ),
         ),
     ]

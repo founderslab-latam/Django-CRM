@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.http import Http404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import (
     extend_schema,
     inline_serializer,
@@ -399,7 +400,7 @@ class CaseListView(APIView, LimitOffsetPagination):
             return Response(
                 {
                     "error": False,
-                    "message": "Case Created Successfully",
+                    "message": _("Case Created Successfully"),
                     "id": str(cases_obj.id),
                     "cases_obj": CaseSerializer(cases_obj).data,
                 },
@@ -548,7 +549,7 @@ class CaseDetailView(APIView):
 
             notify_newly_assigned(request, cases_object, previous_assigned_to_users)
             return Response(
-                {"error": False, "message": "Case Updated Successfully"},
+                {"error": False, "message": _("Case Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -575,7 +576,7 @@ class CaseDetailView(APIView):
         assert_case_delete_access(request.profile, self.object)
         self.object.delete()
         return Response(
-            {"error": False, "message": "Case Deleted Successfully."},
+            {"error": False, "message": _("Case Deleted Successfully.")},
             status=status.HTTP_200_OK,
         )
 
@@ -898,7 +899,7 @@ class CaseDetailView(APIView):
 
             notify_newly_assigned(request, cases_object, previous_assigned_to_users)
             return Response(
-                {"error": False, "message": "Case Updated Successfully"},
+                {"error": False, "message": _("Case Updated Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -953,7 +954,7 @@ class CaseCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Submitted"},
+                    {"error": False, "message": _("Comment Submitted")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -963,7 +964,7 @@ class CaseCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -992,7 +993,7 @@ class CaseCommentView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(
-                    {"error": False, "message": "Comment Updated"},
+                    {"error": False, "message": _("Comment Updated")},
                     status=status.HTTP_200_OK,
                 )
             return Response(
@@ -1002,7 +1003,7 @@ class CaseCommentView(APIView):
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -1025,13 +1026,13 @@ class CaseCommentView(APIView):
         if is_org_admin(request.profile) or request.profile == self.object.commented_by:
             self.object.delete()
             return Response(
-                {"error": False, "message": "Comment Deleted Successfully"},
+                {"error": False, "message": _("Comment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You do not have permission to perform this action",
+                "errors": _("You do not have permission to perform this action"),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -1089,13 +1090,13 @@ class CaseAttachmentView(APIView):
         ):
             self.object.delete()
             return Response(
-                {"error": False, "message": "Attachment Deleted Successfully"},
+                {"error": False, "message": _("Attachment Deleted Successfully")},
                 status=status.HTTP_200_OK,
             )
         return Response(
             {
                 "error": True,
-                "errors": "You don't have permission to perform this action.",
+                "errors": _("You don't have permission to perform this action."),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -1143,14 +1144,14 @@ class CaseSolutionLinkView(APIView):
         solution_id = request.data.get("solution_id")
         if not solution_id:
             return Response(
-                {"error": True, "errors": "solution_id required"},
+                {"error": True, "errors": _("solution_id required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         sol = self._get_solution(solution_id, request.profile.org)
         if not sol:
             return Response(
-                {"error": True, "errors": "Solution not found"},
+                {"error": True, "errors": _("Solution not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1173,7 +1174,7 @@ class CaseSolutionLinkView(APIView):
         sol = self._get_solution(solution_pk, request.profile.org)
         if not sol:
             return Response(
-                {"error": True, "errors": "Solution not found"},
+                {"error": True, "errors": _("Solution not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         case.solutions.remove(sol)
@@ -1327,7 +1328,7 @@ class ReopenPolicyView(APIView):
     def get(self, request, format=None):
         if not is_org_admin(request.profile):
             return Response(
-                {"error": True, "errors": "Admin access required"},
+                {"error": True, "errors": _("Admin access required")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         policy = self._get_or_create_policy(request.profile.org)
@@ -1344,7 +1345,7 @@ class ReopenPolicyView(APIView):
     def put(self, request, format=None):
         if not is_org_admin(request.profile):
             return Response(
-                {"error": True, "errors": "Admin access required"},
+                {"error": True, "errors": _("Admin access required")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         policy = self._get_or_create_policy(request.profile.org)

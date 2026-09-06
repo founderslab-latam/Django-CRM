@@ -15,6 +15,7 @@ as the default, and accepts ``cascade`` in the body to override.
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -99,7 +100,9 @@ class CaseLinkParentView(APIView):
         # race on the cycle check. We look up the parent under the same lock.
         case = Case.objects.select_for_update().filter(id=pk, org=org).first()
         if case is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND
+            )
 
         former_parent_id = case.parent_id
 
@@ -107,7 +110,7 @@ class CaseLinkParentView(APIView):
             # Detach.
             if case.parent_id is None:
                 return Response(
-                    {"detail": "Case is not linked to a parent."},
+                    {"detail": _("Case is not linked to a parent.")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             case.parent = None
@@ -188,10 +191,12 @@ class CaseCloseWithChildrenView(APIView):
         org = request.profile.org
         case = Case.objects.select_for_update().filter(id=pk, org=org).first()
         if case is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND
+            )
         if case.status == "Duplicate":
             return Response(
-                {"detail": "Cannot close a merged case."},
+                {"detail": _("Cannot close a merged case.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         resolution_comment = (request.data.get("resolution_comment") or "").strip()

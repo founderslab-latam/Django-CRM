@@ -25,6 +25,7 @@ from typing import Any, Iterable
 from django.db import transaction
 from django.db.models.functions import Lower
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 from accounts.models import Account
 from cases.models import Case
@@ -468,7 +469,7 @@ def commit_rows(file_bytes: bytes, org, profile) -> dict[str, Any]:
         # Don't write anything if any row failed; users must fix the file first.
         return {
             "error": True,
-            "message": "Fix the invalid rows before importing",
+            "message": _("Fix the invalid rows before importing"),
             "errors": [e.to_dict() for e in result.errors],
             "created": 0,
         }

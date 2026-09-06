@@ -7,6 +7,7 @@ being stripped out later. A field that is not declared cannot be leaked by a
 future edit to a shared serializer, and cannot be mass-assigned on the way in.
 """
 
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from cases.models import Case, Solution
@@ -99,7 +100,7 @@ class PortalCaseCreateSerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         value = (value or "").strip()
         if not value:
-            raise serializers.ValidationError("Give the request a short summary.")
+            raise serializers.ValidationError(_("Give the request a short summary."))
         return value
 
     def validate_priority(self, value):
@@ -121,5 +122,5 @@ class PortalCommentCreateSerializer(serializers.Serializer):
     def validate_comment(self, value):
         value = (value or "").strip()
         if not value:
-            raise serializers.ValidationError("Write a message before sending.")
+            raise serializers.ValidationError(_("Write a message before sending."))
         return value

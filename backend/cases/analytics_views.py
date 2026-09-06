@@ -18,6 +18,7 @@ from uuid import UUID
 from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -205,7 +206,7 @@ class AnalyticsServiceView(_AnalyticsBaseView):
     def get(self, request):
         if not is_org_admin(request.profile):
             return Response(
-                {"error": True, "errors": "Admin access required"}, status=403
+                {"error": True, "errors": _("Admin access required")}, status=403
             )
         days = _parse_days(request.query_params.get("days"))
         qs = Case.objects.filter(
@@ -297,7 +298,7 @@ class AnalyticsExportView(_AnalyticsBaseView):
         bucket = request.query_params.get("bucket")
         fmt = request.query_params.get("fmt", "csv")
         if fmt != "csv":
-            return Response({"error": "only fmt=csv is supported"}, status=400)
+            return Response({"error": _("only fmt=csv is supported")}, status=400)
 
         qs, from_dt, to_dt = _filtered_qs(request)
         try:

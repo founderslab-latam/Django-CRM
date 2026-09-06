@@ -1,4 +1,5 @@
 from django.db.models import Sum
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from accounts.serializer import AccountSerializer
@@ -167,7 +168,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
         been missed.
         """
         if account is not None and account.org_id != self.org.id:
-            raise serializers.ValidationError("No such account.")
+            raise serializers.ValidationError(_("No such account."))
         return account
 
     def validate(self, attrs):
@@ -254,11 +255,15 @@ class CaseCreateSerializer(serializers.ModelSerializer):
                 .exclude(id=self.instance.id)
                 .exists()
             ):
-                raise serializers.ValidationError("Case already exists with this name")
+                raise serializers.ValidationError(
+                    _("Case already exists with this name")
+                )
 
         else:
             if Case.objects.filter(name__iexact=name, org=self.org).exists():
-                raise serializers.ValidationError("Case already exists with this name")
+                raise serializers.ValidationError(
+                    _("Case already exists with this name")
+                )
         return name
 
     def validate_parent(self, parent):
@@ -274,7 +279,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
             return parent
         if parent.org_id != self.org.id:
             raise serializers.ValidationError(
-                "Parent case must belong to the same organization."
+                _("Parent case must belong to the same organization.")
             )
         return parent
 
@@ -480,7 +485,7 @@ class ReopenPolicySerializer(serializers.ModelSerializer):
     def validate_reopen_window_days(self, value):
         if value < 1 or value > 365:
             raise serializers.ValidationError(
-                "reopen_window_days must be between 1 and 365"
+                _("reopen_window_days must be between 1 and 365")
             )
         return value
 
@@ -773,26 +778,36 @@ class RoutingRuleSerializer(serializers.ModelSerializer):
         if value in (None, ""):
             return []
         if not isinstance(value, list):
-            raise serializers.ValidationError("conditions must be a list of objects.")
+            raise serializers.ValidationError(
+                _("conditions must be a list of objects.")
+            )
         for i, cond in enumerate(value):
             if not isinstance(cond, dict):
-                raise serializers.ValidationError(f"conditions[{i}] must be an object.")
+                raise serializers.ValidationError(
+                    _("conditions[%(i)s] must be an object.") % {"i": i}
+                )
             field = cond.get("field")
             op = cond.get("op", "eq")
             if not isinstance(field, str) or not field:
-                raise serializers.ValidationError(f"conditions[{i}].field is required.")
+                raise serializers.ValidationError(
+                    _("conditions[%(i)s].field is required.") % {"i": i}
+                )
             if not (
                 field in self.SUPPORTED_FIELDS or field.startswith("custom_fields.")
             ):
                 raise serializers.ValidationError(
-                    f"conditions[{i}].field {field!r} is not supported."
+                    _("conditions[%(i)s].field %(field)r is not supported.")
+                    % {"i": i, "field": field}
                 )
             if op not in self.SUPPORTED_OPS:
                 raise serializers.ValidationError(
-                    f"conditions[{i}].op {op!r} is not supported."
+                    _("conditions[%(i)s].op %(op)r is not supported.")
+                    % {"i": i, "op": op}
                 )
             if "value" not in cond:
-                raise serializers.ValidationError(f"conditions[{i}].value is required.")
+                raise serializers.ValidationError(
+                    _("conditions[%(i)s].value is required.") % {"i": i}
+                )
         return value
 
     def validate(self, attrs):
@@ -874,7 +889,7 @@ class TimeEntryCreateSerializer(serializers.ModelSerializer):
     def validate_description(self, value):
         if not value or not value.strip():
             raise serializers.ValidationError(
-                "Description is required when logging time manually."
+                _("Description is required when logging time manually.")
             )
         return value.strip()
 
@@ -917,7 +932,7 @@ class TimeEntryUpdateSerializer(serializers.ModelSerializer):
         # Only blocks explicit attempts to clear the field; PATCH bodies that
         # omit `description` (e.g., toggling billable) skip this entirely.
         if value is not None and not value.strip():
-            raise serializers.ValidationError("Description cannot be empty.")
+            raise serializers.ValidationError(_("Description cannot be empty."))
         return value.strip() if value else value
 
     def validate(self, attrs):
@@ -951,7 +966,7 @@ class CaseMoveSerializer(serializers.Serializer):
     def validate(self, attrs):
         if not attrs.get("stage_id") and not attrs.get("status"):
             raise serializers.ValidationError(
-                "Either stage_id or status must be provided"
+                _("Either stage_id or status must be provided")
             )
         return attrs
 

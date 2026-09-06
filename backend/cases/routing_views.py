@@ -6,6 +6,7 @@ See docs/cases/tier1/auto-routing.md.
 from datetime import timedelta
 
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
@@ -59,7 +60,7 @@ def _routing_analytics(org):
 
 def _admin_required():
     return Response(
-        {"error": True, "errors": "Admin access required"},
+        {"error": True, "errors": _("Admin access required")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -138,7 +139,7 @@ class RoutingRuleDetailView(APIView):
         obj = self._get_object(pk, request.profile.org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Routing rule not found"},
+                {"error": True, "errors": _("Routing rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(
@@ -159,7 +160,7 @@ class RoutingRuleDetailView(APIView):
         obj = self._get_object(pk, org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Routing rule not found"},
+                {"error": True, "errors": _("Routing rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         serializer = RoutingRuleSerializer(
@@ -194,12 +195,12 @@ class RoutingRuleDetailView(APIView):
         obj = self._get_object(pk, request.profile.org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Routing rule not found"},
+                {"error": True, "errors": _("Routing rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         obj.delete()
         return Response(
-            {"error": False, "message": "Routing rule deleted"},
+            {"error": False, "message": _("Routing rule deleted")},
             status=status.HTTP_200_OK,
         )
 
@@ -239,13 +240,13 @@ class RoutingRuleTestView(APIView):
         case_id = request.data.get("case_id")
         if not case_id:
             return Response(
-                {"error": True, "errors": "case_id is required"},
+                {"error": True, "errors": _("case_id is required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         case = Case.objects.filter(pk=case_id, org=org).first()
         if case is None:
             return Response(
-                {"error": True, "errors": "Case not found"},
+                {"error": True, "errors": _("Case not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         decision = evaluate(case, dry_run=True)

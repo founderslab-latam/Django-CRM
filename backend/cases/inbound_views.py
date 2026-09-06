@@ -25,6 +25,7 @@ from datetime import timedelta
 
 from django.db.models import Count, Max
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -91,7 +92,7 @@ def _mailbox_analytics(org):
 
 def _admin_required():
     return Response(
-        {"error": True, "errors": "Admin access required"},
+        {"error": True, "errors": _("Admin access required")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -100,7 +101,7 @@ def _topic_rejected():
     """Deliberately as opaque as the signature failure. A caller probing the
     webhook shouldn't learn whether a mailbox is pinned or to what."""
     return Response(
-        {"error": True, "errors": "Signature verification failed"},
+        {"error": True, "errors": _("Signature verification failed")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -148,7 +149,7 @@ class InboundMailboxWebhookView(APIView):
         if mailbox is None:
             # Don't leak which UUIDs exist; return a generic 404.
             return Response(
-                {"error": True, "errors": "Mailbox not found"},
+                {"error": True, "errors": _("Mailbox not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -161,7 +162,8 @@ class InboundMailboxWebhookView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": f"Provider {mailbox.provider!r} not yet supported",
+                    "errors": _("Provider %(provider)r not yet supported")
+                    % {"provider": mailbox.provider},
                 },
                 status=status.HTTP_501_NOT_IMPLEMENTED,
             )
@@ -175,7 +177,7 @@ class InboundMailboxWebhookView(APIView):
             )
         except (ValueError, TypeError):
             return Response(
-                {"error": True, "errors": "Body is not valid JSON"},
+                {"error": True, "errors": _("Body is not valid JSON")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -186,7 +188,7 @@ class InboundMailboxWebhookView(APIView):
                 "SNS verification failed for mailbox=%s: %s", mailbox.id, exc
             )
             return Response(
-                {"error": True, "errors": "Signature verification failed"},
+                {"error": True, "errors": _("Signature verification failed")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -225,7 +227,7 @@ class InboundMailboxWebhookView(APIView):
             except Exception:
                 logger.exception("SNS subscription confirmation failed")
                 return Response(
-                    {"error": True, "errors": "SubscribeURL fetch failed"},
+                    {"error": True, "errors": _("SubscribeURL fetch failed")},
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
             return Response({"ok": True, "subscribed": True})
@@ -236,7 +238,10 @@ class InboundMailboxWebhookView(APIView):
 
         if msg_type != "Notification":
             return Response(
-                {"error": True, "errors": f"Unsupported SNS Type: {msg_type!r}"},
+                {
+                    "error": True,
+                    "errors": _("Unsupported SNS Type: %(type)r") % {"type": msg_type},
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -254,7 +259,7 @@ class InboundMailboxWebhookView(APIView):
 
         if not raw_message:
             return Response(
-                {"error": True, "errors": "SNS Message body is empty"},
+                {"error": True, "errors": _("SNS Message body is empty")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -342,7 +347,7 @@ class InboundMailboxDetailView(APIView):
         obj = self._get_object(pk, request.profile.org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Mailbox not found"},
+                {"error": True, "errors": _("Mailbox not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(
@@ -361,7 +366,7 @@ class InboundMailboxDetailView(APIView):
         obj = self._get_object(pk, org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Mailbox not found"},
+                {"error": True, "errors": _("Mailbox not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         serializer = InboundMailboxSerializer(
@@ -396,8 +401,8 @@ class InboundMailboxDetailView(APIView):
         obj = self._get_object(pk, request.profile.org)
         if not obj:
             return Response(
-                {"error": True, "errors": "Mailbox not found"},
+                {"error": True, "errors": _("Mailbox not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         obj.delete()
-        return Response({"error": False, "message": "Mailbox deleted"})
+        return Response({"error": False, "message": _("Mailbox deleted")})

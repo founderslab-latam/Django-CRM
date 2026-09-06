@@ -20,6 +20,7 @@ from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -92,7 +93,7 @@ def _approval_rule_analytics(org):
 
 def _admin_required():
     return Response(
-        {"error": True, "errors": "Admin access required"},
+        {"error": True, "errors": _("Admin access required")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -150,13 +151,13 @@ class ApprovalRuleListCreateView(APIView):
         for p in approvers:
             if p.org_id != org.id:
                 return Response(
-                    {"error": True, "errors": "Approver is outside this org."},
+                    {"error": True, "errors": _("Approver is outside this org.")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         match_team = serializer.validated_data.get("match_team")
         if match_team is not None and match_team.org_id != org.id:
             return Response(
-                {"error": True, "errors": "Team is outside this org."},
+                {"error": True, "errors": _("Team is outside this org.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         rule = serializer.save(org=org)
@@ -175,7 +176,7 @@ class ApprovalRuleDetailView(APIView):
         rule = self._get(pk, request.profile.org)
         if rule is None:
             return Response(
-                {"error": True, "errors": "Rule not found"},
+                {"error": True, "errors": _("Rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(ApprovalRuleSerializer(rule).data)
@@ -186,7 +187,7 @@ class ApprovalRuleDetailView(APIView):
         rule = self._get(pk, request.profile.org)
         if rule is None:
             return Response(
-                {"error": True, "errors": "Rule not found"},
+                {"error": True, "errors": _("Rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         serializer = ApprovalRuleSerializer(
@@ -209,7 +210,7 @@ class ApprovalRuleDetailView(APIView):
         rule = self._get(pk, request.profile.org)
         if rule is None:
             return Response(
-                {"error": True, "errors": "Rule not found"},
+                {"error": True, "errors": _("Rule not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         # Hard delete is fine. Approval.rule is on_delete=PROTECT, so any
@@ -259,12 +260,12 @@ class CaseRequestApprovalView(APIView):
             ).first()
             if rule is None:
                 return Response(
-                    {"error": True, "errors": "Rule not found or inactive."},
+                    {"error": True, "errors": _("Rule not found or inactive.")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if not rule.matches(case):
                 return Response(
-                    {"error": True, "errors": "Rule does not match this case."},
+                    {"error": True, "errors": _("Rule does not match this case.")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         else:
@@ -273,7 +274,7 @@ class CaseRequestApprovalView(APIView):
                 return Response(
                     {
                         "error": True,
-                        "errors": "No active approval rule matches this case.",
+                        "errors": _("No active approval rule matches this case."),
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -288,7 +289,7 @@ class CaseRequestApprovalView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "An approval is already pending for this case.",
+                    "errors": _("An approval is already pending for this case."),
                     "approval_id": str(existing.id),
                 },
                 status=status.HTTP_409_CONFLICT,
@@ -406,20 +407,21 @@ class ApprovalApproveView(APIView):
         approval = _load_pending(pk, org)
         if approval is None:
             return Response(
-                {"error": True, "errors": "Approval not found"},
+                {"error": True, "errors": _("Approval not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         if approval.state != "pending":
             return Response(
                 {
                     "error": True,
-                    "errors": f"Approval already {approval.state}.",
+                    "errors": _("Approval already %(state)s.")
+                    % {"state": approval.state},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not approval.can_be_acted_on_by(request.profile):
             return Response(
-                {"error": True, "errors": "You are not an approver for this rule."},
+                {"error": True, "errors": _("You are not an approver for this rule.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         # Separation of duties: the person who filed the request cannot approve
@@ -429,8 +431,9 @@ class ApprovalApproveView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You cannot approve your own request; "
-                    "another approver must decide it.",
+                    "errors": _(
+                        "You cannot approve your own request; another approver must decide it."
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -462,26 +465,27 @@ class ApprovalRejectView(APIView):
         reason = (request.data.get("reason") or "").strip()
         if not reason:
             return Response(
-                {"error": True, "errors": "Rejection reason is required."},
+                {"error": True, "errors": _("Rejection reason is required.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         approval = _load_pending(pk, org)
         if approval is None:
             return Response(
-                {"error": True, "errors": "Approval not found"},
+                {"error": True, "errors": _("Approval not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         if approval.state != "pending":
             return Response(
                 {
                     "error": True,
-                    "errors": f"Approval already {approval.state}.",
+                    "errors": _("Approval already %(state)s.")
+                    % {"state": approval.state},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not approval.can_be_acted_on_by(request.profile):
             return Response(
-                {"error": True, "errors": "You are not an approver for this rule."},
+                {"error": True, "errors": _("You are not an approver for this rule.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         # Separation of duties: the requester cannot reject their own request
@@ -490,8 +494,9 @@ class ApprovalRejectView(APIView):
             return Response(
                 {
                     "error": True,
-                    "errors": "You cannot reject your own request; "
-                    "another approver must decide it.",
+                    "errors": _(
+                        "You cannot reject your own request; another approver must decide it."
+                    ),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -530,14 +535,15 @@ class ApprovalCancelView(APIView):
         approval = _load_pending(pk, org)
         if approval is None:
             return Response(
-                {"error": True, "errors": "Approval not found"},
+                {"error": True, "errors": _("Approval not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
         if approval.state != "pending":
             return Response(
                 {
                     "error": True,
-                    "errors": f"Approval already {approval.state}.",
+                    "errors": _("Approval already %(state)s.")
+                    % {"state": approval.state},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -546,7 +552,7 @@ class ApprovalCancelView(APIView):
             request.profile
         ):
             return Response(
-                {"error": True, "errors": "Only the requester can cancel."},
+                {"error": True, "errors": _("Only the requester can cancel.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         approval.state = "cancelled"
