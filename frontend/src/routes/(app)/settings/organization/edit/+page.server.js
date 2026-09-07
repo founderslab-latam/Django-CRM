@@ -49,8 +49,24 @@ export const actions = {
       if (form.has(flag)) body[flag] = form.get(flag) === 'true';
     }
 
+    // A picked logo file turns the request into multipart. An untouched file
+    // input still submits a zero-byte entry, so the `size > 0` check is what
+    // separates "chose a new logo" from "left it alone".
+    const logo = form.get('logo');
+    const hasLogo = logo && typeof logo !== 'string' && 'size' in logo && logo.size > 0;
+
+    /** @type {Record<string, unknown> | FormData} */
+    let payload = body;
+    if (hasLogo) {
+      payload = new FormData();
+      for (const [k, v] of Object.entries(body)) {
+        payload.append(k, typeof v === 'boolean' ? String(v) : /** @type {string} */ (v));
+      }
+      payload.append('logo', /** @type {Blob} */ (logo), /** @type {File} */ (logo).name);
+    }
+
     try {
-      await updateOrgSettings({ cookies }, body);
+      await updateOrgSettings({ cookies }, payload);
     } catch (/** @type {any} */ err) {
       if (err?.status === 403) {
         return fail(403, {

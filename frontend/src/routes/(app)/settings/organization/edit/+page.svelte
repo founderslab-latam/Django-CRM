@@ -90,6 +90,23 @@
   let touched = $state(/** @type {Record<string, boolean>} */ ({}));
   let submitted = $state(false);
 
+  // Logo is a file, so it lives outside `form` (a File can't round-trip through
+  // $state cleanly). Only a newly picked file is sent; an untouched input
+  // leaves the stored logo alone.
+  const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+  const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+  let logoError = $state('');
+
+  /** @param {Event & { currentTarget: HTMLInputElement }} e */
+  const onLogoChange = (e) => {
+    const file = e.currentTarget.files?.[0];
+    logoError = '';
+    if (!file) return;
+    if (file.size > LOGO_MAX_BYTES) logoError = $_('settings.organization.edit.logo_err_size');
+    else if (!LOGO_TYPES.includes(file.type))
+      logoError = $_('settings.organization.edit.logo_err_type');
+  };
+
   let errors = $derived.by(() => {
     /** @type {Record<string, string>} */
     const e = {};
@@ -106,7 +123,7 @@
     return e;
   });
 
-  let valid = $derived(Object.keys(errors).length === 0);
+  let valid = $derived(Object.keys(errors).length === 0 && !logoError);
 
   // The company tax ID is called different things by country. Chile's is the
   // RUT; everywhere else the generic label stands. The field and its stored
@@ -160,7 +177,14 @@
   </PageHeader>
 
   <div class="v2-scroll v2-pad" style="padding-top:18px">
-    <form class="v2-form" method="POST" action="?/save" use:enhance={check} novalidate>
+    <form
+      class="v2-form"
+      method="POST"
+      action="?/save"
+      enctype="multipart/form-data"
+      use:enhance={check}
+      novalidate
+    >
       {#if result?.error}
         <div
           class="v2-next"
@@ -177,7 +201,7 @@
         </div>
       {/if}
 
-      {#if submitted && !valid}
+      {#if submitted && Object.keys(errors).length > 0}
         <div
           class="v2-next"
           style="background:color-mix(in srgb, var(--v2-rust) 9%, transparent);border-color:color-mix(in srgb, var(--v2-rust) 28%, transparent);margin-bottom:18px"
@@ -222,6 +246,31 @@
         <label for="f-name">{$_('settings.organization.edit.trading_name')}</label>
         <input id="f-name" name="name" class="v2-input" maxlength="100" bind:value={form.name} />
         <p class="v2-hint">{$_('settings.organization.edit.trading_name_hint')}</p>
+      </div>
+
+      <div class="v2-field">
+        <label for="f-logo">{$_('settings.organization.edit.logo')}</label>
+        {#if org.logo_url}
+          <img
+            src={org.logo_url}
+            alt={$_('settings.organization.edit.logo_current')}
+            style="max-height:44px;max-width:180px;display:block;margin-bottom:8px;border-radius:4px"
+          />
+        {/if}
+        <input
+          id="f-logo"
+          name="logo"
+          type="file"
+          class="v2-input"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          onchange={onLogoChange}
+          aria-invalid={logoError ? 'true' : undefined}
+        />
+        {#if logoError}
+          <p class="v2-error">{logoError}</p>
+        {:else}
+          <p class="v2-hint">{$_('settings.organization.edit.logo_hint')}</p>
+        {/if}
       </div>
 
       <div class="pair">

@@ -102,7 +102,7 @@ export async function getOrgSettings({ cookies }) {
  * server-side. Partial, only the fields in `body` are touched.
  *
  * @param {{ cookies: import('@sveltejs/kit').Cookies }} event
- * @param {Record<string, unknown>} body
+ * @param {Record<string, unknown> | FormData} body
  */
 export function updateOrgSettings({ cookies }, body) {
   return apiRequest('/org/settings/', { method: 'PATCH', body }, { cookies });

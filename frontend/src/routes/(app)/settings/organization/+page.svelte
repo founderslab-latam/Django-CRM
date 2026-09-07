@@ -154,9 +154,15 @@
             <dd>{org.website || '—'}</dd>
             <dt>{$_('settings.organization.read.logo')}</dt>
             <dd>
-              {org.logo_url
-                ? $_('settings.organization.read.logo_set')
-                : $_('settings.organization.read.logo_not_set')}
+              {#if org.logo_url}
+                <img
+                  src={org.logo_url}
+                  alt={$_('settings.organization.read.logo_set')}
+                  style="max-height:40px;max-width:160px;display:block;border-radius:4px"
+                />
+              {:else}
+                {$_('settings.organization.read.logo_not_set')}
+              {/if}
             </dd>
           </dl>
         </div>
