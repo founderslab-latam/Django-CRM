@@ -7,6 +7,7 @@
 #   - TWO hostnames, because the SvelteKit app and Django both own `/api/*`:
 #       crm.founderslab.cloud      -> frontend  (SvelteKit / adapter-node, :3000)
 #       api-crm.founderslab.cloud  -> backend   (Django / gunicorn, :8000)
+#     plus api-crm.founderslab.cloud/media/  -> nginx (`media`), public logos only.
 #   - Persistent data is bind-mounted under $DATA_DIR (default
 #     /opt/crm-founderslab-data), OUTSIDE the repo, so a `git clean` or a fresh
 #     checkout can never touch it. Back up with tar/rsync:
@@ -144,6 +145,37 @@ services:
       - "traefik.http.routers.crm-web.entrypoints=websecure"
       - "traefik.http.routers.crm-web.tls.certresolver=mytlschallenge"
       - "traefik.http.services.crm-web.loadbalancer.server.port=3000"
+
+  # Static file server for the PUBLIC media subtrees only (logos). Django does
+  # not serve /media/ with DEBUG=False, and a blanket server would leak other
+  # tenants' attachments -- so this mounts ONLY org_logos/ and
+  # invoice_templates/, read-only. Everything else under /media/ 404s here and
+  # is reached through Django's gated /api/*/download/ endpoints.
+  media:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./docker/nginx/media.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/media/org_logos:/srv/media/org_logos:ro
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/media/invoice_templates:/srv/media/invoice_templates:ro
+    expose:
+      - "80"
+    networks:
+      - n8n_default
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=n8n_default"
+      # Same host as the API; this router is more specific and wins for /media/.
+      - "traefik.http.routers.crm-media.rule=Host(`api-crm.founderslab.cloud`) && PathPrefix(`/media/`)"
+      - "traefik.http.routers.crm-media.entrypoints=websecure"
+      - "traefik.http.routers.crm-media.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.crm-media.priority=100"
+      - "traefik.http.services.crm-media.loadbalancer.server.port=80"
 
 networks:
   # Created by the n8n stack; Traefik is attached to it. Same external network

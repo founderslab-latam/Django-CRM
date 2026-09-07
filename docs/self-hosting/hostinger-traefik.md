@@ -14,15 +14,20 @@ and [Environment variables](environment-variables.md) first.
 Two hostnames, because the SvelteKit app and Django **both** serve `/api/*` and
 cannot share one origin:
 
-| Hostname | Service | Container | Port |
+| Hostname / path | Service | Container | Port |
 |---|---|---|---|
 | `crm.founderslab.cloud` | SvelteKit frontend (adapter-node) | `frontend` | 3000 |
 | `api-crm.founderslab.cloud` | Django API + admin (gunicorn) | `backend` | 8000 |
+| `api-crm.founderslab.cloud/media/` | nginx — public logos only | `media` | 80 |
 
 `db` (PostgreSQL 16) and `redis` (Celery broker) have **no** published port and
 stay on the compose-internal network. `celery-worker` and `celery-beat` share the
-backend image. Traefik reaches `backend` and `frontend` over the external
-`n8n_default` network (the one the existing Traefik is attached to).
+backend image. Traefik reaches `backend`, `frontend` and `media` over the external
+`n8n_default` network (the one the existing Traefik is attached to). The `media`
+router is a `PathPrefix(/media/)` on the API host and only serves `org_logos/`
+and `invoice_templates/` — attachments and documents stay behind Django's gated
+`/api/*/download/` endpoints (a blanket `/media/` server would leak across
+tenants).
 
 Rename `crm.founderslab.cloud` / `api-crm.founderslab.cloud` in **two places** if you
 need different names: the `Host(...)` labels in `docker-compose.prod.yml` and the
@@ -61,7 +66,8 @@ python3 -c "import secrets; print(secrets.token_urlsafe(64))"   # -> SECRET_KEY
 $EDITOR .env.prod        # fill every CHANGE_ME; strong POSTGRES_PASSWORD / DBPASSWORD
 
 # 3. Data directory, outside the repo, so `git clean` can never touch it.
-sudo mkdir -p /opt/crm-founderslab-data/{postgres,media,staticfiles}
+sudo mkdir -p /opt/crm-founderslab-data/{postgres,staticfiles} \
+              /opt/crm-founderslab-data/media/{org_logos,invoice_templates}
 
 # 4. Bring it up.
 docker compose -f docker-compose.prod.yml up -d --build
@@ -162,15 +168,14 @@ Deferred on purpose; none of it blocks entering customers.
   (Google or magic link) — there is **no** password field, the `ADMIN_PASSWORD`
   is only for `/admin/`.
 - **Uploaded-file previews.** With `ENV_TYPE=dev` and `DEBUG=False`, Django does
-  not serve `/media/` (by design — it was a cross-tenant read hole). Attachments
-  still download fine through the permission-checked
-  `/api/(documents|attachments)/<id>/download/` endpoints, and the invoice PDF
-  renderer reads the org logo straight off disk, so the only casualty is the
-  logo *preview* on the settings screen. The real fix is object storage: point
-  `server_settings.py`'s S3 backend at any S3-compatible endpoint (Hostinger
-  Object Storage, Cloudflare R2, Backblaze B2) via `AWS_S3_ENDPOINT_URL` — which
-  also means moving to `ENV_TYPE=prod` and supplying the SES + Sentry vars it
-  then requires.
+  not serve `/media/` (by design — it was a cross-tenant read hole). The `media`
+  nginx sidecar covers the *public* subtrees (`org_logos/`,
+  `invoice_templates/`), so logo previews and portal logos work. Attachments and
+  documents stay behind the permission-checked
+  `/api/(documents|attachments)/<id>/download/` endpoints — do **not** widen the
+  sidecar's mounts to all of `/media/`. Moving everything to object storage
+  (`server_settings.py`'s S3 backend + `AWS_S3_ENDPOINT_URL`, and `ENV_TYPE=prod`
+  with its SES/Sentry vars) is still the eventual answer for the gated files.
 - **Google sign-in.** Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in
   `.env.prod` and on the frontend. See [Google OAuth](google-oauth.md).
 

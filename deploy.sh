@@ -43,7 +43,8 @@ case "$DATA_DIR/" in
         echo "Movelo fuera del checkout -- si no, git clean se lleva la BD." >&2
         exit 1 ;;
 esac
-mkdir -p "$DATA_DIR"/postgres "$DATA_DIR"/media "$DATA_DIR"/staticfiles
+mkdir -p "$DATA_DIR"/postgres "$DATA_DIR"/staticfiles \
+         "$DATA_DIR"/media/org_logos "$DATA_DIR"/media/invoice_templates
 export DATA_DIR
 
 if ! docker network inspect n8n_default >/dev/null 2>&1; then
