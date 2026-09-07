@@ -345,7 +345,14 @@ async function listContacts(cookies) {
     const response = await apiRequest('/opportunities/?limit=1', {}, { cookies });
     const contacts = (response.contacts_list ?? []).map((/** @type {any} */ contact) => ({
       id: contact.id,
-      name: [contact.first_name, contact.last_name].filter(Boolean).join(' ').trim()
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(' ').trim(),
+      // Every account this contact belongs to: the "primary" FK plus the
+      // `account_contacts` M2M. The deal form filters the picker to the
+      // selected account with this.
+      accountIds: [
+        contact.account,
+        ...(contact.linked_accounts ?? []).map((/** @type {any} */ a) => a.id)
+      ].filter(Boolean)
     }));
     contacts.sort((/** @type {any} */ a, /** @type {any} */ b) => a.name.localeCompare(b.name));
     return contacts;

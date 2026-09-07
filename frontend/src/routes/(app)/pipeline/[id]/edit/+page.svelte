@@ -67,6 +67,15 @@
   // The deal's people. Held apart from `form` so the `<select multiple>` binds
   // to a plain array; synced back via the `contacts_present` marker.
   let selectedContacts = $state(untrack(() => [...(data.form.contacts ?? [])]));
+
+  // Contacts of the chosen account, plus any already on the deal so a contact
+  // linked to a different account stays visible (to keep or remove).
+  let visibleContacts = $derived(
+    (data.contacts ?? []).filter(
+      (/** @type {any} */ c) =>
+        c.accountIds.includes(form.account) || selectedContacts.includes(c.id)
+    )
+  );
   let touched = $state(/** @type {Record<string, boolean>} */ ({}));
   let submitted = $state(false);
   let saved = $state(false);
@@ -261,7 +270,7 @@
         size="4"
         bind:value={selectedContacts}
       >
-        {#each data.contacts as c (c.id)}
+        {#each visibleContacts as c (c.id)}
           <option value={c.id}>{c.name}</option>
         {/each}
       </select>

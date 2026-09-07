@@ -57,6 +57,15 @@
   // a `<select multiple>` binds cleanest to a plain array.
   let selectedContacts = $state(untrack(() => result?.values?.contacts ?? []));
 
+  // Only contacts of the chosen account (by the FK or the account_contacts
+  // M2M), plus any already picked so a stale choice stays visible to remove.
+  let visibleContacts = $derived(
+    (data.contacts ?? []).filter(
+      (/** @type {any} */ c) =>
+        form.account && (c.accountIds.includes(form.account) || selectedContacts.includes(c.id))
+    )
+  );
+
   let more = $state(false);
   let touched = $state(/** @type {Record<string, boolean>} */ ({}));
   let submitted = $state(false);
@@ -204,13 +213,18 @@
         class="v2-input"
         multiple
         size="4"
+        disabled={!form.account}
         bind:value={selectedContacts}
       >
-        {#each data.contacts as c (c.id)}
+        {#each visibleContacts as c (c.id)}
           <option value={c.id}>{c.name}</option>
         {/each}
       </select>
-      <p class="v2-hint">{$_('opportunity.new.hint_contacts')}</p>
+      <p class="v2-hint">
+        {form.account
+          ? $_('opportunity.new.hint_contacts')
+          : $_('opportunity.new.hint_contacts_pick_account')}
+      </p>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">

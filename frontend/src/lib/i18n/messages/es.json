@@ -931,6 +931,7 @@
       "option_choose_account": "Elige una cuenta…",
       "label_contacts": "Contactos",
       "hint_contacts": "Personas de esta cuenta involucradas en el negocio. Mantené Ctrl (⌘ en Mac) para elegir más de una.",
+      "hint_contacts_pick_account": "Elegí primero la cuenta — después aparecen sus contactos acá.",
       "error_name_required": "Ponle al negocio un nombre que reconocerías en una lista.",
       "error_account_required": "Elige la cuenta a la que pertenece este negocio.",
       "label_amount": "Monto",

@@ -931,6 +931,7 @@
       "option_choose_account": "Choose an account…",
       "label_contacts": "Contacts",
       "hint_contacts": "People at this account involved in the deal. Hold Ctrl (⌘ on Mac) to pick more than one.",
+      "hint_contacts_pick_account": "Choose the account first — then its contacts appear here.",
       "error_name_required": "Give the deal a name you would recognise in a list.",
       "error_account_required": "Pick the account this deal belongs to.",
       "label_amount": "Amount",
