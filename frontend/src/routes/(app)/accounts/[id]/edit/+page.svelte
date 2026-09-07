@@ -24,6 +24,7 @@
   import { tick, untrack } from 'svelte';
   import { enhance } from '$app/forms';
   import { _ } from '$lib/i18n/index.js';
+  import { industryLabel } from '$lib/accounts/industry-labels.js';
   import { isValidRut } from '$lib/common/rut.js';
   import { taxIdLabel, taxIdHint } from '$lib/common/tax-id-label.js';
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
@@ -213,7 +214,7 @@
         <select id="f-industry" name="industry" class="v2-input" bind:value={form.industry}>
           <option value="">{$_('accounts.edit.option_not_recorded')}</option>
           {#each data.industries as i (i.value)}
-            <option value={i.value}>{i.label}</option>
+            <option value={i.value}>{industryLabel(i.value, $_)}</option>
           {/each}
         </select>
       </div>

@@ -329,6 +329,40 @@
       "submit_button": "Create account",
       "cancel_button": "Cancel",
       "error_fallback": "Could not create this account."
+    },
+    "enums": {
+      "industry": {
+        "advertising": "ADVERTISING",
+        "agriculture": "AGRICULTURE",
+        "apparel_accessories": "APPAREL & ACCESSORIES",
+        "automotive": "AUTOMOTIVE",
+        "banking": "BANKING",
+        "biotechnology": "BIOTECHNOLOGY",
+        "building_materials_equipment": "BUILDING MATERIALS & EQUIPMENT",
+        "chemical": "CHEMICAL",
+        "computer": "COMPUTER",
+        "education": "EDUCATION",
+        "electronics": "ELECTRONICS",
+        "energy": "ENERGY",
+        "entertainment_leisure": "ENTERTAINMENT & LEISURE",
+        "finance": "FINANCE",
+        "food_beverage": "FOOD & BEVERAGE",
+        "grocery": "GROCERY",
+        "healthcare": "HEALTHCARE",
+        "insurance": "INSURANCE",
+        "legal": "LEGAL",
+        "manufacturing": "MANUFACTURING",
+        "publishing": "PUBLISHING",
+        "real_estate": "REAL ESTATE",
+        "service": "SERVICE",
+        "software": "SOFTWARE",
+        "sports": "SPORTS",
+        "technology": "TECHNOLOGY",
+        "telecommunications": "TELECOMMUNICATIONS",
+        "television": "TELEVISION",
+        "transportation": "TRANSPORTATION",
+        "venture_capital": "VENTURE CAPITAL"
+      }
     }
   },
   "contacts": {

@@ -329,6 +329,40 @@
       "submit_button": "Crear cuenta",
       "cancel_button": "Cancelar",
       "error_fallback": "No se pudo crear la cuenta."
+    },
+    "enums": {
+      "industry": {
+        "advertising": "Publicidad",
+        "agriculture": "Agricultura",
+        "apparel_accessories": "Indumentaria y accesorios",
+        "automotive": "Automotriz",
+        "banking": "Banca",
+        "biotechnology": "Biotecnología",
+        "building_materials_equipment": "Materiales y equipos de construcción",
+        "chemical": "Química",
+        "computer": "Informática",
+        "education": "Educación",
+        "electronics": "Electrónica",
+        "energy": "Energía",
+        "entertainment_leisure": "Entretenimiento y ocio",
+        "finance": "Finanzas",
+        "food_beverage": "Alimentos y bebidas",
+        "grocery": "Supermercados",
+        "healthcare": "Salud",
+        "insurance": "Seguros",
+        "legal": "Legal",
+        "manufacturing": "Manufactura",
+        "publishing": "Editorial",
+        "real_estate": "Bienes raíces",
+        "service": "Servicios",
+        "software": "Software",
+        "sports": "Deportes",
+        "technology": "Tecnología",
+        "telecommunications": "Telecomunicaciones",
+        "television": "Televisión",
+        "transportation": "Transporte",
+        "venture_capital": "Capital de riesgo"
+      }
     }
   },
   "contacts": {
