@@ -148,15 +148,19 @@ cron, or by hand) for anything you are not sure is backward compatible.
 
 Deferred on purpose; none of it blocks entering customers.
 
-- **Email.** `crm/settings.py` today reads only `EMAIL_BACKEND` and, when it
-  contains `django_ses`, the SES variables — it does **not** read
-  `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` /
-  `EMAIL_USE_TLS`. To use the HostArmada Postfix box or Google Workspace SMTP,
-  add those five reads to `settings.py` on the fork, then set
-  `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` and the host/port
-  vars in `.env.prod`. Until then, magic-link sign-in, teammate invites, the
-  invoice/estimate portal and CSAT emails print to `docker compose logs backend`
-  rather than being sent; the admin logs in with email + password.
+- **Email.** `crm/settings.py` reads the standard SMTP knobs
+  (`EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` /
+  `EMAIL_USE_TLS` / `EMAIL_USE_SSL`) when `EMAIL_BACKEND` is the SMTP backend.
+  To turn on real delivery: set `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
+  plus the host vars in `.env.prod` (see `.env.prod.example`), then
+  `./deploy.sh` (rebuilds `backend` + `celery-worker`, which is what sends
+  mail). Google Workspace: `smtp.gmail.com:587` needs an **App Password** (2FA
+  on that mailbox) and sends only as that address — for arbitrary `@founderslab.dev`
+  senders use `smtp-relay.gmail.com` (Admin console → Gmail → Routing → SMTP
+  relay). Until SMTP is on, magic-link / invite / portal / CSAT mails print to
+  `docker compose ... logs celery-worker`; the app login is passwordless
+  (Google or magic link) — there is **no** password field, the `ADMIN_PASSWORD`
+  is only for `/admin/`.
 - **Uploaded-file previews.** With `ENV_TYPE=dev` and `DEBUG=False`, Django does
   not serve `/media/` (by design — it was a cross-tenant read hole). Attachments
   still download fine through the permission-checked

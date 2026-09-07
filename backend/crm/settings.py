@@ -279,6 +279,24 @@ if "django_ses" in EMAIL_BACKEND:
     # Uses AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from env if set;
     # otherwise falls back to IAM role credentials.
 
+# SMTP settings (loaded when EMAIL_BACKEND is the SMTP backend). Django's own
+# defaults are localhost:25 with no auth, which no real mail server accepts, so
+# read the standard knobs from the environment for self-hosters pointing at
+# their own Postfix, Google Workspace, or any transactional SMTP provider.
+if EMAIL_BACKEND.endswith("smtp.EmailBackend"):
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+    EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+    # TLS (587) and SSL (465) are mutually exclusive in Django; if SSL is asked
+    # for, it wins and TLS is forced off so the two never contradict.
+    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
+    EMAIL_USE_TLS = (
+        not EMAIL_USE_SSL
+        and os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+    )
+
 
 # celery Tasks
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
