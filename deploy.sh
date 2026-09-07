@@ -30,6 +30,22 @@ if [ ! -f .env.prod ]; then
     exit 1
 fi
 
+# Los bind mounts (BD, media) viven bajo $DATA_DIR. Tiene que ser una ruta
+# ABSOLUTA y FUERA del checkout, o un `git clean -fdx` borraría la base.
+DATA_DIR="${DATA_DIR:-/opt/crm-founderslab-data}"
+case "$DATA_DIR" in
+    /*) ;;
+    *) echo "Error: DATA_DIR debe ser ruta absoluta, no '$DATA_DIR'." >&2; exit 1 ;;
+esac
+case "$DATA_DIR/" in
+    "$(pwd -P)"/*)
+        echo "Error: DATA_DIR ('$DATA_DIR') está dentro del repo ('$(pwd -P)')." >&2
+        echo "Movelo fuera del checkout -- si no, git clean se lleva la BD." >&2
+        exit 1 ;;
+esac
+mkdir -p "$DATA_DIR"/postgres "$DATA_DIR"/media "$DATA_DIR"/staticfiles
+export DATA_DIR
+
 if ! docker network inspect n8n_default >/dev/null 2>&1; then
     echo "Error: no existe la red externa 'n8n_default' -- ¿está corriendo Traefik?" >&2
     exit 1
