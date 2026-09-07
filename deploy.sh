@@ -78,4 +78,4 @@ echo "==> Logs recientes (Ctrl+C corta esto, el contenedor sigue corriendo):"
 
 echo
 echo "==> Deploy listo: $before -> $after"
-echo "==> Verificar:  https://api-crm.founderslab.dev/healthz/   y   https://crm.founderslab.dev/"
+echo "==> Verificar:  https://api-crm.founderslab.cloud/healthz/   y   https://crm.founderslab.cloud/"

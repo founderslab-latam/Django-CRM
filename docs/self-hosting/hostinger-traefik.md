@@ -16,15 +16,15 @@ cannot share one origin:
 
 | Hostname | Service | Container | Port |
 |---|---|---|---|
-| `crm.founderslab.dev` | SvelteKit frontend (adapter-node) | `frontend` | 3000 |
-| `api-crm.founderslab.dev` | Django API + admin (gunicorn) | `backend` | 8000 |
+| `crm.founderslab.cloud` | SvelteKit frontend (adapter-node) | `frontend` | 3000 |
+| `api-crm.founderslab.cloud` | Django API + admin (gunicorn) | `backend` | 8000 |
 
 `db` (PostgreSQL 16) and `redis` (Celery broker) have **no** published port and
 stay on the compose-internal network. `celery-worker` and `celery-beat` share the
 backend image. Traefik reaches `backend` and `frontend` over the external
 `n8n_default` network (the one the existing Traefik is attached to).
 
-Rename `crm.founderslab.dev` / `api-crm.founderslab.dev` in **two places** if you
+Rename `crm.founderslab.cloud` / `api-crm.founderslab.cloud` in **two places** if you
 need different names: the `Host(...)` labels in `docker-compose.prod.yml` and the
 URL variables in `.env.prod`.
 
@@ -43,8 +43,8 @@ URL variables in `.env.prod`.
 - DNS: an **A record** for each hostname pointing at the VPS IPv4 (and `AAAA` if
   you serve IPv6):
   ```
-  crm.founderslab.dev.       A   <vps-ip>
-  api-crm.founderslab.dev.   A   <vps-ip>
+  crm.founderslab.cloud.       A   <vps-ip>
+  api-crm.founderslab.cloud.   A   <vps-ip>
   ```
 
 ## Deploy
@@ -76,7 +76,7 @@ migration step — see [Upgrades](#upgrades).
 
 ```bash
 # Backend up, RLS active, tenant role is not a superuser.
-curl -sf https://api-crm.founderslab.dev/healthz/ && echo OK
+curl -sf https://api-crm.founderslab.cloud/healthz/ && echo OK
 docker compose -f docker-compose.prod.yml exec backend python manage.py manage_rls --status
 docker compose -f docker-compose.prod.yml exec db \
   psql -U postgres -d crm_db -c "\du crm_user"   # must NOT say "Superuser"
@@ -84,9 +84,9 @@ docker compose -f docker-compose.prod.yml exec db \
 
 Then:
 
-1. Open `https://api-crm.founderslab.dev/admin/` and sign in with
+1. Open `https://api-crm.founderslab.cloud/admin/` and sign in with
    `ADMIN_EMAIL` / `ADMIN_PASSWORD`. This confirms the API, DB and TLS.
-2. Open `https://crm.founderslab.dev/` and sign in with the same credentials,
+2. Open `https://crm.founderslab.cloud/` and sign in with the same credentials,
    then create the **FoundersLab** organization through the onboarding.
    - If the frontend refuses a user who has no organization yet, create the
      `Org` and your `Profile` (role `ADMIN`, linked to your user and that org) in
@@ -155,7 +155,7 @@ Deferred on purpose; none of it blocks entering customers.
   plus the host vars in `.env.prod` (see `.env.prod.example`), then
   `./deploy.sh` (rebuilds `backend` + `celery-worker`, which is what sends
   mail). Google Workspace: `smtp.gmail.com:587` needs an **App Password** (2FA
-  on that mailbox) and sends only as that address — for arbitrary `@founderslab.dev`
+  on that mailbox) and sends only as that address — for arbitrary `@founderslab.cloud`
   senders use `smtp-relay.gmail.com` (Admin console → Gmail → Routing → SMTP
   relay). Until SMTP is on, magic-link / invite / portal / CSAT mails print to
   `docker compose ... logs celery-worker`; the app login is passwordless
@@ -178,9 +178,9 @@ Deferred on purpose; none of it blocks entering customers.
 
 | Symptom | Cause / fix |
 |---|---|
-| Frontend pages 500 on load, API calls from SSR fail | The `frontend` container can't reach `https://api-crm.founderslab.dev` by hairpin NAT. Add `extra_hosts: ["api-crm.founderslab.dev:<traefik-ip-on-n8n_default>"]` to the `frontend` service, or a DNS entry the container can resolve to the host. |
+| Frontend pages 500 on load, API calls from SSR fail | The `frontend` container can't reach `https://api-crm.founderslab.cloud` by hairpin NAT. Add `extra_hosts: ["api-crm.founderslab.cloud:<traefik-ip-on-n8n_default>"]` to the `frontend` service, or a DNS entry the container can resolve to the host. |
 | Every form submit returns `403 Cross-site POST form submissions are forbidden` | `ORIGIN` in `.env.prod` doesn't match the URL in the browser bar exactly (scheme + host). |
 | Login works but no HSTS header / `request.is_secure()` false | `TRUST_PROXY_SSL_HEADER=True` missing, or Traefik isn't sending `X-Forwarded-Proto`. |
-| Traefik 504 on `api-crm.founderslab.dev`, intermittently | The `traefik.docker.network=n8n_default` label is missing or wrong; Traefik picked the internal network it can't route to. |
+| Traefik 504 on `api-crm.founderslab.cloud`, intermittently | The `traefik.docker.network=n8n_default` label is missing or wrong; Traefik picked the internal network it can't route to. |
 | `DisallowedHost` in backend logs | Add the exact `Host` header value to `ALLOWED_HOSTS` (the compose healthcheck uses `127.0.0.1`, already listed). |
 | Container healthcheck for `backend` never goes healthy | `curl`/`wget` aren't in the image — the check uses `python -c urllib…`; if you changed it, keep it Python. |
