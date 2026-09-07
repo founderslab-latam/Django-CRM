@@ -53,6 +53,10 @@
     }))
   );
 
+  // The deal's people. A separate `$state` array, not part of `form`, because
+  // a `<select multiple>` binds cleanest to a plain array.
+  let selectedContacts = $state(untrack(() => result?.values?.contacts ?? []));
+
   let more = $state(false);
   let touched = $state(/** @type {Record<string, boolean>} */ ({}));
   let submitted = $state(false);
@@ -190,6 +194,23 @@
         {/each}
       </select>
       {#if show('account')}<p class="v2-error" id="e-account">{errors.account}</p>{/if}
+    </div>
+
+    <div class="v2-field">
+      <label for="f-contacts">{$_('opportunity.new.label_contacts')}</label>
+      <select
+        id="f-contacts"
+        name="contacts"
+        class="v2-input"
+        multiple
+        size="4"
+        bind:value={selectedContacts}
+      >
+        {#each data.contacts as c (c.id)}
+          <option value={c.id}>{c.name}</option>
+        {/each}
+      </select>
+      <p class="v2-hint">{$_('opportunity.new.hint_contacts')}</p>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">

@@ -64,6 +64,9 @@
   }));
 
   let form = $state(untrack(() => ({ ...data.form })));
+  // The deal's people. Held apart from `form` so the `<select multiple>` binds
+  // to a plain array; synced back via the `contacts_present` marker.
+  let selectedContacts = $state(untrack(() => [...(data.form.contacts ?? [])]));
   let touched = $state(/** @type {Record<string, boolean>} */ ({}));
   let submitted = $state(false);
   let saved = $state(false);
@@ -246,6 +249,24 @@
           {/each}
         </select>
       </div>
+    </div>
+
+    <div class="v2-field">
+      <label for="f-contacts">{$_('opportunity.edit.label_contacts')}</label>
+      <select
+        id="f-contacts"
+        name="contacts"
+        class="v2-input"
+        multiple
+        size="4"
+        bind:value={selectedContacts}
+      >
+        {#each data.contacts as c (c.id)}
+          <option value={c.id}>{c.name}</option>
+        {/each}
+      </select>
+      <input type="hidden" name="contacts_present" value="1" />
+      <p class="v2-hint">{$_('opportunity.edit.hint_contacts')}</p>
     </div>
 
     <div class="v2-field">

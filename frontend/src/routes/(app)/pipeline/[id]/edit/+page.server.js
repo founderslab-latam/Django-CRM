@@ -41,6 +41,13 @@ export const actions = {
     const ownerWas = form.get('assigned_to_original')?.toString().trim() ?? '';
     if (owner !== ownerWas) values.assigned_to = owner;
 
+    // A multi-select submits nothing when fully deselected, which reads the
+    // same as a field this form does not own. The hidden `contacts_present`
+    // marker is what lets "remove the last contact" be expressible.
+    if (form.has('contacts_present')) {
+      values.contacts = form.getAll('contacts').map((id) => id.toString());
+    }
+
     try {
       await updateDeal(event, event.params.id, values);
     } catch (/** @type {any} */ err) {

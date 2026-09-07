@@ -22,6 +22,8 @@ export const actions = {
     for (const field of [...EDITABLE_FIELDS, 'assigned_to']) {
       if (form.has(field)) values[field] = form.get(field)?.toString().trim() ?? '';
     }
+    const contacts = form.getAll('contacts').map((id) => id.toString());
+    if (contacts.length) values.contacts = contacts;
 
     /** @type {any} */
     let created;

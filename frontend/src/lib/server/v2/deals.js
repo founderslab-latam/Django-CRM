@@ -331,6 +331,30 @@ async function listAccounts(cookies) {
 }
 
 /**
+ * Contacts in this org, for the deal's people multi-select.
+ *
+ * Same source as `listAccounts`: `contacts_list` on the opportunities list
+ * response, org-scoped server-side. The backend attaches them with
+ * `contacts.add(*Contact.objects.filter(id__in=..., org=...))`, so an id from
+ * outside the org silently drops rather than crossing tenants.
+ *
+ * @param {import('@sveltejs/kit').Cookies} cookies
+ */
+async function listContacts(cookies) {
+  try {
+    const response = await apiRequest('/opportunities/?limit=1', {}, { cookies });
+    const contacts = (response.contacts_list ?? []).map((/** @type {any} */ contact) => ({
+      id: contact.id,
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(' ').trim()
+    }));
+    contacts.sort((/** @type {any} */ a, /** @type {any} */ b) => a.name.localeCompare(b.name));
+    return contacts;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Profiles in this org, for the owner select.
  *
  * The API filters `assigned_to` ids through
@@ -379,13 +403,15 @@ async function myProfileId(cookies) {
  * @param {{ cookies: import('@sveltejs/kit').Cookies }} event
  */
 export async function getDealFormOptions({ cookies }) {
-  const [accounts, owners, mine] = await Promise.all([
+  const [accounts, contacts, owners, mine] = await Promise.all([
     listAccounts(cookies),
+    listContacts(cookies),
     listOwners(cookies),
     myProfileId(cookies)
   ]);
   return {
     accounts,
+    contacts,
     owners,
     defaults: { assigned_to: mine, currency: 'USD', stage: 'PROSPECTING' }
   };
@@ -407,11 +433,16 @@ export async function getDealForEdit({ cookies }, id) {
   const deal = toRow(raw);
 
   const lineItems = raw.line_items ?? [];
-  const [accounts, owners] = await Promise.all([listAccounts(cookies), listOwners(cookies)]);
+  const [accounts, contacts, owners] = await Promise.all([
+    listAccounts(cookies),
+    listContacts(cookies),
+    listOwners(cookies)
+  ]);
 
   return {
     deal,
     accounts,
+    contacts,
     owners,
     form: {
       name: deal.name,
@@ -425,7 +456,9 @@ export async function getDealForEdit({ cookies }, id) {
       description: deal.description ?? '',
       // Binds to a Profile id, not a display name. The mock bound the owner
       // select to a name, which reads identically on screen and cannot be saved.
-      assigned_to: raw.assigned_to?.[0]?.id ?? ''
+      assigned_to: raw.assigned_to?.[0]?.id ?? '',
+      // Contact ids the deal currently carries, for the multi-select.
+      contacts: (raw.contacts ?? []).map((/** @type {any} */ c) => c.id)
     },
     server: {
       // `recalculate_amount()` sets amount from the line items and flips
@@ -472,6 +505,12 @@ function toBody(values) {
   // meaningful, it is how a deal is left unassigned, so it is sent.
   if ('assigned_to' in values) {
     body.assigned_to = values.assigned_to ? [values.assigned_to] : [];
+  }
+  // The deal's people. Only sent when the form carried them (create always,
+  // edit when the `contacts_present` marker is set), so the backend's
+  // `if "contacts" in params` guard leaves them alone on any other save.
+  if ('contacts' in values) {
+    body.contacts = values.contacts ?? [];
   }
   return body;
 }
