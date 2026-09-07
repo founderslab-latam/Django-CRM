@@ -61,6 +61,7 @@ nav:
       - Requirements: self-hosting/requirements.md
       - Docker: self-hosting/docker.md
       - Production deployment: self-hosting/production-deploy.md
+      - Hostinger VPS + Traefik: self-hosting/hostinger-traefik.md
       - PostgreSQL and RLS: self-hosting/postgresql-and-rls.md
       - Environment variables: self-hosting/environment-variables.md
       - Email and Celery: self-hosting/email-and-celery.md
