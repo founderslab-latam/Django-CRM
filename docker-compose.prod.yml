@@ -6,7 +6,7 @@
 #     `db` and `redis` stay on the internal network only.
 #   - TWO hostnames, because the SvelteKit app and Django both own `/api/*`:
 #       crm.founderslab.dev      -> frontend  (SvelteKit / adapter-node, :3000)
-#       api.crm.founderslab.dev  -> backend   (Django / gunicorn, :8000)
+#       api-crm.founderslab.dev  -> backend   (Django / gunicorn, :8000)
 #   - Persistent data is bind-mounted under $DATA_DIR (default
 #     /opt/crm-founderslab-data), OUTSIDE the repo, so a `git clean` or a fresh
 #     checkout can never touch it. Back up with tar/rsync:
@@ -86,7 +86,7 @@ services:
       # `backend` is on two networks (default -> db/redis, n8n_default -> Traefik).
       # Without this label Traefik may pick the wrong one and hang on 504.
       - "traefik.docker.network=n8n_default"
-      - "traefik.http.routers.crm-api.rule=Host(`api.crm.founderslab.dev`)"
+      - "traefik.http.routers.crm-api.rule=Host(`api-crm.founderslab.dev`)"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls.certresolver=mytlschallenge"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"

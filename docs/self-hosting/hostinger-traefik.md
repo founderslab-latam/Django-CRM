@@ -17,14 +17,14 @@ cannot share one origin:
 | Hostname | Service | Container | Port |
 |---|---|---|---|
 | `crm.founderslab.dev` | SvelteKit frontend (adapter-node) | `frontend` | 3000 |
-| `api.crm.founderslab.dev` | Django API + admin (gunicorn) | `backend` | 8000 |
+| `api-crm.founderslab.dev` | Django API + admin (gunicorn) | `backend` | 8000 |
 
 `db` (PostgreSQL 16) and `redis` (Celery broker) have **no** published port and
 stay on the compose-internal network. `celery-worker` and `celery-beat` share the
 backend image. Traefik reaches `backend` and `frontend` over the external
 `n8n_default` network (the one the existing Traefik is attached to).
 
-Rename `crm.founderslab.dev` / `api.crm.founderslab.dev` in **two places** if you
+Rename `crm.founderslab.dev` / `api-crm.founderslab.dev` in **two places** if you
 need different names: the `Host(...)` labels in `docker-compose.prod.yml` and the
 URL variables in `.env.prod`.
 
@@ -44,7 +44,7 @@ URL variables in `.env.prod`.
   you serve IPv6):
   ```
   crm.founderslab.dev.       A   <vps-ip>
-  api.crm.founderslab.dev.   A   <vps-ip>
+  api-crm.founderslab.dev.   A   <vps-ip>
   ```
 
 ## Deploy
@@ -76,7 +76,7 @@ migration step — see [Upgrades](#upgrades).
 
 ```bash
 # Backend up, RLS active, tenant role is not a superuser.
-curl -sf https://api.crm.founderslab.dev/healthz/ && echo OK
+curl -sf https://api-crm.founderslab.dev/healthz/ && echo OK
 docker compose -f docker-compose.prod.yml exec backend python manage.py manage_rls --status
 docker compose -f docker-compose.prod.yml exec db \
   psql -U postgres -d crm_db -c "\du crm_user"   # must NOT say "Superuser"
@@ -84,7 +84,7 @@ docker compose -f docker-compose.prod.yml exec db \
 
 Then:
 
-1. Open `https://api.crm.founderslab.dev/admin/` and sign in with
+1. Open `https://api-crm.founderslab.dev/admin/` and sign in with
    `ADMIN_EMAIL` / `ADMIN_PASSWORD`. This confirms the API, DB and TLS.
 2. Open `https://crm.founderslab.dev/` and sign in with the same credentials,
    then create the **FoundersLab** organization through the onboarding.
@@ -134,13 +134,15 @@ Restore: `docker compose ... exec -T db pg_restore -U postgres -d crm_db --clean
 
 ```bash
 cd /opt/founderslab-crm
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+./deploy.sh                       # pull + build + up (backend, celery x2, frontend)
+./deploy.sh backend              # or just one/some services
 ```
 
-Migrations and `collectstatic` run in the entrypoint on start, so this is the
-whole procedure. Take a `pg_dump` first for anything you are not sure is
-backward compatible.
+`deploy.sh` refuses to run with a dirty working tree, does `git pull --ff-only`,
+rebuilds, restarts, and tails the backend log. Migrations, `collectstatic` and
+`compilemessages` run inside the backend entrypoint on start, so pull + up is the
+whole upgrade — no separate migration step. Take a `pg_dump` first (the backup
+cron, or by hand) for anything you are not sure is backward compatible.
 
 ## Phase 2
 
@@ -172,9 +174,9 @@ Deferred on purpose; none of it blocks entering customers.
 
 | Symptom | Cause / fix |
 |---|---|
-| Frontend pages 500 on load, API calls from SSR fail | The `frontend` container can't reach `https://api.crm.founderslab.dev` by hairpin NAT. Add `extra_hosts: ["api.crm.founderslab.dev:<traefik-ip-on-n8n_default>"]` to the `frontend` service, or a DNS entry the container can resolve to the host. |
+| Frontend pages 500 on load, API calls from SSR fail | The `frontend` container can't reach `https://api-crm.founderslab.dev` by hairpin NAT. Add `extra_hosts: ["api-crm.founderslab.dev:<traefik-ip-on-n8n_default>"]` to the `frontend` service, or a DNS entry the container can resolve to the host. |
 | Every form submit returns `403 Cross-site POST form submissions are forbidden` | `ORIGIN` in `.env.prod` doesn't match the URL in the browser bar exactly (scheme + host). |
 | Login works but no HSTS header / `request.is_secure()` false | `TRUST_PROXY_SSL_HEADER=True` missing, or Traefik isn't sending `X-Forwarded-Proto`. |
-| Traefik 504 on `api.crm.founderslab.dev`, intermittently | The `traefik.docker.network=n8n_default` label is missing or wrong; Traefik picked the internal network it can't route to. |
+| Traefik 504 on `api-crm.founderslab.dev`, intermittently | The `traefik.docker.network=n8n_default` label is missing or wrong; Traefik picked the internal network it can't route to. |
 | `DisallowedHost` in backend logs | Add the exact `Host` header value to `ALLOWED_HOSTS` (the compose healthcheck uses `127.0.0.1`, already listed). |
 | Container healthcheck for `backend` never goes healthy | `curl`/`wget` aren't in the image — the check uses `python -c urllib…`; if you changed it, keep it Python. |
