@@ -27,7 +27,8 @@ services:
     # this host runs.
     image: postgres:16-alpine
     restart: unless-stopped
-    env_file: .env.prod
+    env_file:
+      - .env.prod
     volumes:
       - ${DATA_DIR:-/opt/crm-founderslab-data}/postgres:/var/lib/postgresql/data
       - ./docker/postgres/init-rls-user.prod.sh:/docker-entrypoint-initdb.d/init-rls-user.sh:ro
@@ -55,7 +56,8 @@ services:
     build: .
     image: bottlecrm-app:local
     restart: unless-stopped
-    env_file: .env.prod
+    env_file:
+      - .env.prod
     command: ["/bin/bash", "/entrypoint.prod.sh"]
     depends_on:
       db:
@@ -95,7 +97,8 @@ services:
     build: .
     image: bottlecrm-app:local
     restart: unless-stopped
-    env_file: .env.prod
+    env_file:
+      - .env.prod
     command: ["celery", "-A", "crm", "worker", "--loglevel=info", "--concurrency=2"]
     depends_on:
       db:
@@ -110,7 +113,8 @@ services:
     build: .
     image: bottlecrm-app:local
     restart: unless-stopped
-    env_file: .env.prod
+    env_file:
+      - .env.prod
     command: ["celery", "-A", "crm", "beat", "--loglevel=info"]
     depends_on:
       db:
@@ -124,7 +128,8 @@ services:
       # The last stage of frontend/Dockerfile: a built bundle on node, :3000.
       target: runtime
     restart: unless-stopped
-    env_file: .env.prod
+    env_file:
+      - .env.prod
     depends_on:
       - backend
     expose:
