@@ -1,9 +1,10 @@
 #!/bin/bash
 # Redeploy de BottleCRM (founderslab) en la VPS: git pull + build + up.
 # Uso: ./deploy.sh [servicio ...]
-#   default: backend celery-worker celery-beat frontend  (los que se construyen
-#   desde el repo). `db` y `redis` son imágenes: se levantan solos vía
-#   depends_on si no están corriendo, no se reconstruyen.
+#   Sin argumentos: reconstruye las imágenes de la app (backend + celery x2 +
+#   frontend) y hace `up -d` de TODO el stack (así `db`, `redis` y `media`
+#   arrancan / se recrean si cambió el compose).
+#   Con argumentos: build + up solo de esos servicios.
 #
 # migrate / collectstatic / compilemessages corren dentro del entrypoint del
 # contenedor `backend` en cada arranque, así que pull + up ES el upgrade
@@ -19,10 +20,13 @@ cd "$(dirname "$0")"
 
 COMPOSE=(docker compose -f docker-compose.prod.yml)
 
+# What to `build`. Only these have a build context; the rest are plain images.
+BUILD_SERVICES=(backend celery-worker celery-beat frontend)
+# What to `up -d`. Empty => the whole stack.
+UP_SERVICES=()
 if [ "$#" -gt 0 ]; then
-    SERVICES=("$@")
-else
-    SERVICES=(backend celery-worker celery-beat frontend)
+    BUILD_SERVICES=("$@")
+    UP_SERVICES=("$@")
 fi
 
 if [ ! -f .env.prod ]; then
@@ -68,11 +72,16 @@ if [ "$before" = "$after" ]; then
     echo "==> Sin commits nuevos ($after) -- reconstruyo igual por si cambió la imagen base."
 fi
 
-echo "==> docker compose build ${SERVICES[*]}"
-"${COMPOSE[@]}" build "${SERVICES[@]}"
+echo "==> docker compose build ${BUILD_SERVICES[*]}"
+"${COMPOSE[@]}" build "${BUILD_SERVICES[@]}"
 
-echo "==> docker compose up -d ${SERVICES[*]}"
-"${COMPOSE[@]}" up -d "${SERVICES[@]}"
+if [ "${#UP_SERVICES[@]}" -gt 0 ]; then
+    echo "==> docker compose up -d ${UP_SERVICES[*]}"
+    "${COMPOSE[@]}" up -d "${UP_SERVICES[@]}"
+else
+    echo "==> docker compose up -d  (todo el stack)"
+    "${COMPOSE[@]}" up -d
+fi
 
 echo "==> Logs recientes (Ctrl+C corta esto, el contenedor sigue corriendo):"
 "${COMPOSE[@]}" logs --tail=40 backend
