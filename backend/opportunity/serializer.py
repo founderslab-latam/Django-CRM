@@ -221,23 +221,6 @@ class OpportunityCreateSerializer(serializers.ModelSerializer):
         if request_obj:
             self.org = request_obj.profile.org
 
-    def validate_name(self, name):
-        if self.instance:
-            if (
-                Opportunity.objects.filter(name__iexact=name, org=self.org)
-                .exclude(id=self.instance.id)
-                .exists()
-            ):
-                raise serializers.ValidationError(
-                    "Opportunity already exists with this name"
-                )
-        else:
-            if Opportunity.objects.filter(name__iexact=name, org=self.org).exists():
-                raise serializers.ValidationError(
-                    "Opportunity already exists with this name"
-                )
-        return name
-
     def _resolved(self, data, field):
         """The value this save will end up with, the submitted one if the
         request carried the field, otherwise what is already on the record.
@@ -266,6 +249,23 @@ class OpportunityCreateSerializer(serializers.ModelSerializer):
         """
         stage = self._resolved(data, "stage")
         errors = {}
+
+        # A deal name is unique per ACCOUNT, not per org. Generic names
+        # ("Renewal", "Q1 proposal") legitimately recur across different
+        # customers; an org-wide check rejected the second one. `filter(account=
+        # None)` is `account__isnull=True`, so an accountless deal is still
+        # checked against other accountless ones.
+        name = self._resolved(data, "name")
+        if name:
+            clash = Opportunity.objects.filter(
+                name__iexact=name,
+                account=self._resolved(data, "account"),
+                org=self.org,
+            )
+            if self.instance is not None:
+                clash = clash.exclude(pk=self.instance.pk)
+            if clash.exists():
+                errors["name"] = "A deal with that name already exists for this account."
 
         if stage in CLOSED_STAGES and not self._resolved(data, "closed_on"):
             errors["closed_on"] = (

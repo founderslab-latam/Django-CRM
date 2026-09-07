@@ -271,13 +271,45 @@ class TestOpportunityListView:
 
     @patch("opportunity.views.opportunity_views.send_email_to_assigned_user.delay")
     def test_create_opportunity_duplicate_name(self, mock_email, admin_client, opp_a):
-        """Creating an opportunity with a duplicate name returns 400."""
+        """A duplicate name on the same account (here: no account) returns 400."""
         payload = {
             "name": "Org A Deal",
             "stage": "QUALIFICATION",
         }
         response = admin_client.post(OPPORTUNITIES_LIST_URL, payload, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("opportunity.views.opportunity_views.send_email_to_assigned_user.delay")
+    def test_create_opportunity_same_name_different_account(
+        self, mock_email, admin_client, org_a, admin_user
+    ):
+        """The same deal name is allowed on two different accounts."""
+        _set_rls(org_a)
+        acme = Account.objects.create(name="Acme", org=org_a, created_by=admin_user)
+        globex = Account.objects.create(name="Globex", org=org_a, created_by=admin_user)
+
+        first = admin_client.post(
+            OPPORTUNITIES_LIST_URL,
+            {"name": "Renewal", "stage": "QUALIFICATION", "account": str(acme.pk)},
+            format="json",
+        )
+        assert first.status_code == status.HTTP_200_OK
+
+        second = admin_client.post(
+            OPPORTUNITIES_LIST_URL,
+            {"name": "Renewal", "stage": "QUALIFICATION", "account": str(globex.pk)},
+            format="json",
+        )
+        assert second.status_code == status.HTTP_200_OK
+
+        # ...but a third on Acme, same name, is still refused.
+        third = admin_client.post(
+            OPPORTUNITIES_LIST_URL,
+            {"name": "Renewal", "stage": "QUALIFICATION", "account": str(acme.pk)},
+            format="json",
+        )
+        assert third.status_code == status.HTTP_400_BAD_REQUEST
+        assert "name" in third.data.get("errors", third.data)
 
     def test_list_opportunities_search_filter(self, admin_client, opp_a):
         """Search filter works on name."""
