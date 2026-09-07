@@ -5,7 +5,6 @@ from common.serializer import (
     LeadCommentSerializer,
     ProfileSerializer,
     TagsSerializer,
-    TaxIdCountryValidationMixin,
     TeamsSerializer,
     UserSerializer,
 )
@@ -87,7 +86,7 @@ class LeadSerializer(serializers.ModelSerializer):
         read_only_fields = ("is_sample",)
 
 
-class LeadCreateSerializer(TaxIdCountryValidationMixin, serializers.ModelSerializer):
+class LeadCreateSerializer(serializers.ModelSerializer):
     probability = serializers.IntegerField(
         max_value=100, required=False, allow_null=True
     )

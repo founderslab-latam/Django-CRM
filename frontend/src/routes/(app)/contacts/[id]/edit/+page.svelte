@@ -24,7 +24,6 @@
   import PageHeader from '$lib/v2/components/PageHeader.svelte';
   import { ChevronRight, TriangleAlert } from '@lucide/svelte';
   import { _ } from '$lib/i18n/index.js';
-  import { isValidRut } from '$lib/common/rut.js';
   import { taxIdLabel, taxIdHint } from '$lib/common/tax-id-label.js';
 
   /** @type {{ data: any, form: any }} */
@@ -56,11 +55,6 @@
 
     if (form.linkedin_url && !/^https?:\/\/\S+$/.test(form.linkedin_url))
       e.linkedin_url = $_('contacts.edit.error_linkedin_invalid');
-
-    // A Chilean contact's tax ID is a RUT; the serializer rejects one whose
-    // check digit does not match. Mirror that so the field can say so.
-    if (form.country === 'CL' && form.tax_id && !isValidRut(form.tax_id))
-      e.tax_id = $_('common.tax_id.cl_invalid');
 
     return e;
   });
@@ -353,12 +347,8 @@
         maxlength="50"
         bind:value={form.tax_id}
         placeholder={form.country === 'CL' ? $_('common.tax_id.cl_placeholder') : undefined}
-        onblur={() => (touched.tax_id = true)}
-        aria-invalid={show('tax_id') ? 'true' : undefined}
       />
-      {#if show('tax_id')}
-        <p class="v2-error">{errors.tax_id}</p>
-      {:else if taxHint}
+      {#if taxHint}
         <p class="v2-hint">{taxHint}</p>
       {/if}
     </div>

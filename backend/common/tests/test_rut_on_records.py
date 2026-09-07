@@ -1,6 +1,8 @@
 """
-The Chilean RUT is validated on a customer record's tax id -- lead, contact
-and account -- but only when that record's own country is CL.
+The Chilean RUT is validated on an ACCOUNT's tax id (and the org's, elsewhere)
+when country is CL -- an account is the party on an invoice. Lead and Contact
+carry a `tax_id` column too, but it is a free-form optional note there, not
+RUT-validated.
 
 Run with: pytest common/tests/test_rut_on_records.py -v
 """
@@ -18,6 +20,8 @@ BAD_RUT = "12.345.678-9"
 
 @pytest.mark.django_db
 class TestLeadTaxId:
+    """Lead.tax_id is free text -- never RUT-validated, never canonicalised."""
+
     URL = "/api/leads/"
 
     def _payload(self, **extra):
@@ -28,47 +32,35 @@ class TestLeadTaxId:
             **extra,
         }
 
-    def test_cl_lead_rejects_invalid_rut(self, admin_client, org_a):
+    def test_cl_lead_accepts_any_tax_id_verbatim(self, admin_client, org_a):
         response = admin_client.post(
             self.URL, self._payload(country="CL", tax_id=BAD_RUT)
         )
-        assert response.status_code == 400
-        assert not Lead.objects.filter(email="jane.rut@example.com").exists()
-
-    def test_cl_lead_stores_rut_canonically(self, admin_client, org_a):
-        response = admin_client.post(
-            self.URL, self._payload(country="CL", tax_id=VALID_RUT_BARE)
-        )
         assert response.status_code == 200
-        lead = Lead.objects.get(email="jane.rut@example.com")
-        assert lead.tax_id == VALID_RUT_CANONICAL
+        assert Lead.objects.get(email="jane.rut@example.com").tax_id == BAD_RUT
 
-    def test_non_cl_lead_keeps_free_form_tax_id(self, admin_client, org_a):
-        response = admin_client.post(
-            self.URL, self._payload(country="US", tax_id="EIN 12-3456789")
-        )
-        assert response.status_code == 200
-        assert Lead.objects.get(email="jane.rut@example.com").tax_id == "EIN 12-3456789"
-
-    def test_patching_country_to_cl_validates_existing_tax_id(
+    def test_editing_a_cl_lead_is_not_blocked_by_its_tax_id(
         self, admin_client, admin_user, org_a
     ):
         lead = Lead.objects.create(
             first_name="Al",
             last_name="Pha",
             email="al.rut@example.com",
+            country="CL",
             tax_id=BAD_RUT,
             created_by=admin_user,
             org=org_a,
         )
         response = admin_client.patch(
-            f"{self.URL}{lead.id}/", {"country": "CL"}, format="json"
+            f"{self.URL}{lead.id}/", {"first_name": "Alan"}, format="json"
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
 
 @pytest.mark.django_db
 class TestContactTaxId:
+    """Contact.tax_id is free text -- never RUT-validated, never canonicalised."""
+
     URL = "/api/contacts/"
 
     def _payload(self, **extra):
@@ -79,36 +71,29 @@ class TestContactTaxId:
             **extra,
         }
 
-    def test_cl_contact_rejects_invalid_rut(self, admin_client, org_a):
+    def test_cl_contact_accepts_any_tax_id_verbatim(self, admin_client, org_a):
         response = admin_client.post(
             self.URL, self._payload(country="CL", tax_id=BAD_RUT), format="json"
         )
-        assert response.status_code == 400
-        assert not Contact.objects.filter(email="charlie.rut@example.com").exists()
+        assert response.status_code == 200
+        assert Contact.objects.get(email="charlie.rut@example.com").tax_id == BAD_RUT
 
-    def test_cl_contact_stores_rut_canonically(self, admin_client, org_a):
-        response = admin_client.post(
-            self.URL,
-            self._payload(country="CL", tax_id="12.345.678-5"),
-            format="json",
+    def test_editing_a_cl_contact_is_not_blocked_by_its_tax_id(
+        self, admin_client, admin_user, org_a
+    ):
+        contact = Contact.objects.create(
+            first_name="Di",
+            last_name="Ez",
+            email="di.rut@example.com",
+            country="CL",
+            tax_id=BAD_RUT,
+            created_by=admin_user,
+            org=org_a,
+        )
+        response = admin_client.patch(
+            f"{self.URL}{contact.id}/", {"first_name": "Diego"}, format="json"
         )
         assert response.status_code == 200
-        assert (
-            Contact.objects.get(email="charlie.rut@example.com").tax_id
-            == VALID_RUT_CANONICAL
-        )
-
-    def test_non_cl_contact_keeps_free_form_tax_id(self, admin_client, org_a):
-        response = admin_client.post(
-            self.URL,
-            self._payload(country="AR", tax_id="30-12345678-9"),
-            format="json",
-        )
-        assert response.status_code == 200
-        assert (
-            Contact.objects.get(email="charlie.rut@example.com").tax_id
-            == "30-12345678-9"
-        )
 
 
 @pytest.mark.django_db

@@ -6,7 +6,6 @@ from common.serializer import (
     AttachmentsSerializer,
     OrganizationSerializer,
     ProfileSerializer,
-    TaxIdCountryValidationMixin,
     TeamsSerializer,
 )
 from contacts.models import Contact
@@ -101,10 +100,14 @@ class ContactSerializer(serializers.ModelSerializer):
         )
 
 
-class CreateContactSerializer(
-    TaxIdCountryValidationMixin, serializers.ModelSerializer
-):
-    """Serializer for creating/updating Contact data"""
+class CreateContactSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating Contact data.
+
+    `tax_id` is a free-form optional field here. A contact's own tax id is not
+    the party on an invoice -- that is the account -- so it is not RUT-validated
+    even for a Chilean contact; the check lives on `AccountCreateSerializer` and
+    `OrgSettingsSerializer` only.
+    """
 
     def __init__(self, *args, **kwargs):
         request_obj = kwargs.pop("request_obj", None)

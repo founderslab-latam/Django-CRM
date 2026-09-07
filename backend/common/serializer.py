@@ -118,6 +118,11 @@ class OrganizationSerializer(serializers.ModelSerializer):
 class TaxIdCountryValidationMixin:
     """Country-aware validation of a `tax_id` field on a `ModelSerializer`.
 
+    Used only where the tax id is an invoice party: `AccountCreateSerializer`
+    (the receptor) and `OrgSettingsSerializer` (the emisor). Lead and Contact
+    carry a `tax_id` column but do NOT mix this in -- there it is a free-form
+    optional note.
+
     The serializer's model must expose `country` and `tax_id`. When the record's
     own `country` is `CL`, a non-blank `tax_id` must be a valid Chilean RUT and
     is rewritten to canonical `12.345.678-5` form; for every other country it is
