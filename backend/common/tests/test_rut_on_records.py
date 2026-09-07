@@ -122,3 +122,38 @@ class TestAccountTaxId:
         )
         assert response.status_code == 200
         assert Account.objects.get(name="US Corp").tax_id == "not-a-rut"
+
+
+@pytest.mark.django_db
+class TestTaxIdNullable:
+    """An empty tax id (the frontend sends null) must not 400 on any of them."""
+
+    @pytest.mark.parametrize(
+        "url,payload",
+        [
+            ("/api/contacts/", {"first_name": "N", "last_name": "N", "email": "n@example.com"}),
+            ("/api/leads/", {"first_name": "N", "last_name": "N", "email": "n2@example.com"}),
+            ("/api/accounts/", {"name": "Nullable SA"}),
+        ],
+    )
+    def test_create_with_null_tax_id(self, admin_client, org_a, url, payload):
+        response = admin_client.post(url, {**payload, "tax_id": None}, format="json")
+        assert response.status_code in (200, 201), response.data
+
+    def test_patch_contact_clearing_tax_id(self, admin_client, admin_user, org_a):
+        from contacts.models import Contact
+
+        c = Contact.objects.create(
+            first_name="Fer",
+            last_name="Río",
+            email="fer@example.com",
+            tax_id="12.345.678-5",
+            created_by=admin_user,
+            org=org_a,
+        )
+        response = admin_client.patch(
+            f"/api/contacts/{c.id}/", {"tax_id": None}, format="json"
+        )
+        assert response.status_code == 200, response.data
+        c.refresh_from_db()
+        assert not c.tax_id

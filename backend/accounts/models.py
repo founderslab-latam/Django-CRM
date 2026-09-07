@@ -59,6 +59,7 @@ class Account(AssignableMixin, BaseModel):
         _("Tax ID"),
         max_length=50,
         blank=True,
+        null=True,
         default="",
         help_text=(
             "Tax ID / VAT number. When country is CL this is a Chilean RUT and "

@@ -50,11 +50,9 @@ class Contact(AssignableMixin, BaseModel):
         _("Tax ID"),
         max_length=50,
         blank=True,
+        null=True,
         default="",
-        help_text=(
-            "Tax ID / VAT number. When country is CL this is a Chilean RUT and "
-            "is validated (modulo-11 check digit), stored as 12.345.678-5."
-        ),
+        help_text="Tax ID / VAT number. Free-form; not validated.",
     )
 
     # Assignment
