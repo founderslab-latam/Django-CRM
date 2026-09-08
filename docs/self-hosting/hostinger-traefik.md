@@ -18,16 +18,21 @@ cannot share one origin:
 |---|---|---|---|
 | `crm.founderslab.cloud` | SvelteKit frontend (adapter-node) | `frontend` | 3000 |
 | `api-crm.founderslab.cloud` | Django API + admin (gunicorn) | `backend` | 8000 |
-| `api-crm.founderslab.cloud/media/` | nginx — public logos only | `media` | 80 |
+| `media-crm.founderslab.cloud` | nginx — public logos only | `media` | 80 |
+| `api-crm.founderslab.cloud/media/` | same, legacy route (DNS-cutover only) | `media` | 80 |
 
 `db` (PostgreSQL 16) and `redis` (Celery broker) have **no** published port and
 stay on the compose-internal network. `celery-worker` and `celery-beat` share the
 backend image. Traefik reaches `backend`, `frontend` and `media` over the external
 `n8n_default` network (the one the existing Traefik is attached to). The `media`
-router is a `PathPrefix(/media/)` on the API host and only serves `org_logos/`
-and `invoice_templates/` — attachments and documents stay behind Django's gated
+sidecar answers its own host `media-crm.founderslab.cloud` (plus the legacy
+`api-crm.../media/` path during DNS cutover) and only serves `org_logos/` and
+`invoice_templates/` — attachments and documents stay behind Django's gated
 `/api/*/download/` endpoints (a blanket `/media/` server would leak across
-tenants).
+tenants). A dedicated host is what lets an emailed logo `<img>` load: email
+clients fetch it anonymously and cross-origin. Set `PUBLIC_MEDIA_URL` in
+`.env.prod` to `https://media-crm.founderslab.cloud` so the backend builds
+absolute logo URLs; leave it empty and emails fall back to the org name text.
 
 Rename `crm.founderslab.cloud` / `api-crm.founderslab.cloud` in **two places** if you
 need different names: the `Host(...)` labels in `docker-compose.prod.yml` and the
@@ -48,8 +53,9 @@ URL variables in `.env.prod`.
 - DNS: an **A record** for each hostname pointing at the VPS IPv4 (and `AAAA` if
   you serve IPv6):
   ```
-  crm.founderslab.cloud.       A   <vps-ip>
-  api-crm.founderslab.cloud.   A   <vps-ip>
+  crm.founderslab.cloud.         A   <vps-ip>
+  api-crm.founderslab.cloud.     A   <vps-ip>
+  media-crm.founderslab.cloud.   A   <vps-ip>
   ```
 
 ## Deploy

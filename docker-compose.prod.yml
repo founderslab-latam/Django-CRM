@@ -170,12 +170,20 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=n8n_default"
-      # Same host as the API; this router is more specific and wins for /media/.
-      - "traefik.http.routers.crm-media.rule=Host(`api-crm.founderslab.cloud`) && PathPrefix(`/media/`)"
+      # Dedicated public host for logos. Email clients fetch <img> anonymously
+      # and cannot follow a relative path, so emails need an absolute URL on a
+      # credential-free host -- set PUBLIC_MEDIA_URL to https://this-host. Its
+      # own cert; the nginx still serves only /media/{org_logos,invoice_templates}.
+      - "traefik.http.routers.crm-media.rule=Host(`media-crm.founderslab.cloud`)"
       - "traefik.http.routers.crm-media.entrypoints=websecure"
       - "traefik.http.routers.crm-media.tls.certresolver=mytlschallenge"
-      - "traefik.http.routers.crm-media.priority=100"
       - "traefik.http.services.crm-media.loadbalancer.server.port=80"
+      # Kept during the DNS cutover: api-crm.../media/ still resolves logos for
+      # anything already pointing there. Remove once nothing references it.
+      - "traefik.http.routers.crm-media-legacy.rule=Host(`api-crm.founderslab.cloud`) && PathPrefix(`/media/`)"
+      - "traefik.http.routers.crm-media-legacy.entrypoints=websecure"
+      - "traefik.http.routers.crm-media-legacy.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.crm-media-legacy.priority=100"
 
 networks:
   # Created by the n8n stack; Traefik is attached to it. Same external network
