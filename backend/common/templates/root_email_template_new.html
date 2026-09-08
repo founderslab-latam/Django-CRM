@@ -157,10 +157,16 @@
             <td class="email-card" style="background: #FFFFFF; padding: 40px 48px; border-radius: 8px;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 
-                <!-- Logo -->
+                <!-- Brandmark: the sending org's logo, else its name, else the product default. -->
                 <tr>
                   <td style="padding-bottom: 20px;">
-                    <span style="font-size: 22px; font-weight: 700; color: #EA580C; text-decoration: none; letter-spacing: -0.5px;">BottleCRM</span>
+                    {% block brandmark %}
+                    {% if email_logo_url %}
+                    <img src="{{ email_logo_url }}" alt="{{ email_brand_name|default:'BottleCRM' }}" height="28" style="height:28px;max-height:28px;width:auto;display:block;border:0;outline:none;text-decoration:none;">
+                    {% else %}
+                    <span style="font-size: 22px; font-weight: 700; color: #EA580C; text-decoration: none; letter-spacing: -0.5px;">{{ email_brand_name|default:'BottleCRM' }}</span>
+                    {% endif %}
+                    {% endblock brandmark %}
                   </td>
                 </tr>
 

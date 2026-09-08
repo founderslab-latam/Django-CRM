@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 15:54+0000\n"
+"POT-Creation-Date: 2026-09-08 21:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,6 +71,9 @@ msgstr "Ya existe una cuenta con este nombre"
 
 msgid "Annual revenue cannot be negative."
 msgstr "Los ingresos anuales no pueden ser negativos."
+
+msgid "An account has been assigned to you"
+msgstr "Se te asignó una cuenta"
 
 msgid "Account Created Successfully"
 msgstr "Cuenta creada correctamente."
@@ -441,6 +444,21 @@ msgstr "Corrige las filas inválidas antes de importar."
 msgid "Only approved solutions can be published. Please approve it first."
 msgstr "Solo se pueden publicar soluciones aprobadas. Apruébala primero."
 
+msgid "A case has been assigned to you"
+msgstr "Se te asignó un caso"
+
+#, python-format
+msgid "How did we do? %(case)s"
+msgstr "¿Qué te pareció nuestra atención? %(case)s"
+
+#, python-format
+msgid "Re: %(case)s"
+msgstr "Re: %(case)s"
+
+#, python-format
+msgid "%(case)s is now %(status)s"
+msgstr "%(case)s ahora está en %(status)s"
+
 #, python-format
 msgid "How did we do on \"%(case_name)s\"?"
 msgstr "¿Qué te pareció nuestra atención en \"%(case_name)s\"?"
@@ -539,6 +557,11 @@ msgstr "No se encontró la solución."
 msgid "Organization context is required. Please login again."
 msgstr "Se requiere contexto de organización. Inicia sesión nuevamente."
 
+#, fuzzy
+#| msgid "The organization must keep at least one active admin."
+msgid "This organization is not active."
+msgstr "La organización debe conservar al menos un administrador activo."
+
 msgid "email address"
 msgstr ""
 
@@ -617,6 +640,29 @@ msgstr "Demasiados scopes (máximo 32)."
 
 msgid "expires_at must be in the future."
 msgstr "expires_at debe ser una fecha futura."
+
+msgid "Welcome to BottleCRM"
+msgstr "Te damos la bienvenida a BottleCRM"
+
+#, python-format
+msgid "Your BottleCRM sign-in code: %(code)s"
+msgstr "Tu código de acceso a BottleCRM: %(code)s"
+
+msgid "Your BottleCRM sign-in link"
+msgstr "Tu enlace de acceso a BottleCRM"
+
+#, python-format
+msgid "Your sign-in code: %(code)s"
+msgstr "Tu código de acceso: %(code)s"
+
+msgid "Account activated"
+msgstr "Cuenta activada"
+
+msgid "Account deactivated"
+msgstr "Cuenta desactivada"
+
+msgid "Your account has been deleted"
+msgstr "Tu cuenta fue eliminada"
 
 msgid "An account has been assigned to you in BottleCRM"
 msgstr "Se te asignó una cuenta en BottleCRM"
@@ -765,9 +811,6 @@ msgstr "Si tienes alguna duda, comunícate con tu administrador."
 
 msgid "Activate your BottleCRM account"
 msgstr "Activa tu cuenta de BottleCRM"
-
-msgid "Welcome to BottleCRM"
-msgstr "Te damos la bienvenida a BottleCRM"
 
 msgid "Thanks for creating an account. Click the button below to verify your email and activate your account."
 msgstr "Gracias por crear una cuenta. Haz clic en el botón de abajo para verificar tu correo y activar tu cuenta."
@@ -1582,6 +1625,12 @@ msgstr "Ingresa un RUT válido, por ejemplo 12.345.678-5."
 msgid "That RUT's check digit does not match. Check the number."
 msgstr "El dígito verificador de ese RUT no coincide. Revisa el número."
 
+msgid "Use 1-63 characters: lowercase letters, digits and hyphens, not starting or ending with a hyphen."
+msgstr ""
+
+msgid "That subdomain is reserved."
+msgstr ""
+
 msgid "User account is disabled"
 msgstr "La cuenta de usuario está deshabilitada."
 
@@ -1632,6 +1681,9 @@ msgstr "El campo org_id es obligatorio."
 
 msgid "org_id must be a valid UUID"
 msgstr "El campo org_id debe ser un UUID válido."
+
+msgid "Organization not found"
+msgstr "No se encontró la organización."
 
 msgid "User does not have access to this organization"
 msgstr "El usuario no tiene acceso a esta organización."
@@ -1714,9 +1766,6 @@ msgstr "No se puede %(verb)s una organización diferente."
 
 msgid "Only organization admins can update organization details"
 msgstr "Solo los administradores de la organización pueden actualizar los datos de la organización."
-
-msgid "Organization not found"
-msgstr "No se encontró la organización."
 
 msgid "Organization updated successfully"
 msgstr "Organización actualizada correctamente."
@@ -1948,6 +1997,9 @@ msgstr "Supera los 64 caracteres"
 
 msgid "A contact was created concurrently that conflicts with this import (likely a duplicate email). Re-run preview and try again."
 msgstr "Se creó un contacto de forma concurrente que entra en conflicto con esta importación (probablemente un correo electrónico duplicado). Vuelve a ejecutar la vista previa e inténtalo de nuevo."
+
+msgid "A contact has been assigned to you"
+msgstr "Se te asignó un contacto"
 
 msgid "Contact created Successfuly"
 msgstr "Contacto creado correctamente."
@@ -2448,6 +2500,22 @@ msgid "Template not found or does not belong to your organization"
 msgstr "No se encontró la plantilla o no pertenece a tu organización."
 
 #, python-format
+msgid "Invoice #%(number)s has been assigned to you"
+msgstr "Se te asignó la factura n.º %(number)s"
+
+#, python-format
+msgid "Invoice #%(number)s from %(org)s"
+msgstr "Factura n.º %(number)s de %(org)s"
+
+#, python-format
+msgid "Payment reminder: invoice #%(number)s"
+msgstr "Recordatorio de pago: factura n.º %(number)s"
+
+#, python-format
+msgid "Estimate #%(number)s from %(org)s"
+msgstr "Presupuesto n.º %(number)s de %(org)s"
+
+#, python-format
 msgid "Invoice #%(invoice_number)s has been assigned to you"
 msgstr "Se te asignó la factura n.º %(invoice_number)s"
 
@@ -2590,6 +2658,13 @@ msgstr ""
 msgid "Default Win Probability %"
 msgstr ""
 
+#, python-format
+msgid "Lead '%(lead)s' has been assigned to you"
+msgstr "Se te asignó el prospecto «%(lead)s»"
+
+msgid "A lead has been assigned to you"
+msgstr "Se te asignó un prospecto"
+
 msgid "Lead moved successfully"
 msgstr "Prospecto movido correctamente."
 
@@ -2685,6 +2760,19 @@ msgstr ""
 
 msgid "Deal Type Weights"
 msgstr ""
+
+msgid "An opportunity has been assigned to you"
+msgstr "Se te asignó una oportunidad"
+
+#, python-format
+msgid "%(count)s stale deal needs attention"
+msgid_plural "%(count)s stale deals need attention"
+msgstr[0] "%(count)s trato estancado necesita atención"
+msgstr[1] "%(count)s tratos estancados necesitan atención"
+
+#, python-format
+msgid "Goal '%(goal)s' reached %(milestone)s"
+msgstr "El objetivo «%(goal)s» alcanzó %(milestone)s"
 
 #, python-format
 msgid "Congratulations, %(username)s!"
@@ -2842,6 +2930,9 @@ msgstr ""
 msgid "Sort Order"
 msgstr ""
 
+msgid "A task has been assigned to you"
+msgstr "Se te asignó una tarea"
+
 msgid "title"
 msgstr ""
 
@@ -2907,6 +2998,10 @@ msgstr "Este formulario no se puede enviar desde este sitio."
 
 msgid "Could not verify that you are human. Please try again."
 msgstr "No se pudo verificar que eres una persona. Inténtalo de nuevo."
+
+#, python-format
+msgid "New submission: %(form)s"
+msgstr "Nuevo envío: %(form)s"
 
 #, python-format
 msgid "A new submission arrived through <strong>%(form_name)s</strong>."

@@ -1,7 +1,9 @@
 from celery import shared_task
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Profile
 from common.tasks import set_rls_context
@@ -24,10 +26,12 @@ def send_email_to_assigned_user(recipients, contact_id, org_id):
             context["user"] = profile.user
             context["contact"] = contact
             context["created_by"] = created_by
-            subject = "Assigned a contact for you."
-            html_content = render_to_string(
-                "assigned_to/contact_assigned.html", context=context
-            )
+            context.update(brand_context(contact.org))
+            with localized_email(recipient=profile.user, org=contact.org):
+                subject = _("A contact has been assigned to you")
+                html_content = render_to_string(
+                    "assigned_to/contact_assigned.html", context=context
+                )
 
             msg = EmailMessage(subject, html_content, to=recipients_list)
             msg.content_subtype = "html"

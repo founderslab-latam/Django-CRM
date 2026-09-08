@@ -12,6 +12,7 @@ from common.custom_fields import (
     is_supported_target,
     validate_definition_options,
 )
+from common.i18n import LANGUAGE_CHOICES
 from common.models import (
     Activity,
     Address,
@@ -80,6 +81,10 @@ class OrgAwareRefreshToken(RefreshToken):
             # without an extra /api/profile/ round trip. Distinct from `role`,
             # which is org-scoped.
             token["is_superuser"] = bool(getattr(user, "is_superuser", False))
+            # The user's own language preference (blank = none). The web shell
+            # seeds its `locale` cookie from this so a preference set on one
+            # device follows the account to the next.
+            token["language"] = getattr(user, "language", "") or ""
 
         # Add org context to the token payload
         if org:
@@ -88,6 +93,9 @@ class OrgAwareRefreshToken(RefreshToken):
             # Add org_name for display (avoids /api/auth/profile call)
             if hasattr(org, "name"):
                 token["org_name"] = org.name
+            # The org's language: the shell's fallback when the user set none.
+            if hasattr(org, "language"):
+                token["org_language"] = org.language or ""
             # Add org settings for currency/locale
             if hasattr(org, "default_currency"):
                 token["org_settings"] = {
@@ -201,6 +209,7 @@ class OrgSettingsSerializer(TaxIdCountryValidationMixin, serializers.ModelSerial
             "default_country",
             "currency_symbol",
             "timezone",
+            "language",
             # Case-handling behaviour (org-wide switches). Editable only here.
             "csat_enabled",
             "auto_close_children_on_parent_close",
@@ -732,7 +741,7 @@ class CreateProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "name", "profile_pic"]
+        fields = ["id", "email", "name", "profile_pic", "language"]
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -781,6 +790,13 @@ class ProfileSelfUpdateSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=20,
         validators=[flexible_phone_validator],
+    )
+    # Preferred UI + email language. Written to `User.language` (like `name`,
+    # it is shared across every org membership). Blank clears the preference,
+    # which then falls back to the org's language, then Accept-Language, then
+    # English -- see `common.i18n.resolve_language`.
+    language = serializers.ChoiceField(
+        choices=LANGUAGE_CHOICES, required=False, allow_blank=True
     )
 
 

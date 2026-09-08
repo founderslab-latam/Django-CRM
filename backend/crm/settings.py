@@ -267,6 +267,15 @@ elif ENV_TYPE == "prod":
     # raises, so it suppressed nothing.
     from .server_settings import *  # noqa: F403
 
+# Absolute base URL of a PUBLIC, credential-free host that serves the org-logo
+# subtree of MEDIA (e.g. https://media-crm.example.com). Used to turn the
+# relative `org.logo.url` into an absolute link an email client or a headless
+# PDF renderer can fetch. Empty -> emails fall back to the text wordmark and
+# the PDF uses whatever local/relative path it already resolved. Never point
+# this at a host that serves the whole MEDIA_ROOT: attachments are tenant
+# -private and a static server has no row-level security.
+PUBLIC_MEDIA_URL = os.environ.get("PUBLIC_MEDIA_URL", "").rstrip("/")
+
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@localhost")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@localhost")
 

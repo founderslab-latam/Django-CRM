@@ -8,10 +8,12 @@ from django.core.signing import TimestampSigner
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from cases.models import Case, CsatSurvey, EscalationPolicy, TimeEntry
 from cases.notifications import case_link
 from cases.workflow import TERMINAL_STATUSES
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Activity, Org, Profile
 from common.tasks import set_rls_context
@@ -60,10 +62,12 @@ def send_email_to_assigned_user(recipients, case_id, org_id):
             context["user"] = profile.user
             context["case"] = case
             context["created_by"] = created_by
-            subject = "Assigned to case."
-            html_content = render_to_string(
-                "assigned_to/cases_assigned.html", context=context
-            )
+            context.update(brand_context(case.org))
+            with localized_email(recipient=profile.user, org=case.org):
+                subject = _("A case has been assigned to you")
+                html_content = render_to_string(
+                    "assigned_to/cases_assigned.html", context=context
+                )
 
             msg = EmailMessage(subject, html_content, to=recipients_list)
             msg.content_subtype = "html"
@@ -325,16 +329,19 @@ def send_csat_survey(case_id, org_id):
         "rating_scale": range(CSAT_RATING_MIN, CSAT_RATING_MAX + 1),
         "scale_low_label": CSAT_SCALE_LOW_LABEL,
         "scale_high_label": CSAT_SCALE_HIGH_LABEL,
+        **brand_context(case.org),
     }
     # Deliberately unguarded. This render used to sit under a bare
     # `except Exception` that fell back to a plain link, with a comment saying
     # the template existed in production. It never existed anywhere, so every
     # survey ever sent took the fallback and nobody found out. A template that
     # fails to render is now a task failure that Celery logs.
-    html = render_to_string("csat/survey_email.html", context=context)
+    with localized_email(org=case.org):
+        html = render_to_string("csat/survey_email.html", context=context)
+        subject = _("How did we do? %(case)s") % {"case": case.name}
 
     msg = EmailMessage(
-        subject=f"How did we do?, {case.name}",
+        subject=subject,
         body=html,
         to=[contact.email],
     )
@@ -393,22 +400,25 @@ def notify_portal_contacts(case_id, org_id, kind, actor_contact_id=None):
     org_name = case.org.name or ""
     sent = 0
     for contact in recipients:
-        html = render_to_string(
-            "portal/case_update_email.html",
-            {
-                "contact_name": contact.first_name or "",
-                "case_name": case.name,
-                "case_status": case.status,
-                "kind": kind,
-                "link": link,
-                "org_name": org_name,
-            },
-        )
-        subject = (
-            f"Re: {case.name}"
-            if kind == "reply"
-            else f"{case.name} is now {case.status}"
-        )
+        with localized_email(org=case.org):
+            html = render_to_string(
+                "portal/case_update_email.html",
+                {
+                    "contact_name": contact.first_name or "",
+                    "case_name": case.name,
+                    "case_status": case.status,
+                    "kind": kind,
+                    "link": link,
+                    "org_name": org_name,
+                    **brand_context(case.org),
+                },
+            )
+            subject = (
+                _("Re: %(case)s") % {"case": case.name}
+                if kind == "reply"
+                else _("%(case)s is now %(status)s")
+                % {"case": case.name, "status": case.status}
+            )
         msg = EmailMessage(subject, html, to=[contact.email])
         msg.content_subtype = "html"
         try:

@@ -10,8 +10,11 @@ import logging
 
 from celery import shared_task
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
+from common.models import Org
 from common.tasks import set_rls_context
 from leads.tasks import send_email
 from webforms.models import WebFormSubmission
@@ -69,18 +72,24 @@ def send_webform_submission_email(submission_id, org_id):
         logger.info("Web form %s has no notification recipients.", form.id)
         return
 
-    html_content = render_to_string(
-        "webforms/submission_email.html",
-        {
-            "form": form,
-            "submission": submission,
-            "lead": submission.lead,
-            "lead_url": frontend_url(f"/leads/{submission.lead_id}"),
-            "is_duplicate": (submission.status == WebFormSubmission.ACCEPTED_DUPLICATE),
-        },
-    )
+    org = Org.objects.filter(id=org_id).first()
+    with localized_email(org=org):
+        subject = _("New submission: %(form)s") % {"form": form.name}
+        html_content = render_to_string(
+            "webforms/submission_email.html",
+            {
+                "form": form,
+                "submission": submission,
+                "lead": submission.lead,
+                "lead_url": frontend_url(f"/leads/{submission.lead_id}"),
+                "is_duplicate": (
+                    submission.status == WebFormSubmission.ACCEPTED_DUPLICATE
+                ),
+                **brand_context(org),
+            },
+        )
     send_email(
-        subject=f"New submission: {form.name}",
+        subject=subject,
         html_content=html_content,
         recipients=recipients,
     )

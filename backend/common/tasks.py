@@ -10,7 +10,9 @@ from django.core.validators import validate_email
 from django.db import connection
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import (
     MagicLinkToken,
@@ -75,9 +77,10 @@ def send_welcome_email(user_id):
         logger.warning("Welcome email skipped: invalid email for user %s", user_id)
         return
 
-    context = {"url": settings.FRONTEND_URL}
-    subject = "Welcome to BottleCRM"
-    html_content = render_to_string("welcome_email.html", context=context)
+    context = {"url": settings.FRONTEND_URL, **brand_context(None)}
+    with localized_email(recipient=user_obj):
+        subject = _("Welcome to BottleCRM")
+        html_content = render_to_string("welcome_email.html", context=context)
 
     msg = EmailMessage(
         subject,
@@ -113,6 +116,7 @@ def send_magic_link_email(token_id, raw_code=None):
         )
         return
 
+    recipient = User.objects.filter(email__iexact=email).first()
     if magic_token.delivery == "code":
         if not raw_code:
             logger.warning(
@@ -120,20 +124,22 @@ def send_magic_link_email(token_id, raw_code=None):
                 token_id,
             )
             return
-        subject = f"Your BottleCRM sign-in code: {raw_code}"
-        html_content = render_to_string(
-            "magic_link_code_email.html",
-            {"code": raw_code},
-        )
+        with localized_email(recipient=recipient):
+            subject = _("Your BottleCRM sign-in code: %(code)s") % {"code": raw_code}
+            html_content = render_to_string(
+                "magic_link_code_email.html",
+                {"code": raw_code, **brand_context(None)},
+            )
     else:
         magic_link_url = (
             f"{settings.FRONTEND_URL}/login/verify?token={magic_token.token}"
         )
-        subject = "Your BottleCRM sign-in link"
-        html_content = render_to_string(
-            "magic_link_email.html",
-            {"magic_link_url": magic_link_url},
-        )
+        with localized_email(recipient=recipient):
+            subject = _("Your BottleCRM sign-in link")
+            html_content = render_to_string(
+                "magic_link_email.html",
+                {"magic_link_url": magic_link_url, **brand_context(None)},
+            )
 
     msg = EmailMessage(
         subject,
@@ -185,20 +191,23 @@ def send_portal_login_email(token_id, raw_code):
         return None
 
     org_name = token_obj.org.name or ""
-    html_content = render_to_string(
-        "portal/login_email.html",
-        {
-            "org_name": org_name,
-            "contact_name": contact.first_name or "",
-            "code": raw_code,
-        },
-    )
-
-    msg = EmailMessage(
+    with localized_email(org=token_obj.org):
+        html_content = render_to_string(
+            "portal/login_email.html",
+            {
+                "org_name": org_name,
+                "contact_name": contact.first_name or "",
+                "code": raw_code,
+                **brand_context(token_obj.org),
+            },
+        )
         # The code is in the subject so it shows in a phone's notification
         # preview, which is where the customer is reading it. Same trade the
         # internal magic-link mail already makes.
-        f"Your sign-in code: {raw_code}",
+        subject = _("Your sign-in code: %(code)s") % {"code": raw_code}
+
+    msg = EmailMessage(
+        subject,
         html_content,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[email],
@@ -230,16 +239,18 @@ def send_email_user_status(
         if user.is_active:
             context["message"] = "activated"
         context["status_changed_user"] = status_changed_user
-        if context["message"] == "activated":
-            subject = "Account Activated "
-            html_content = render_to_string(
-                "user_status_activate.html", context=context
-            )
-        else:
-            subject = "Account Deactivated "
-            html_content = render_to_string(
-                "user_status_deactivate.html", context=context
-            )
+        context.update(brand_context(None))
+        with localized_email(recipient=user):
+            if context["message"] == "activated":
+                subject = _("Account activated")
+                html_content = render_to_string(
+                    "user_status_activate.html", context=context
+                )
+            else:
+                subject = _("Account deactivated")
+                html_content = render_to_string(
+                    "user_status_deactivate.html", context=context
+                )
         recipients = []
         recipients.append(user.email)
         if recipients:
@@ -264,10 +275,13 @@ def send_email_user_delete(
         context["message"] = "deleted"
         context["deleted_by"] = deleted_by
         context["email"] = user_email
+        context.update(brand_context(None))
         recipients = []
         recipients.append(user_email)
-        subject = "CRM : Your account is Deleted. "
-        html_content = render_to_string("user_delete_email.html", context=context)
+        recipient = User.objects.filter(email__iexact=user_email).first()
+        with localized_email(recipient=recipient):
+            subject = _("Your account has been deleted")
+            html_content = render_to_string("user_delete_email.html", context=context)
         if recipients:
             msg = EmailMessage(
                 subject,

@@ -7,8 +7,10 @@ from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
 from accounts.models import Account
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Org, Profile
 from common.tasks import set_rls_context
@@ -68,7 +70,7 @@ def send_lead_assigned_emails(lead_id, new_assigned_to_list, org_id):
         return False
 
     users = Profile.objects.filter(id__in=new_assigned_to_list).distinct()
-    subject = f"Lead '{lead_instance}' has been assigned to you"
+    org = lead_instance.org
     from_email = settings.DEFAULT_FROM_EMAIL
     template_name = "assigned_to/leads_assigned.html"
 
@@ -88,14 +90,22 @@ def send_lead_assigned_emails(lead_id, new_assigned_to_list, org_id):
         "lead": lead_instance,
         "url": frontend_url(f"/leads/{lead_instance.id}"),
     }
-    mail_kwargs = {"subject": subject, "from_email": from_email}
     for profile in users:
         if profile.user.email:
             context["user"] = profile.user
-            html_content = get_rendered_html(template_name, context)
-            mail_kwargs["html_content"] = html_content
-            mail_kwargs["recipients"] = [profile.user.email]
-            send_email.delay(**mail_kwargs)
+            with localized_email(recipient=profile.user, org=org):
+                subject = _("Lead '%(lead)s' has been assigned to you") % {
+                    "lead": lead_instance
+                }
+                html_content = get_rendered_html(
+                    template_name, {**context, **brand_context(org)}
+                )
+            send_email.delay(
+                subject=subject,
+                from_email=from_email,
+                html_content=html_content,
+                recipients=[profile.user.email],
+            )
     return None
 
 
@@ -105,6 +115,7 @@ def send_email_to_assigned_user(recipients, lead_id, org_id, source=""):
     set_rls_context(org_id)
     lead = Lead.objects.get(id=lead_id)
     created_by = lead.created_by
+    org = lead.org
     for user in recipients:
         recipients_list = []
         profile = Profile.objects.filter(id=user, is_active=True).first()
@@ -116,10 +127,12 @@ def send_email_to_assigned_user(recipients, lead_id, org_id, source=""):
             context["lead"] = lead
             context["created_by"] = created_by
             context["source"] = source
-            subject = "Assigned a lead for you. "
-            html_content = render_to_string(
-                "assigned_to/leads_assigned.html", context=context
-            )
+            context.update(brand_context(org))
+            with localized_email(recipient=profile.user, org=org):
+                subject = _("A lead has been assigned to you")
+                html_content = render_to_string(
+                    "assigned_to/leads_assigned.html", context=context
+                )
             msg = EmailMessage(subject, html_content, to=recipients_list)
             msg.content_subtype = "html"
             try:

@@ -17,7 +17,9 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
+from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Profile
 from common.org_time import activate_org_timezone
@@ -56,7 +58,6 @@ def send_email(invoice_id, recipients, org_id, domain="localhost", protocol="htt
     for user_id in recipients:
         profile = Profile.objects.filter(id=user_id, is_active=True).first()
         if profile and profile.user and profile.user.email:
-            subject = f"Invoice #{invoice.invoice_number} has been assigned to you"
             context = {
                 "invoice": invoice,
                 "invoice_title": invoice.invoice_title,
@@ -64,10 +65,15 @@ def send_email(invoice_id, recipients, org_id, domain="localhost", protocol="htt
                 "url": frontend_url(f"/invoices/{invoice.id}"),
                 "user": profile.user,
                 "assigned_by": invoice.created_by.user if invoice.created_by else None,
+                **brand_context(invoice.org),
             }
-            html_content = render_to_string(
-                "invoices/emails/assigned_to_email.html", context=context
-            )
+            with localized_email(recipient=profile.user, org=invoice.org):
+                subject = _("Invoice #%(number)s has been assigned to you") % {
+                    "number": invoice.invoice_number
+                }
+                html_content = render_to_string(
+                    "invoices/emails/assigned_to_email.html", context=context
+                )
             msg = EmailMessage(
                 subject=subject,
                 body=html_content,
@@ -116,8 +122,6 @@ def send_invoice_to_client(
         logger.warning("Invoice %s has no client email", invoice_id)
         return
 
-    subject = f"Invoice #{invoice.invoice_number} from {invoice.org.name}"
-
     # Build public URL if enabled
     public_url = None
     if invoice.public_link_enabled and invoice.public_token:
@@ -127,10 +131,16 @@ def send_invoice_to_client(
         "invoice": invoice,
         "public_url": public_url,
         "org": invoice.org,
+        **brand_context(invoice.org),
     }
-    html_content = render_to_string(
-        "invoices/emails/invoice_to_client.html", context=context
-    )
+    with localized_email(org=invoice.org):
+        subject = _("Invoice #%(number)s from %(org)s") % {
+            "number": invoice.invoice_number,
+            "org": invoice.org.name,
+        }
+        html_content = render_to_string(
+            "invoices/emails/invoice_to_client.html", context=context
+        )
 
     msg = EmailMessage(
         subject=subject,
@@ -411,8 +421,6 @@ def send_payment_reminder(invoice_id, org_id, domain="localhost", protocol="http
         )
         return
 
-    subject = f"Payment Reminder: Invoice #{invoice.invoice_number}"
-
     public_url = None
     if invoice.public_link_enabled and invoice.public_token:
         public_url = frontend_url(f"/portal/invoice/{invoice.public_token}")
@@ -424,10 +432,15 @@ def send_payment_reminder(invoice_id, org_id, domain="localhost", protocol="http
         "days_overdue": (timezone.localdate() - invoice.due_date).days
         if invoice.due_date
         else 0,
+        **brand_context(invoice.org),
     }
-    html_content = render_to_string(
-        "invoices/emails/payment_reminder.html", context=context
-    )
+    with localized_email(org=invoice.org):
+        subject = _("Payment reminder: invoice #%(number)s") % {
+            "number": invoice.invoice_number
+        }
+        html_content = render_to_string(
+            "invoices/emails/payment_reminder.html", context=context
+        )
 
     msg = EmailMessage(
         subject=subject,
@@ -596,8 +609,6 @@ def send_estimate_to_client(
         logger.warning("Estimate %s has no client email", estimate_id)
         return
 
-    subject = f"Estimate #{estimate.estimate_number} from {estimate.org.name}"
-
     public_url = None
     if estimate.public_link_enabled and estimate.public_token:
         public_url = frontend_url(f"/portal/estimate/{estimate.public_token}")
@@ -606,10 +617,16 @@ def send_estimate_to_client(
         "estimate": estimate,
         "public_url": public_url,
         "org": estimate.org,
+        **brand_context(estimate.org),
     }
-    html_content = render_to_string(
-        "invoices/emails/estimate_to_client.html", context=context
-    )
+    with localized_email(org=estimate.org):
+        subject = _("Estimate #%(number)s from %(org)s") % {
+            "number": estimate.estimate_number,
+            "org": estimate.org.name,
+        }
+        html_content = render_to_string(
+            "invoices/emails/estimate_to_client.html", context=context
+        )
 
     msg = EmailMessage(
         subject=subject,

@@ -379,6 +379,12 @@ class ProfileView(APIView):
             user.name = data["name"].strip()
             user.save(update_fields=["name"])
 
+        # Language lives on User for the same reason as name: it is one
+        # person's preference across every org they belong to. Blank clears it.
+        if "language" in data:
+            request.user.language = data["language"]
+            request.user.save(update_fields=["language"])
+
         return Response(
             {
                 "message": _("Profile updated successfully"),

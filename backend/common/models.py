@@ -16,6 +16,7 @@ from django.utils.timesince import timesince
 from django.utils.translation import gettext_lazy as _
 
 from common.base import BaseModel, BaseOrgModel
+from common.i18n import LANGUAGE_CHOICES
 from common.utils import (
     COUNTRIES,
     CURRENCY_CODES,
@@ -40,6 +41,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(_("email address"), blank=True, unique=True)
     name = models.CharField(_("name"), max_length=255, blank=True, default="")
+    # Preferred UI + email language. Lives on User, not Profile: like `name`, a
+    # person's language is theirs across every org they belong to. Blank means
+    # "no preference" -- `common.i18n.resolve_language` then falls back to the
+    # org's language, then the request's Accept-Language, then English.
+    language = models.CharField(
+        max_length=8, blank=True, default="", choices=LANGUAGE_CHOICES
+    )
     profile_pic = models.CharField(max_length=1000, null=True, blank=True)
     activation_key = models.CharField(max_length=150, null=True, blank=True)
     key_expires = models.DateTimeField(null=True, blank=True)
@@ -182,6 +190,13 @@ class Org(BaseModel):
     )
     default_country = models.CharField(
         max_length=2, choices=COUNTRIES, blank=True, null=True
+    )
+    # The org's language: the fallback for a member who has set no language of
+    # their own, the language of org- and customer-facing mail (invoices,
+    # estimates), and the default handed to users created inside this org.
+    # Blank means English (see `common.i18n.resolve_language`).
+    language = models.CharField(
+        max_length=8, blank=True, default="", choices=LANGUAGE_CHOICES
     )
     # The org's calendar day. Every "today", "overdue" and "this month" in the
     # app is resolved against this, because a day boundary is a fact about the
@@ -353,6 +368,7 @@ class Profile(BaseModel):
             "email": self.user.email,
             "id": self.user.id,
             "name": self.user.name,
+            "language": self.user.language,
             "is_active": self.user.is_active,
             "profile_pic": self.user.profile_pic,
             "last_login": self.user.last_login,
