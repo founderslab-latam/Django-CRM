@@ -76,7 +76,7 @@ class TestPATAuthentication:
     def test_inactive_org_raises(self, org_a, admin_profile):
         raw, _ = PersonalAccessToken.generate(profile=admin_profile, name="cli")
         org = admin_profile.org
-        org.is_active = False
+        org.status = "SUSPENDED"
         org.save()
         req = self.factory.get("/api/leads/", HTTP_AUTHORIZATION=f"Bearer {raw}")
         with pytest.raises(AuthenticationFailed):

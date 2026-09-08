@@ -9,6 +9,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.timesince import timesince
@@ -28,7 +29,7 @@ from common.utils import (
     is_document_file_video,
     is_document_file_zip,
 )
-from common.validators import validate_iana_timezone
+from common.validators import validate_iana_timezone, validate_org_subdomain
 
 from .manager import UserManager
 
@@ -99,10 +100,62 @@ def generate_unique_key():
     return str(uuid.uuid4())
 
 
+def generate_routing_key():
+    """A stable, DNS-safe token for a tenant's CNAME target.
+
+    The operator hands a customer ``<routing_key>.crm.founderslab.cloud`` to
+    point a CNAME at. It never changes for the life of the org, unlike
+    ``subdomain``, which the customer may rename.
+    """
+    return secrets.token_hex(6)  # 12 lowercase hex chars, a valid DNS label
+
+
 class Org(BaseModel):
+    ORG_STATUS = (
+        ("ACTIVE", "Active"),
+        ("SUSPENDED", "Suspended"),
+        ("DELETED", "Deleted"),
+    )
+
     name = models.CharField(max_length=100, blank=True, null=True)
     api_key = models.TextField(default=generate_unique_key, unique=True, editable=False)
+    # Mirror of `status` (see `save()`), kept so existing
+    # `Org.objects.filter(is_active=True)` call sites keep working unchanged.
     is_active = models.BooleanField(default=True)
+
+    # Lifecycle. Only an ACTIVE org can be used: `RequireOrgContext` 403s every
+    # request for a SUSPENDED or DELETED one. DELETED is a soft delete -- rows
+    # are retained, access is cut.
+    status = models.CharField(
+        max_length=16,
+        choices=ORG_STATUS,
+        default="ACTIVE",
+        db_index=True,
+    )
+    status_reason = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Free-text note for a suspension or deletion, e.g. 'non-payment 2026-09'.",
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    # Tenant subdomain: `<subdomain>.crm.founderslab.cloud`. The customer picks
+    # and may rename it. Host->org routing is a later phase; this just stores it.
+    subdomain = models.CharField(
+        max_length=63,
+        blank=True,
+        default="",
+        validators=[validate_org_subdomain],
+        help_text="Subdomain label, e.g. 'acme'. Lowercase letters, digits and hyphens.",
+    )
+    # The stable CNAME target host is `<routing_key>.crm.founderslab.cloud`.
+    routing_key = models.CharField(
+        max_length=32,
+        unique=True,
+        editable=False,
+        default=generate_routing_key,
+    )
 
     # Company Profile (for invoices, documents, etc.)
     company_name = models.CharField(
@@ -174,9 +227,21 @@ class Org(BaseModel):
         verbose_name_plural = "Organizations"
         db_table = "organization"
         ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                Lower("subdomain"),
+                name="unique_org_subdomain",
+                condition=~models.Q(subdomain=""),
+            ),
+        ]
 
     def __str__(self):
         return str(self.name)
+
+    def save(self, *args, **kwargs):
+        # `is_active` is a derived mirror of `status`; nothing else writes it.
+        self.is_active = self.status == "ACTIVE"
+        super().save(*args, **kwargs)
 
 
 class Tags(BaseModel):

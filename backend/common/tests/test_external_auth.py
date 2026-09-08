@@ -49,7 +49,7 @@ class TestAPIKeyAuthentication:
 
     def test_inactive_org_raises(self, org_a):
         """API key for inactive org should raise AuthenticationFailed."""
-        org_a.is_active = False
+        org_a.status = "SUSPENDED"
         org_a.save()
         request = self.factory.get("/api/some-endpoint/", HTTP_TOKEN=org_a.api_key)
         with pytest.raises(AuthenticationFailed, match="Invalid API Key"):

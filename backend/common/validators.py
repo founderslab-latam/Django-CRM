@@ -336,3 +336,39 @@ def validate_tax_id_for_country(country: str, tax_id: str) -> str:
     if country == "CL" and tax_id:
         return validate_rut(tax_id)
     return tax_id
+
+
+# A DNS label: 1-63 chars, lowercase alnum and hyphen, no leading/trailing
+# hyphen. RFC 1123 allows a leading digit.
+_ORG_SUBDOMAIN_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+
+# Labels the platform uses itself or that would confuse routing / mail.
+_RESERVED_SUBDOMAINS = frozenset(
+    {
+        "www", "api", "app", "admin", "operator", "mail", "smtp", "imap",
+        "pop", "ftp", "ns", "ns1", "ns2", "mx", "cdn", "static", "assets",
+        "media", "crm", "api-crm", "portal", "status", "help", "support",
+        "docs", "blog", "dev", "staging", "test", "demo", "internal",
+        "dashboard", "billing", "auth", "login",
+    }
+)
+
+
+def validate_org_subdomain(value: str) -> None:
+    """A tenant subdomain label: shape plus a reserved-name block-list.
+
+    Blank is allowed (an org may have no subdomain yet); anything non-blank
+    must be a usable DNS label and not one the platform reserves.
+    """
+    if not value:
+        return
+    label = str(value).lower()
+    if not _ORG_SUBDOMAIN_RE.fullmatch(label):
+        raise DjangoValidationError(
+            _(
+                "Use 1-63 characters: lowercase letters, digits and hyphens, "
+                "not starting or ending with a hyphen."
+            )
+        )
+    if label in _RESERVED_SUBDOMAINS:
+        raise DjangoValidationError(_("That subdomain is reserved."))
