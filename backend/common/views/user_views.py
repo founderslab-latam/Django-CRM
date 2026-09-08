@@ -72,7 +72,7 @@ class GetTeamsAndUsersView(APIView):
         teams = Teams.objects.filter(org=request.profile.org).order_by("-id")
         teams_data = TeamsSerializer(teams, many=True).data
         profiles = Profile.objects.filter(
-            is_active=True, org=request.profile.org
+            is_active=True, org=request.profile.org, is_operator_access=False
         ).order_by("user__email")
         profiles_data = ProfileSerializer(profiles, many=True).data
         data["teams"] = teams_data
@@ -201,7 +201,9 @@ class UsersListView(APIView, LimitOffsetPagination):
                 {"error": True, "errors": _("Permission Denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        queryset = Profile.objects.filter(org=request.profile.org).order_by("-id")
+        queryset = Profile.objects.filter(
+            org=request.profile.org, is_operator_access=False
+        ).order_by("-id")
         params = request.query_params
         if params:
             if params.get("email"):

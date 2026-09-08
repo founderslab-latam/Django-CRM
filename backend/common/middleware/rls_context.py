@@ -245,10 +245,19 @@ class RequireOrgContext:
             # status so the UI can show a "suspended" screen. DELETED is a soft
             # delete: 404, generic body -- behave as if the org is gone rather
             # than confirm it existed.
+            #
+            # A platform superuser impersonating in (a flagged
+            # `is_operator_access` profile) reaches a non-ACTIVE org anyway:
+            # inspecting a non-paying or deleted tenant is the whole point.
             org_status = getattr(request.org, "status", "ACTIVE")
-            if org_status == "DELETED":
+            is_operator = getattr(
+                getattr(request, "profile", None), "is_operator_access", False
+            )
+            if is_operator:
+                pass
+            elif org_status == "DELETED":
                 return JsonResponse({"detail": _("Not found.")}, status=404)
-            if org_status != "ACTIVE":
+            elif org_status != "ACTIVE":
                 return JsonResponse(
                     {
                         "detail": _("This organization is not active."),

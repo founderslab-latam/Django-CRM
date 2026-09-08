@@ -76,7 +76,9 @@ class OrgProfileCreateView(APIView):
         """
         here we are passing profile list of the user, where org details also included
         """
-        profile_list = Profile.objects.filter(user=request.user)
+        profile_list = Profile.objects.filter(
+            user=request.user, is_operator_access=False
+        )
         serializer = ShowOrganizationListSerializer(profile_list, many=True)
         return Response(
             {

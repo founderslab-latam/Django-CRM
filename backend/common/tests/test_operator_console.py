@@ -175,3 +175,69 @@ class TestOperatorOrgLifecycle:
         org_a.refresh_from_db()
         assert org_a.status == "ACTIVE"
         assert org_a.deleted_at is None
+
+
+@pytest.mark.django_db
+class TestOperatorImpersonation:
+    SWITCH = "/api/auth/switch-org/"
+
+    def test_superuser_switches_into_a_non_member_org(self, operator_client, org_a):
+        r = operator_client.post(self.SWITCH, {"org_id": str(org_a.id)}, format="json")
+        assert r.status_code == 200, r.content
+        prof = Profile.objects.get(
+            user__email="op@test.com", org=org_a, is_operator_access=True
+        )
+        assert prof.role == "ADMIN"
+        # the returned token actually works for that org
+        c = APIClient()
+        c.credentials(HTTP_AUTHORIZATION=f"Bearer {r.json()['access_token']}")
+        assert c.get("/api/leads/").status_code == 200
+
+    def test_non_superuser_still_403(self, user_client, org_b, org_b_client):
+        # user_client (regular_user) is a member of org_a only; not a superuser.
+        r = user_client.post(self.SWITCH, {"org_id": str(org_b.id)}, format="json")
+        assert r.status_code == 403
+
+    def test_superuser_can_enter_a_suspended_org(self, operator_client, org_a):
+        org_a.status = "SUSPENDED"
+        org_a.save()
+        r = operator_client.post(self.SWITCH, {"org_id": str(org_a.id)}, format="json")
+        assert r.status_code == 200
+        c = APIClient()
+        c.credentials(HTTP_AUTHORIZATION=f"Bearer {r.json()['access_token']}")
+        assert c.get("/api/accounts/").status_code == 200  # not 403
+
+    def test_switch_to_missing_org_is_404(self, operator_client):
+        r = operator_client.post(
+            self.SWITCH,
+            {"org_id": "00000000-0000-0000-0000-000000000000"},
+            format="json",
+        )
+        assert r.status_code == 404
+
+    def test_repeat_switch_reuses_the_profile(self, operator_client, org_a):
+        for _ in range(3):
+            operator_client.post(self.SWITCH, {"org_id": str(org_a.id)}, format="json")
+        assert (
+            Profile.objects.filter(
+                user__email="op@test.com", org=org_a, is_operator_access=True
+            ).count()
+            == 1
+        )
+
+    def test_operator_profile_hidden_from_member_surfaces(
+        self, operator_client, org_b, user_client, user_profile
+    ):
+        # user_client is a real member of org_b.
+        operator_client.post(self.SWITCH, {"org_id": str(org_b.id)}, format="json")
+        emails = {
+            p["user_details"]["email"]
+            for p in user_client.get("/api/users/").json().get("active_users", [])
+            if p.get("user_details")
+        }
+        assert "op@test.com" not in emails
+        teams_users = user_client.get("/api/users/get-teams-and-users/").json()
+        pemails = {
+            p.get("user_details", {}).get("email") for p in teams_users.get("profiles", [])
+        }
+        assert "op@test.com" not in pemails

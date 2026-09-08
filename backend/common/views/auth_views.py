@@ -327,7 +327,9 @@ class GoogleIdTokenView(APIView):
         # Get user's organizations. Active profiles only: `OrgSwitchView`
         # requires `is_active=True`, so listing a deactivated membership here
         # offered an org that answers 403 the moment it is chosen.
-        profiles = Profile.objects.filter(user=user, is_active=True).select_related(
+        profiles = Profile.objects.filter(
+            user=user, is_active=True, is_operator_access=False
+        ).select_related(
             "org"
         )
         organizations = [_org_payload(p.org, role=p.role) for p in profiles]
@@ -664,13 +666,40 @@ class OrgSwitchView(APIView):
                 user=request.user, org_id=org_id, is_active=True
             )
         except Profile.DoesNotExist:
-            audit_log.permission_denied(
-                request.user, from_org, "ORG_SWITCH", f"org:{org_id}", request
-            )
-            return Response(
-                {"error": _("User does not have access to this organization")},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            # A platform superuser may enter any org, even one they are not a
+            # member of and even a SUSPENDED/DELETED one, via a real but flagged
+            # ADMIN profile. `is_operator_access` keeps it out of every
+            # tenant-facing member list, count and picker; the switch is
+            # audited, and so is every subsequent action (attributed to this
+            # profile in the normal audit log).
+            if getattr(request.user, "is_superuser", False):
+                from common.models import Org
+
+                target = Org.objects.filter(id=org_id).first()
+                if target is None:
+                    return Response(
+                        {"error": _("Organization not found")},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                profile, _created = Profile.objects.get_or_create(
+                    user=request.user,
+                    org=target,
+                    is_operator_access=True,
+                    defaults={
+                        "role": "ADMIN",
+                        "is_organization_admin": True,
+                        "is_active": True,
+                    },
+                )
+                audit_log.operator_impersonation(request.user, target, request)
+            else:
+                audit_log.permission_denied(
+                    request.user, from_org, "ORG_SWITCH", f"org:{org_id}", request
+                )
+                return Response(
+                    {"error": _("User does not have access to this organization")},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Retire the outgoing refresh token and issue its replacement together,
         # so a failure cannot leave the caller without a usable token while the
@@ -855,7 +884,9 @@ class MagicLinkVerifyView(APIView):
         user.save(update_fields=["last_login"])
 
         # Get user's organizations
-        profiles = Profile.objects.filter(user=user, is_active=True)
+        profiles = Profile.objects.filter(
+            user=user, is_active=True, is_operator_access=False
+        )
         default_org = None
         profile = None
 
