@@ -202,7 +202,7 @@
     max-height: 30px;
     max-width: 190px;
     object-fit: contain;
-    object-position: left center;
+    object-position: center;
     display: block;
   }
 </style>

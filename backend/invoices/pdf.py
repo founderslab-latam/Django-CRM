@@ -189,8 +189,9 @@ def get_fallback_css():
     }
 
     .logo {
-        max-height: 60px;
+        max-height: 56px;
         max-width: 200px;
+        object-fit: contain;
     }
 
     .invoice-title {
