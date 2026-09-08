@@ -84,3 +84,30 @@ class TestOrgSubdomain:
     def test_multiple_orgs_may_have_no_subdomain(self):
         Org.objects.create(name="A", subdomain="")
         Org.objects.create(name="B", subdomain="")  # no unique clash on blank
+
+
+@pytest.mark.django_db
+class TestSuspendedOrgIsUnreachable:
+    """RequireOrgContext 403s every app request for a non-ACTIVE org."""
+
+    def test_active_org_reaches_the_api(self, admin_client, org_a):
+        assert admin_client.get("/api/leads/").status_code == 200
+
+    def test_suspended_org_is_403(self, admin_client, org_a):
+        org_a.status = "SUSPENDED"
+        org_a.save()
+        r = admin_client.get("/api/leads/")
+        assert r.status_code == 403
+        assert r.json().get("org_status") == "SUSPENDED"
+
+    def test_deleted_org_is_403(self, admin_client, org_a):
+        org_a.status = "DELETED"
+        org_a.save()
+        assert admin_client.get("/api/accounts/").status_code == 403
+
+    def test_switch_org_still_works_from_a_suspended_org(self, admin_client, org_a):
+        org_a.status = "SUSPENDED"
+        org_a.save()
+        # /api/auth/switch-org/ is exempt, so the user is not trapped.
+        r = admin_client.post("/api/auth/switch-org/", {}, format="json")
+        assert r.status_code != 403 or r.json().get("org_status") != "SUSPENDED"

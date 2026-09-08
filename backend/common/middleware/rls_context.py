@@ -233,6 +233,20 @@ class RequireOrgContext:
                     status=403,
                 )
 
+            # A suspended or soft-deleted org is unreachable through the app.
+            # The exempt paths above still work (so `/api/auth/me/` and
+            # `/api/auth/switch-org/` let the user see why and move to another
+            # org), and the operator console lives under its own exempt prefix.
+            org_status = getattr(request.org, "status", "ACTIVE")
+            if org_status != "ACTIVE":
+                return JsonResponse(
+                    {
+                        "detail": _("This organization is not active."),
+                        "org_status": org_status,
+                    },
+                    status=403,
+                )
+
         # Set org context
         self._set_org_context(request)
 
