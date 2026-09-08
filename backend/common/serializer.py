@@ -76,6 +76,10 @@ class OrgAwareRefreshToken(RefreshToken):
             # Build display name from email (User model doesn't have first/last name)
             token["user_name"] = user.email.split("@")[0] if user.email else ""
             token["user_profile_pic"] = user.profile_pic or ""
+            # Platform superuser, so the shell can show the operator console
+            # without an extra /api/profile/ round trip. Distinct from `role`,
+            # which is org-scoped.
+            token["is_superuser"] = bool(getattr(user, "is_superuser", False))
 
         # Add org context to the token payload
         if org:
@@ -97,6 +101,10 @@ class OrgAwareRefreshToken(RefreshToken):
         # Add role if profile provided (avoids /api/auth/profile call)
         if profile:
             token["role"] = profile.role
+            # True when this is a superuser impersonating a tenant they are not
+            # a member of; the shell shows an "operating as" banner.
+            if getattr(profile, "is_operator_access", False):
+                token["impersonated"] = True
 
         return token
 

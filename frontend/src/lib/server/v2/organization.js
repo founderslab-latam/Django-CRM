@@ -122,11 +122,15 @@ export function updateOrgSettings({ cookies }, body) {
  * badge-count fetches already do, rather than let it propagate.
  *
  * @param {{ cookies: import('@sveltejs/kit').Cookies }} event
- * @returns {Promise<{ terminology?: Record<string, string>, vertical?: string }>}
+ * @returns {Promise<{ terminology?: Record<string, string>, vertical?: string, logo_url?: string | null }>}
  */
 export async function getOrgTerminology({ cookies }) {
   const org = await apiRequest('/org/settings/', {}, { cookies });
-  return { terminology: org?.terminology, vertical: org?.vertical };
+  return {
+    terminology: org?.terminology,
+    vertical: org?.vertical,
+    logo_url: org?.logo_url ?? null
+  };
 }
 
 /**

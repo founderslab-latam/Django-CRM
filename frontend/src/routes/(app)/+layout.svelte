@@ -10,7 +10,7 @@
   import CommandPalette from '$lib/v2/components/CommandPalette.svelte';
   import { Search, Sun, Columns3, LifeBuoy, Receipt, Plus, Menu } from '@lucide/svelte';
 
-  /** @type {{ data: { counts: Record<string, number>, org: { name: string, terminology?: Record<string, string> | null }, role: string }, children: import('svelte').Snippet }} */
+  /** @type {{ data: { counts: Record<string, number>, org: { name: string, terminology?: Record<string, string> | null, logo_url?: string | null }, role: string, is_superuser?: boolean, impersonated?: boolean }, children: import('svelte').Snippet }} */
   let { data, children } = $props();
 
   let paletteOpen = $state(false);
@@ -63,10 +63,21 @@
     counts={data.counts}
     org={data.org}
     role={data.role}
+    isSuperuser={data.is_superuser}
     terminology={data.org.terminology}
     onsearch={() => (paletteOpen = true)}
   />
   <div class="v2-main">
+    {#if data.impersonated}
+      <div class="v2-impersonation-bar" role="status">
+        <span>
+          {$_('operator.banner.text', { values: { org: data.org.name } })}
+        </span>
+        <form method="POST" action="/operator/exit">
+          <button type="submit">{$_('operator.banner.exit')}</button>
+        </form>
+      </div>
+    {/if}
     <!-- Phone top bar. The sidebar is hidden below 768px; this replaces the
          org mark and the search affordance it carried. -->
     <div class="v2-mobile-top">
@@ -79,8 +90,12 @@
       >
         <Menu />
       </button>
-      <span class="v2-mark">{data.org.name.slice(0, 1)}</span>
-      <h2>{data.org.name}</h2>
+      {#if data.org.logo_url}
+        <img class="v2-mobile-logo" src={data.org.logo_url} alt={data.org.name} />
+      {:else}
+        <span class="v2-mark">{data.org.name.slice(0, 1)}</span>
+        <h2>{data.org.name}</h2>
+      {/if}
       <button
         class="v2-btn v2-btn-quiet"
         type="button"
@@ -109,7 +124,9 @@
 
   <!-- Both live inside .v2-root so they inherit the scoped tokens; both are
        position:fixed, so the shell's overflow:hidden does not clip them. -->
-  <a class="v2-fab" href={resolve('/pipeline/new')} aria-label={$_('common.nav.aria_new_deal')}><Plus size={21} /></a>
+  <a class="v2-fab" href={resolve('/pipeline/new')} aria-label={$_('common.nav.aria_new_deal')}
+    ><Plus size={21} /></a
+  >
 
   <!-- Mobile navigation drawer. Only openable from the mobile top bar, so it
        never surfaces on desktop; a backdrop click, Escape, or navigating all
@@ -140,6 +157,7 @@
           counts={data.counts}
           org={data.org}
           role={data.role}
+          isSuperuser={data.is_superuser}
           terminology={data.org.terminology}
           onsearch={() => {
             menuOpen = false;
@@ -152,3 +170,37 @@
 
   <CommandPalette open={paletteOpen} onclose={() => (paletteOpen = false)} />
 </div>
+
+<style>
+  .v2-impersonation-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 550;
+    color: #fff;
+    background: var(--v2-rust, #b4462e);
+  }
+  .v2-impersonation-bar form {
+    margin: 0;
+  }
+  .v2-impersonation-bar button {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    padding: 3px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .v2-impersonation-bar button:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .v2-mobile-logo {
+    max-height: 24px;
+    max-width: 140px;
+    display: block;
+  }
+</style>

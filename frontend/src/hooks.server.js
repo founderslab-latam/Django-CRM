@@ -21,7 +21,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /**
  * @typedef {{ default_currency?: string, currency_symbol?: string, default_country?: string|null }} OrgSettingsPayload
- * @typedef {{ org_id?: string, org_name?: string, role?: string, user_id?: string, user_name?: string, user_email?: string, user_profile_pic?: string, exp?: number, iat?: number, org_settings?: OrgSettingsPayload }} JWTPayload
+ * @typedef {{ org_id?: string, org_name?: string, role?: string, user_id?: string, user_name?: string, user_email?: string, user_profile_pic?: string, exp?: number, iat?: number, org_settings?: OrgSettingsPayload, is_superuser?: boolean, impersonated?: boolean }} JWTPayload
  * @typedef {{ id: string, name: string }} OrgInfo
  * @typedef {{ org: OrgInfo, role?: string }} ProfileInfo
  * @typedef {{ id?: string, organizations?: Array<{ id: string, name: string }> }} UserInfo
@@ -244,6 +244,11 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
       email: jwtPayload.user_email || '',
       profilePhoto: jwtPayload.user_profile_pic || ''
     };
+    // Platform superuser (operator console) and impersonation banner, both
+    // straight off the JWT — no extra round trip. `impersonated` is re-read
+    // per org-context branch below since it is org-scoped.
+    /** @type {any} */ (event.locals).is_superuser = Boolean(jwtPayload.is_superuser);
+    /** @type {any} */ (event.locals).impersonated = false;
 
     // Check if org cookie is set and token has org context
     if (orgId && !UUID_RE.test(orgId)) {
@@ -262,6 +267,7 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
           org: event.locals.org,
           role: jwtPayload.role || 'USER'
         };
+        /** @type {any} */ (event.locals).impersonated = Boolean(jwtPayload.impersonated);
         event.locals.org_name = jwtPayload.org_name || 'Organization';
         // Extract org settings for currency/locale
         event.locals.org_settings = jwtPayload.org_settings || {
@@ -300,6 +306,7 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
             org: switchResult.current_org,
             role: newPayload?.role || 'USER'
           };
+          /** @type {any} */ (event.locals).impersonated = Boolean(newPayload?.impersonated);
           event.locals.org_name = switchResult.current_org?.name || 'Organization';
           event.locals.org_settings = newPayload?.org_settings || {
             default_currency: 'USD',
@@ -329,8 +336,11 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
   // resolution + RLS is what actually protects the data (see docs/PORTAL_RLS.md).
   const PUBLIC_ROUTES = ['/login', '/logout', '/bounce', '/portal', '/csat'];
 
-  // Define semi-protected routes (auth required, but no org)
-  const AUTH_ONLY_ROUTES = ['/org'];
+  // Define semi-protected routes (auth required, but no org). `/operator` is
+  // the superuser console: it spans every tenant and must work with no org
+  // context (e.g. right after "exit impersonation" clears the org cookie).
+  // The route's own load gates it on `is_superuser`.
+  const AUTH_ONLY_ROUTES = ['/org', '/operator'];
 
   // Check if public route
   const isPublicRoute = PUBLIC_ROUTES.some(

@@ -100,7 +100,8 @@
         "profile": "Tu perfil",
         "help": "Ayuda",
         "download_app": "Descargar la app",
-        "sign_out": "Cerrar sesión"
+        "sign_out": "Cerrar sesión",
+        "operator": "Operador"
       }
     },
     "search": {
@@ -4047,6 +4048,55 @@
       "error_token_required": "Se requiere el token de la factura",
       "error_not_found": "No se encontró la factura o el enlace venció",
       "error_load": "No se pudo cargar la factura"
+    }
+  },
+  "operator": {
+    "banner": {
+      "text": "Operando como {org} — estás con una cuenta de superusuario de la plataforma.",
+      "exit": "Salir"
+    },
+    "status": {
+      "active": "Activa",
+      "suspended": "Suspendida",
+      "deleted": "Eliminada"
+    },
+    "list": {
+      "title": "Organizaciones",
+      "subtitle": "Todos los tenants de la plataforma. Solo lo ven los superusuarios.",
+      "new_button": "Nueva organización",
+      "search_placeholder": "Buscar por nombre o subdominio",
+      "filter_all": "Todos los estados",
+      "filter_apply": "Filtrar",
+      "col_org": "Organización",
+      "col_status": "Estado",
+      "col_subdomain": "Subdominio",
+      "col_members": "Miembros",
+      "col_created": "Creada",
+      "enter": "Entrar como admin",
+      "enter_hint": "Abre el CRM de este tenant como ADMIN (la impersonation queda auditada).",
+      "suspend": "Suspender",
+      "suspend_prompt": "Motivo para suspender esta organización (ej. falta de pago):",
+      "delete": "Eliminar",
+      "delete_confirm": "¿Eliminar (lógico) {org}? Se conservan los datos pero se corta todo acceso.",
+      "reactivate": "Reactivar",
+      "restore": "Restaurar",
+      "empty": "Ninguna organización coincide.",
+      "error_bad_request": "No se pudo procesar la solicitud.",
+      "error_fallback": "No se pudo guardar el cambio."
+    },
+    "new": {
+      "title": "Nueva organización",
+      "label_name": "Nombre",
+      "label_currency": "Moneda por defecto",
+      "label_country": "País por defecto",
+      "label_subdomain": "Subdominio",
+      "hint_subdomain": "Opcional. Minúsculas, dígitos y guiones. Se usa para <subdominio>.crm.founderslab.cloud.",
+      "label_admin_email": "Email del admin",
+      "hint_admin_email": "Opcional. Esta persona recibe una invitación por magic link como primer ADMIN de la org.",
+      "submit": "Crear organización",
+      "cancel": "Cancelar",
+      "error_name_required": "Ponle un nombre a la organización.",
+      "error_fallback": "No se pudo crear la organización."
     }
   }
 }

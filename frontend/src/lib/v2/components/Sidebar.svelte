@@ -22,6 +22,7 @@
     SlidersHorizontal,
     Search,
     Smartphone,
+    ShieldCheck,
     LogOut
   } from '@lucide/svelte';
   import { t } from '$lib/terminology.js';
@@ -50,8 +51,9 @@
    *
    * @type {{
    *   counts?: Record<string, number>,
-   *   org?: { name: string },
+   *   org?: { name: string, logo_url?: string | null },
    *   role?: string,
+   *   isSuperuser?: boolean,
    *   terminology?: Record<string, string> | null,
    *   onsearch?: () => void
    * }}
@@ -60,6 +62,7 @@
     counts = {},
     org = { name: 'BottleCRM' },
     role = 'USER',
+    isSuperuser = false,
     terminology = undefined,
     onsearch = () => {}
   } = $props();
@@ -186,8 +189,12 @@
 
 <nav class="v2-nav" aria-label={$_('common.sidebar.nav.landmark')}>
   <div class="v2-org">
-    <span class="v2-mark">{org.name.slice(0, 1)}</span>
-    <b>{org.name}</b>
+    {#if org.logo_url}
+      <img class="v2-org-logo" src={org.logo_url} alt={org.name} />
+    {:else}
+      <span class="v2-mark">{org.name.slice(0, 1)}</span>
+      <b>{org.name}</b>
+    {/if}
   </div>
 
   <!--
@@ -235,6 +242,16 @@
       <CircleUser />
       {$_('common.sidebar.nav.profile')}
     </a>
+    {#if isSuperuser}
+      <a
+        class="v2-link"
+        href={resolve('/operator')}
+        aria-current={isActive('/operator', false) ? 'page' : undefined}
+      >
+        <ShieldCheck />
+        {$_('common.sidebar.nav.operator')}
+      </a>
+    {/if}
     <a class="v2-link" href={resolve('/help')}>
       <CircleHelp />
       {$_('common.sidebar.nav.help')}
@@ -262,6 +279,12 @@
 </nav>
 
 <style>
+  .v2-org-logo {
+    max-height: 26px;
+    max-width: 150px;
+    display: block;
+  }
+
   /* Search opens an overlay rather than navigating, so it is a button. It
      borrows .v2-link for everything else. A control that sits in a list of
      links should not look like the odd one out. */

@@ -141,7 +141,12 @@ export async function load(event) {
     // shell hide destinations a member can only reach to be turned away. The
     // backend still enforces every one of those gates, so this is UX, not a
     // security control. Defaults to the non-admin view when the claim is absent.
-    role: event.locals.profile?.role ?? 'USER'
+    role: event.locals.profile?.role ?? 'USER',
+    // Platform superuser -> the operator console link is shown. `impersonated`
+    // -> the "operating as <org>" banner. Both off the JWT (hooks.server.js);
+    // the backend gates the console and every tenant endpoint regardless.
+    is_superuser: Boolean(/** @type {any} */ (event.locals).is_superuser),
+    impersonated: Boolean(/** @type {any} */ (event.locals).impersonated)
   };
 
   // countKeys' fetches and the terminology fetch are pushed into ONE
@@ -163,6 +168,10 @@ export async function load(event) {
   const terminologyResult = results[countKeys.length];
   if (terminologyResult.status === 'fulfilled') {
     shell.org.terminology = terminologyResult.value.terminology;
+    // Shown in place of the org name in the shell when set. Absent (a broken
+    // fetch, or no logo) just leaves the name, same "missing not stale"
+    // contract as terminology and the count badges.
+    /** @type {any} */ (shell.org).logo_url = terminologyResult.value.logo_url ?? null;
   }
 
   return shell;

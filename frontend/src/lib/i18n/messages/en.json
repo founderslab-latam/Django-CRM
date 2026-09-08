@@ -100,7 +100,8 @@
         "profile": "Your profile",
         "help": "Help",
         "download_app": "Download app",
-        "sign_out": "Sign out"
+        "sign_out": "Sign out",
+        "operator": "Operator"
       }
     },
     "search": {
@@ -4047,6 +4048,55 @@
       "error_token_required": "Invoice token is required",
       "error_not_found": "Invoice not found or link has expired",
       "error_load": "Failed to load invoice"
+    }
+  },
+  "operator": {
+    "banner": {
+      "text": "Operating as {org} — you are signed in as a platform superuser.",
+      "exit": "Exit"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "deleted": "Deleted"
+    },
+    "list": {
+      "title": "Organizations",
+      "subtitle": "Every tenant on this platform. Only platform superusers see this.",
+      "new_button": "New organization",
+      "search_placeholder": "Search name or subdomain",
+      "filter_all": "All statuses",
+      "filter_apply": "Filter",
+      "col_org": "Organization",
+      "col_status": "Status",
+      "col_subdomain": "Subdomain",
+      "col_members": "Members",
+      "col_created": "Created",
+      "enter": "Enter as admin",
+      "enter_hint": "Open this tenant's CRM as an ADMIN (impersonation is audited).",
+      "suspend": "Suspend",
+      "suspend_prompt": "Reason for suspending this organization (e.g. non-payment):",
+      "delete": "Delete",
+      "delete_confirm": "Soft-delete {org}? Its data is kept but all access is cut.",
+      "reactivate": "Reactivate",
+      "restore": "Restore",
+      "empty": "No organizations match.",
+      "error_bad_request": "That request could not be processed.",
+      "error_fallback": "The change could not be saved."
+    },
+    "new": {
+      "title": "New organization",
+      "label_name": "Name",
+      "label_currency": "Default currency",
+      "label_country": "Default country",
+      "label_subdomain": "Subdomain",
+      "hint_subdomain": "Optional. Lowercase letters, digits and hyphens. Used for <subdomain>.crm.founderslab.cloud.",
+      "label_admin_email": "Admin email",
+      "hint_admin_email": "Optional. This person is invited by magic link as the org's first ADMIN.",
+      "submit": "Create organization",
+      "cancel": "Cancel",
+      "error_name_required": "Give the organization a name.",
+      "error_fallback": "The organization could not be created."
     }
   }
 }
