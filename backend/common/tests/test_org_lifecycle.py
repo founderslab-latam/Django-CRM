@@ -93,17 +93,20 @@ class TestSuspendedOrgIsUnreachable:
     def test_active_org_reaches_the_api(self, admin_client, org_a):
         assert admin_client.get("/api/leads/").status_code == 200
 
-    def test_suspended_org_is_403(self, admin_client, org_a):
+    def test_suspended_org_is_403_with_status(self, admin_client, org_a):
         org_a.status = "SUSPENDED"
         org_a.save()
         r = admin_client.get("/api/leads/")
         assert r.status_code == 403
         assert r.json().get("org_status") == "SUSPENDED"
 
-    def test_deleted_org_is_403(self, admin_client, org_a):
+    def test_deleted_org_is_404_and_leaks_nothing(self, admin_client, org_a):
+        """A soft-deleted org behaves as if it never existed."""
         org_a.status = "DELETED"
         org_a.save()
-        assert admin_client.get("/api/accounts/").status_code == 403
+        r = admin_client.get("/api/accounts/")
+        assert r.status_code == 404
+        assert "org_status" not in r.json()
 
     def test_switch_org_still_works_from_a_suspended_org(self, admin_client, org_a):
         org_a.status = "SUSPENDED"
