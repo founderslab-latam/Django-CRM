@@ -279,9 +279,20 @@
 </nav>
 
 <style>
+  /* A logo stands in for the wordmark, so give it the whole rail. The rail's
+     inner width is ~184px (222 nav − 22 nav padding − 16 .v2-org padding);
+     drop the side padding when a logo is present so it can span the full
+     width, and allow real height so a horizontal wordmark stays legible. */
+  .v2-org:has(.v2-org-logo) {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
   .v2-org-logo {
-    max-height: 26px;
-    max-width: 150px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 44px;
+    object-fit: contain;
+    object-position: left center;
     display: block;
   }
 

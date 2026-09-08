@@ -199,8 +199,10 @@
     background: rgba(255, 255, 255, 0.15);
   }
   .v2-mobile-logo {
-    max-height: 24px;
-    max-width: 140px;
+    max-height: 30px;
+    max-width: 190px;
+    object-fit: contain;
+    object-position: left center;
     display: block;
   }
 </style>
