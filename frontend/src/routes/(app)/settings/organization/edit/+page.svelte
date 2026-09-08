@@ -81,6 +81,7 @@
       default_currency: org.default_currency || 'USD',
       default_country: org.default_country ?? '',
       timezone: org.timezone || 'UTC',
+      language: org.language ?? '',
       // Booleans travel as strings so the select always submits an explicit value.
       csat_enabled: String(org.csat_enabled ?? true),
       auto_close_children_on_parent_close: String(org.auto_close_children_on_parent_close ?? false)
@@ -425,6 +426,18 @@
         </select>
         <p class="v2-hint">
           {$_('settings.organization.edit.timezone_hint')}
+        </p>
+      </div>
+
+      <div class="v2-field">
+        <label for="f-language">{$_('settings.organization.edit.language')}</label>
+        <select id="f-language" name="language" class="v2-input" bind:value={form.language}>
+          <option value="">{$_('settings.organization.edit.language_unset')}</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+        <p class="v2-hint">
+          {$_('settings.organization.edit.language_hint')}
         </p>
       </div>
 

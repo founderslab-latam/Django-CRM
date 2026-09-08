@@ -67,6 +67,57 @@ export function resolveLocale(value) {
 }
 
 /**
+ * First supported locale in an `Accept-Language` header, or `null`.
+ *
+ * `"es-CL,es;q=0.9,en;q=0.8"` → `"es"`. Only used to seed the `locale` cookie
+ * when the request carries none and the account has no stored preference: the
+ * cookie, once written, is what every later request reads.
+ *
+ * @param {string | null | undefined} header
+ * @returns {string | null}
+ */
+export function localeFromAcceptLanguage(header) {
+  if (!header) return null;
+  const tags = String(header)
+    .split(',')
+    .map((part) => {
+      const [tag, ...params] = part.trim().split(';');
+      const q = params.find((p) => p.trim().startsWith('q='));
+      const weight = q ? parseFloat(q.split('=')[1]) : 1;
+      return {
+        base: tag.trim().toLowerCase().split('-')[0],
+        weight: Number.isNaN(weight) ? 1 : weight
+      };
+    })
+    .filter((t) => t.base)
+    .sort((a, b) => b.weight - a.weight);
+  for (const { base } of tags) {
+    if (SUPPORTED_LOCALES.includes(base)) return base;
+  }
+  return null;
+}
+
+/**
+ * The locale to render this request in.
+ *
+ * An explicit `locale` cookie (the language switcher writes it) always wins.
+ * Absent that, seed from the account's stored preference — the user's own,
+ * then their org's — and finally the browser's `Accept-Language`, before the
+ * `en` default. The caller writes the resolved value back to the cookie so it
+ * is stable for the rest of the session.
+ *
+ * @param {{ cookie?: string|null, userLanguage?: string|null, orgLanguage?: string|null, acceptLanguage?: string|null }} sources
+ * @returns {string}
+ */
+export function pickLocale({ cookie, userLanguage, orgLanguage, acceptLanguage } = {}) {
+  if (cookie && SUPPORTED_LOCALES.includes(cookie)) return cookie;
+  for (const candidate of [userLanguage, orgLanguage]) {
+    if (candidate && SUPPORTED_LOCALES.includes(candidate)) return candidate;
+  }
+  return localeFromAcceptLanguage(acceptLanguage) || DEFAULT_LOCALE;
+}
+
+/**
  * Register the catalogs (once per module instance) and point the `locale`
  * store at `requestedLocale`, waiting for that catalog to be loaded.
  *

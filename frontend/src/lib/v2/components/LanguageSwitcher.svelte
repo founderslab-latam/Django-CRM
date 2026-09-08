@@ -1,11 +1,11 @@
 <script>
   /**
-   * Language switcher — i18n pilot infrastructure (Developer A in
-   * ~/harness-engineering/bottle-crm-i18n/PLAN.md). Cookie-based locale, no
-   * URL prefix: picking a language writes the `locale` cookie and reloads
-   * the page, so the very next SSR render (hooks.server.js) already
-   * resolves that locale before anything renders. There is no client-side
-   * re-render of the current page's content — the reload IS the mechanism.
+   * Language switcher. Picking a language POSTs to `/locale`, which writes
+   * the `locale` cookie and — when signed in — persists the choice to the
+   * account (`User.language`) so it follows the user to their next device.
+   * Then a full reload: the next SSR render (hooks.server.js) resolves the
+   * new locale before anything renders. There is no client-side re-render of
+   * the current page's content — the reload IS the mechanism.
    *
    * A `<select>` rather than a button row on purpose: `SUPPORTED_LOCALES`
    * is expected to grow past two, and a row of buttons stops scaling well
@@ -29,9 +29,19 @@
   };
 
   /** @param {Event & { currentTarget: HTMLSelectElement }} event */
-  function handleChange(event) {
+  async function handleChange(event) {
     const next = event.currentTarget.value;
     if (next === $currentLocale) return;
+    try {
+      await fetch('/locale', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ locale: next })
+      });
+    } catch {
+      // Network failed before the server could Set-Cookie; the fallback
+      // below still switches the language for this browser.
+    }
     document.cookie = `${LOCALE_COOKIE_NAME}=${next}; path=/; max-age=31536000; samesite=lax`;
     window.location.reload();
   }

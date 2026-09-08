@@ -50,7 +50,8 @@ export const EDITABLE_FIELDS = [
   'tax_id',
   'default_currency',
   'default_country',
-  'timezone'
+  'timezone',
+  'language'
 ];
 
 /**

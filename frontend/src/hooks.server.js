@@ -14,14 +14,14 @@ import { redirect } from '@sveltejs/kit';
 import axios from 'axios';
 import { env } from '$env/dynamic/public';
 import { describeError } from '$lib/server/log-safe.js';
-import { setupI18n, resolveLocale, LOCALE_COOKIE_NAME } from '$lib/i18n/index.js';
+import { setupI18n, resolveLocale, pickLocale, LOCALE_COOKIE_NAME } from '$lib/i18n/index.js';
 
 const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * @typedef {{ default_currency?: string, currency_symbol?: string, default_country?: string|null }} OrgSettingsPayload
- * @typedef {{ org_id?: string, org_name?: string, role?: string, user_id?: string, user_name?: string, user_email?: string, user_profile_pic?: string, exp?: number, iat?: number, org_settings?: OrgSettingsPayload, is_superuser?: boolean, impersonated?: boolean }} JWTPayload
+ * @typedef {{ org_id?: string, org_name?: string, role?: string, user_id?: string, user_name?: string, user_email?: string, user_profile_pic?: string, exp?: number, iat?: number, org_settings?: OrgSettingsPayload, is_superuser?: boolean, impersonated?: boolean, language?: string, org_language?: string }} JWTPayload
  * @typedef {{ id: string, name: string }} OrgInfo
  * @typedef {{ org: OrgInfo, role?: string }} ProfileInfo
  * @typedef {{ id?: string, organizations?: Array<{ id: string, name: string }> }} UserInfo
@@ -176,13 +176,13 @@ async function switchOrg(accessToken, orgId, refreshToken) {
 export const handleError = Sentry.handleErrorWithSentry();
 
 export const handle = sequence(Sentry.sentryHandle(), async function _handle({ event, resolve }) {
-  // i18n pilot: resolve the request's locale from the `locale` cookie (no
-  // URL prefix - see $lib/i18n for the key convention and supported locale
-  // list) and load its catalog before anything renders, so the SSR HTML
-  // comes back in the right language from the first response instead of
-  // flashing from one locale to another.
+  // i18n: the request's locale is resolved AFTER the JWT is decoded below, so
+  // a signed-in user with no `locale` cookie yet still gets their stored
+  // `language` (or their org's, or the browser's Accept-Language) on the very
+  // first request. `setupI18n` is awaited before `resolve()` at the foot of
+  // this handler. A provisional value keeps `event.locals.locale` defined for
+  // any early return.
   event.locals.locale = resolveLocale(event.cookies.get(LOCALE_COOKIE_NAME));
-  await setupI18n(event.locals.locale);
 
   // Get tokens from cookies
   /** @type {string | undefined} */
@@ -321,6 +321,28 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
       }
     }
   }
+
+  // Resolve the locale now that the JWT (and any org switch) is settled. An
+  // explicit `locale` cookie wins; otherwise seed from the user's stored
+  // language, then the org's, then Accept-Language. Write the result back so
+  // every later request in the session just reads the cookie.
+  const localeCookie = event.cookies.get(LOCALE_COOKIE_NAME);
+  event.locals.locale = pickLocale({
+    cookie: localeCookie,
+    userLanguage: /** @type {any} */ (jwtPayload)?.language,
+    orgLanguage: /** @type {any} */ (jwtPayload)?.org_language,
+    acceptLanguage: event.request.headers.get('accept-language')
+  });
+  if (localeCookie !== event.locals.locale) {
+    event.cookies.set(LOCALE_COOKIE_NAME, event.locals.locale, {
+      path: '/',
+      httpOnly: false, // the language switcher reads/writes it from the browser
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 365
+    });
+  }
+  await setupI18n(event.locals.locale);
 
   // Route protection
   const pathname = event.url.pathname;
