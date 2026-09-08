@@ -249,6 +249,14 @@ class TestProfileView:
         response = admin_client.get(self.url)
         assert response.status_code == status.HTTP_200_OK
         assert "user_obj" in response.data
+        # is_superuser is always present so the shell can gate the operator UI.
+        assert response.data["user_obj"]["is_superuser"] is False
+
+    def test_get_profile_reports_superuser(self, admin_client, admin_profile, admin_user):
+        admin_user.is_superuser = True
+        admin_user.save(update_fields=["is_superuser"])
+        response = admin_client.get(self.url)
+        assert response.data["user_obj"]["is_superuser"] is True
 
     def test_patch_profile_phone(self, admin_client, admin_profile):
         """Update phone via PATCH."""

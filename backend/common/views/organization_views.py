@@ -329,6 +329,9 @@ class ProfileView(APIView):
         # (nested into many records). Adding it here keeps the extra query and
         # the wider output on this one self-profile endpoint, off the hot path.
         user_obj["teams"] = list(profile.user_teams.values_list("name", flat=True))
+        # Platform superuser, so the SvelteKit shell can show the operator
+        # console. Distinct from `role == "ADMIN"`, which is org-scoped.
+        user_obj["is_superuser"] = bool(request.user.is_superuser)
         return Response({"user_obj": user_obj}, status=status.HTTP_200_OK)
 
     @extend_schema(
