@@ -117,11 +117,14 @@ def safe_pdf_url_fetcher(url):
     if scheme == "data":
         return default_url_fetcher(url)
 
-    # http(s), and protocol-relative //host/path, only to the S3 media host.
+    # http(s), and protocol-relative //host/path, only to the media host(s).
     if scheme in ("http", "https") or (scheme == "" and parsed.netloc):
         s3_host = (getattr(settings, "AWS_S3_CUSTOM_DOMAIN", "") or "").lower()
+        public_media_host = (
+            urlparse(getattr(settings, "PUBLIC_MEDIA_URL", "") or "").hostname or ""
+        ).lower()
         host = (parsed.hostname or "").lower()
-        if s3_host and host == s3_host:
+        if host and host in {h for h in (s3_host, public_media_host) if h}:
             # Residual: default_url_fetcher follows 30x, and only the first hop
             # is host-checked. Low risk. The S3 host is trusted and fixed, and
             # only serves the org's own logo object; urllib refuses redirects to
