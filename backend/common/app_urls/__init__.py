@@ -30,6 +30,10 @@ urlpatterns = [
         include("business_hours.urls", namespace="api_business_hours"),
     ),
     path("macros/", include("macros.urls", namespace="api_macros")),
+    # Superuser operator console: cross-tenant org administration. Exempt from
+    # RequireOrgContext (see common/middleware/rls_context.py) -- no tenant
+    # context of its own.
+    path("operator/", include("common.operator_urls", namespace="api_operator")),
     # Web form management (issue #634). The public submit and embed routes are
     # NOT here: they are anonymous and mounted at /api/public/forms/ in
     # crm/urls.py, outside this authenticated tree.

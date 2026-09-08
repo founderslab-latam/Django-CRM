@@ -120,6 +120,9 @@ class RequireOrgContext:
         "/api/auth/magic-link/verify/",
         "/api/auth/magic-link/verify-code/",
         "/api/org/",
+        # Superuser operator console: administers orgs across every tenant, so
+        # it carries no single org context. Auth is `IsOperator` in the views.
+        "/api/operator/",
         "/admin/",
         "/swagger-ui/",
         "/api/schema/",

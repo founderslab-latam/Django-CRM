@@ -591,3 +591,12 @@ if not IS_DEV_ENV:
 # nothing: the schema is served from whatever host serves the app.
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+
+# Operator console (superuser-only tenant administration).
+# OPERATOR_API_KEY authorises the /api/operator/ endpoints for unattended
+# automation via the `X-Operator-Key` header; empty (the default) disables that
+# path, leaving only interactive superusers / superuser PATs.
+OPERATOR_API_KEY = os.environ.get("OPERATOR_API_KEY", "")
+# Base domain a tenant's CNAME target hangs off:
+# `<org.routing_key>.<TENANT_BASE_DOMAIN>`.
+TENANT_BASE_DOMAIN = os.environ.get("TENANT_BASE_DOMAIN", "crm.founderslab.cloud")

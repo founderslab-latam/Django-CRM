@@ -70,6 +70,12 @@ API_RESOURCES = frozenset(
         "macros",
         "notifications",
         "opportunities",
+        # The superuser operator console. Listed to keep the vocabulary honest
+        # against the live URLconf, not because a PAT's scopes govern it: every
+        # view under this root uses `IsOperator`, which requires
+        # `user.is_superuser` (or the OPERATOR_API_KEY header). A non-superuser's
+        # PAT is refused there regardless of what scopes it carries.
+        "operator",
         "org",
         "packs",
         # The customer self-service portal. Listed to keep the vocabulary

@@ -113,3 +113,34 @@ class IsSuperAdmin(permissions.BasePermission):
             return False
 
         return bool(user.is_active and user.is_superuser)
+
+
+class IsOperator(permissions.BasePermission):
+    """Platform-operator access for the /api/operator/ endpoints.
+
+    Granted to any of:
+      - an authenticated superuser (interactive, JWT), or a superuser's PAT
+        (DRF sets ``request.user`` from the token either way);
+      - a request carrying the ``X-Operator-Key`` header equal to
+        ``settings.OPERATOR_API_KEY``. That path is for unattended automation
+        (billing / cron) and is disabled while the setting is empty.
+    """
+
+    message = "Operator access required."
+
+    def has_permission(self, request, view):
+        import secrets
+
+        from django.conf import settings
+
+        key = getattr(settings, "OPERATOR_API_KEY", "") or ""
+        presented = request.headers.get("X-Operator-Key", "") or ""
+        if key and presented and secrets.compare_digest(presented, key):
+            request._operator_auth = "api_key"
+            return True
+
+        user = getattr(request, "user", None)
+        if user and user.is_authenticated and user.is_active and user.is_superuser:
+            request._operator_auth = "superuser"
+            return True
+        return False

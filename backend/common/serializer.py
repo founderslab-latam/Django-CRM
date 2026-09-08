@@ -229,8 +229,9 @@ class OrgSettingsSerializer(TaxIdCountryValidationMixin, serializers.ModelSerial
     @extend_schema_field(int)
     def get_member_count(self, obj):
         # Active members in this org, for the settings header. Naturally
-        # org-scoped: obj is always request.profile.org.
-        return obj.profiles.filter(is_active=True).count()
+        # org-scoped: obj is always request.profile.org. Operator-access
+        # profiles (a superuser impersonating in) are not tenant members.
+        return obj.profiles.filter(is_active=True, is_operator_access=False).count()
 
 
 class TagsSerializer(serializers.ModelSerializer):

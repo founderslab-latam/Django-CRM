@@ -311,6 +311,10 @@ class Profile(BaseModel):
     has_marketing_access = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_organization_admin = models.BooleanField(default=False)
+    # True for a profile that exists only so a platform superuser can enter
+    # this org (operator impersonation via /api/auth/switch-org/). Excluded
+    # from every tenant-facing member list, count and assignee picker.
+    is_operator_access = models.BooleanField(default=False, db_index=True)
     date_of_joining = models.DateField(null=True, blank=True)
 
     class Meta:

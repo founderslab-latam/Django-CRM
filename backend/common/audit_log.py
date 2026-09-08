@@ -313,6 +313,43 @@ class AuditLogger:
             request=request,
         )
 
+    def operator_org_provisioned(self, user, org, request=None):
+        """A platform operator created a new tenant org."""
+        self._log(
+            "OPERATOR_ORG_PROVISIONED",
+            user=user,
+            org=org,
+            description=f"Operator provisioned org '{org.name}'",
+            metadata={"org_id": str(org.id), "subdomain": org.subdomain},
+            request=request,
+        )
+
+    def operator_org_status_changed(self, user, org, new_status, reason, request=None):
+        """A platform operator suspended / deleted / reactivated a tenant org."""
+        self._log(
+            "OPERATOR_ORG_STATUS_CHANGED",
+            user=user,
+            org=org,
+            description=f"Operator set org '{org.name}' -> {new_status}",
+            metadata={
+                "org_id": str(org.id),
+                "new_status": new_status,
+                "reason": reason or "",
+            },
+            request=request,
+        )
+
+    def operator_impersonation(self, user, org, request=None):
+        """A platform superuser entered a tenant org they are not a member of."""
+        self._log(
+            "OPERATOR_IMPERSONATION",
+            user=user,
+            org=org,
+            description=f"Superuser impersonated ADMIN in org '{org.name}'",
+            metadata={"org_id": str(org.id)},
+            request=request,
+        )
+
     def suspicious_activity(self, user, org, activity_type, details, request=None):
         """Log suspicious activity for security review."""
         self._log(
