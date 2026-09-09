@@ -4103,5 +4103,13 @@
       "error_name_required": "Give the organization a name.",
       "error_fallback": "The organization could not be created."
     }
+  },
+  "wrong_workspace": {
+    "head_title": "Wrong workspace",
+    "heading": "You're not a member of this workspace",
+    "body": "This address belongs to {org}, and your account isn't a member of it.",
+    "body_generic": "Your account isn't a member of the organization at this address.",
+    "signed_in_as": "Signed in as {email}.",
+    "go_to_main_app": "Go to the main app"
   }
 }

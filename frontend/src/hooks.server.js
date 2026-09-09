@@ -15,6 +15,7 @@ import axios from 'axios';
 import { env } from '$env/dynamic/public';
 import { describeError } from '$lib/server/log-safe.js';
 import { setupI18n, resolveLocale, pickLocale, LOCALE_COOKIE_NAME } from '$lib/i18n/index.js';
+import { resolveHostOrg } from '$lib/server/host-org.js';
 
 const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -184,13 +185,36 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
   // any early return.
   event.locals.locale = resolveLocale(event.cookies.get(LOCALE_COOKIE_NAME));
 
+  // Per-tenant subdomain routing: is this request on `<tenant>.<base>`? The
+  // lookup is cached per host (a 404 for the bare domain caches too), so this
+  // is one API call a minute, not one a request. `host_org` brands the
+  // pre-auth pages and pins the session below.
+  /** @type {any} */ (event.locals).host_org = await resolveHostOrg(event.url.host, event.fetch);
+
   // Get tokens from cookies
   /** @type {string | undefined} */
   let accessToken = event.cookies.get('jwt_access');
   // Reassigned if we rotate below, so later calls hand on the live token rather
   // than the one we just spent.
   let refreshToken = event.cookies.get('jwt_refresh');
-  const orgId = event.cookies.get('org');
+  let orgId = event.cookies.get('org');
+
+  // On a tenant subdomain the host is the canonical org context.
+  //  - no org cookie yet (a fresh sign-in): adopt the subdomain's org, so the
+  //    session lands in it. If the user is not a member, `switchOrg` below
+  //    fails and we send them to /wrong-workspace.
+  //  - an org cookie for a DIFFERENT org: a token replayed from elsewhere.
+  //    We never silently switch it (that was the product decision); the guard
+  //    redirects to /wrong-workspace with a link back to the main app.
+  const hostOrg = /** @type {any} */ (event.locals).host_org;
+  let hostOrgMismatch = false;
+  if (hostOrg) {
+    if (!orgId) {
+      orgId = hostOrg.id;
+    } else if (orgId !== hostOrg.id) {
+      hostOrgMismatch = true;
+    }
+  }
 
   /** @type {JWTPayload | null} */
   let jwtPayload = null;
@@ -314,9 +338,11 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
             default_country: null
           };
         } else {
-          // Org switch failed, clear org cookie and redirect
+          // Org switch failed. On a tenant subdomain that means the signed-in
+          // user is not a member of this workspace; send them somewhere that
+          // says so. Elsewhere, fall back to the org picker as before.
           event.cookies.delete('org', { path: '/' });
-          throw redirect(303, '/org');
+          throw redirect(303, hostOrg ? '/wrong-workspace' : '/org');
         }
       }
     }
@@ -356,7 +382,7 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
   // endpoints). Without them here the guard redirects every customer who clicks
   // a link to /login, so the portal is unreachable. Server-side token→org
   // resolution + RLS is what actually protects the data (see docs/PORTAL_RLS.md).
-  const PUBLIC_ROUTES = ['/login', '/logout', '/bounce', '/portal', '/csat'];
+  const PUBLIC_ROUTES = ['/login', '/logout', '/bounce', '/portal', '/csat', '/wrong-workspace'];
 
   // Define semi-protected routes (auth required, but no org). `/operator` is
   // the superuser console: it spans every tenant and must work with no org
@@ -373,6 +399,13 @@ export const handle = sequence(Sentry.sentryHandle(), async function _handle({ e
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
+
+  // A signed-in user whose token is for a different org than this subdomain.
+  // Never silently switch it; show a page that says so, with a way back to the
+  // main app. Applies to every non-public route, auth-only ones included.
+  if (hostOrgMismatch && !isPublicRoute && jwtPayload) {
+    throw redirect(303, '/wrong-workspace');
+  }
 
   if (isAuthOnlyRoute) {
     // Auth-only route - require user

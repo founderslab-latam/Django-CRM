@@ -4103,5 +4103,13 @@
       "error_name_required": "Ponle un nombre a la organización.",
       "error_fallback": "No se pudo crear la organización."
     }
+  },
+  "wrong_workspace": {
+    "head_title": "Espacio de trabajo incorrecto",
+    "heading": "No perteneces a este espacio de trabajo",
+    "body": "Esta dirección es de {org}, y tu cuenta no es miembro.",
+    "body_generic": "Tu cuenta no es miembro de la organización en esta dirección.",
+    "signed_in_as": "Sesión iniciada como {email}.",
+    "go_to_main_app": "Ir a la aplicación principal"
   }
 }
