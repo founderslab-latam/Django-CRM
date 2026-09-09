@@ -185,6 +185,54 @@ Deferred on purpose; none of it blocks entering customers.
 - **Google sign-in.** Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in
   `.env.prod` and on the frontend. See [Google OAuth](google-oauth.md).
 
+## Per-tenant subdomains
+
+Serve each org at its own `<subdomain>.crm.founderslab.cloud` (and at the stable
+`<routing_key>.crm.founderslab.cloud` a customer can CNAME to). The operator
+console already assigns `subdomain`; wiring it up is DNS + one Traefik flag +
+one env var. Certs are issued per subdomain on first request (no wildcard, so
+no DNS-01), driven by a file the backend regenerates from the database.
+
+1. **DNS.** Add a wildcard record so a new subdomain needs no DNS change:
+   ```
+   *.crm.founderslab.cloud.   A   <vps-ip>
+   ```
+   (Keep the existing `crm` / `api-crm` / `media-crm` records; the wildcard
+   only covers names that have no explicit record.)
+
+2. **Shared directory + Traefik file provider.** The compose file already mounts
+   `${DATA_DIR}/traefik-dynamic` into `backend` at `/dynamic`. Mount the **same
+   host directory** into your Traefik container and enable its file provider:
+   ```
+   -v /opt/crm-founderslab-data/traefik-dynamic:/dynamic:ro
+   --providers.file.directory=/dynamic
+   --providers.file.watch=true
+   ```
+
+3. **Env.** In `.env.prod`:
+   ```
+   TRAEFIK_DYNAMIC_FILE=/dynamic/tenant-routes.yml
+   ```
+   `TENANT_ROUTER_SERVICE` / `_ENTRYPOINTS` / `_CERTRESOLVER` default to
+   `crm-web@docker` / `websecure` / `mytlschallenge` — the values this compose
+   file uses. On the frontend side, make sure `ORIGIN` is **unset** (see
+   `.env.prod.example`): a fixed `ORIGIN` 403s form POSTs from a subdomain.
+
+4. **Deploy, then seed the file** (the signal has not fired for existing orgs):
+   ```
+   ./deploy.sh
+   docker compose -f docker-compose.prod.yml exec backend \
+     python manage.py sync_tenant_routes
+   ```
+   From then on, assigning or changing a subdomain in the operator console
+   rewrites `tenant-routes.yml`, Traefik picks it up within a second, and the
+   cert is issued on the first HTTPS hit. `sync_tenant_routes --dry-run` prints
+   what would be written.
+
+A signed-in user who opens a subdomain they are not a member of gets a
+"wrong workspace" page linking back to the bare domain — the session is never
+switched silently.
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |

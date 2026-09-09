@@ -69,6 +69,13 @@ services:
       - ./docker/backend/entrypoint.prod.sh:/entrypoint.prod.sh:ro
       - ${DATA_DIR:-/opt/crm-founderslab-data}/media:/app/media
       - ${DATA_DIR:-/opt/crm-founderslab-data}/staticfiles:/app/staticfiles
+      # Per-tenant subdomain routing: the backend writes one Traefik router per
+      # active tenant subdomain here (see common.tenant_routes). Mount the SAME
+      # host directory into your Traefik with
+      # `--providers.file.directory=/dynamic --providers.file.watch=true`, and
+      # set TRAEFIK_DYNAMIC_FILE=/dynamic/tenant-routes.yml in .env.prod. Leave
+      # both unset to keep a single-host deployment unchanged.
+      - ${DATA_DIR:-/opt/crm-founderslab-data}/traefik-dynamic:/dynamic
     expose:
       - "8000"
     networks:
