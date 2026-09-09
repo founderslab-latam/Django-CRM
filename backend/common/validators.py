@@ -372,3 +372,17 @@ def validate_org_subdomain(value: str) -> None:
         )
     if label in _RESERVED_SUBDOMAINS:
         raise DjangoValidationError(_("That subdomain is reserved."))
+
+
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+
+
+def validate_hex_color(value: str) -> None:
+    """A CSS hex colour, ``#RGB`` or ``#RRGGBB``. Blank is allowed (no brand
+    colour set)."""
+    if not value:
+        return
+    if not _HEX_COLOR_RE.fullmatch(str(value)):
+        raise DjangoValidationError(
+            _("Enter a hex colour such as #2563EB.")
+        )

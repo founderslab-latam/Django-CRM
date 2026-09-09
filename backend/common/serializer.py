@@ -195,6 +195,7 @@ class OrgSettingsSerializer(TaxIdCountryValidationMixin, serializers.ModelSerial
             "company_name",
             "logo",
             "logo_url",
+            "brand_color",
             "address_line",
             "city",
             "state",

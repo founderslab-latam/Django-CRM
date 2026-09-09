@@ -69,6 +69,7 @@
     untrack(() => ({
       name: org.name ?? '',
       company_name: org.company_name ?? '',
+      brand_color: org.brand_color ?? '',
       address_line: org.address_line ?? '',
       city: org.city ?? '',
       state: org.state ?? '',
@@ -272,6 +273,27 @@
         {:else}
           <p class="v2-hint">{$_('settings.organization.edit.logo_hint')}</p>
         {/if}
+      </div>
+
+      <div class="v2-field">
+        <label for="f-brand-color">{$_('settings.organization.edit.brand_color')}</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input
+            type="color"
+            value={form.brand_color || '#EA580C'}
+            oninput={(e) => (form.brand_color = e.currentTarget.value)}
+            aria-label={$_('settings.organization.edit.brand_color')}
+            style="width:44px;height:36px;padding:2px;flex:none"
+          />
+          <input
+            id="f-brand-color"
+            name="brand_color"
+            class="v2-input"
+            placeholder="#EA580C"
+            bind:value={form.brand_color}
+          />
+        </div>
+        <p class="v2-hint">{$_('settings.organization.edit.brand_color_hint')}</p>
       </div>
 
       <div class="pair">

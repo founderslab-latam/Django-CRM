@@ -39,6 +39,7 @@ import { apiRequest } from '$lib/api-helpers.js';
 export const EDITABLE_FIELDS = [
   'name',
   'company_name',
+  'brand_color',
   'address_line',
   'city',
   'state',

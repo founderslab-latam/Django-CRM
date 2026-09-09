@@ -39,7 +39,7 @@ would let any scanner in the delivery path answer the survey.
     {% for value in rating_scale %}
     <td align="center" style="padding:0 4px;">
       <a href="{{ link }}?rating={{ value }}"
-         style="display:block;padding:12px 0;background-color:#FAFAFA;border:1px solid #E0E0E0;border-radius:6px;color:#EA580C;text-decoration:none;font-size:26px;line-height:1;">
+         style="display:block;padding:12px 0;background-color:#FAFAFA;border:1px solid #E0E0E0;border-radius:6px;color:{{ email_brand_color|default:'#EA580C' }};text-decoration:none;font-size:26px;line-height:1;">
         &#9733;<span style="display:block;margin-top:6px;font-size:13px;color:#757575;">{{ value }}</span>
       </a>
     </td>

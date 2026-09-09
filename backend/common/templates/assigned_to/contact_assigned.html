@@ -29,7 +29,7 @@
 
 {% block button_link %}
 <a class="btn-link" href="{{ url }}"
-   style="display:inline-block;padding:14px 32px;background-color:#EA580C;color:#ffffff;text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
+   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#EA580C' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
   {% trans "View Contact" %}
 </a>
 {% endblock button_link %}

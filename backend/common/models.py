@@ -30,7 +30,11 @@ from common.utils import (
     is_document_file_video,
     is_document_file_zip,
 )
-from common.validators import validate_iana_timezone, validate_org_subdomain
+from common.validators import (
+    validate_hex_color,
+    validate_iana_timezone,
+    validate_org_subdomain,
+)
 
 from .manager import UserManager
 
@@ -171,6 +175,16 @@ class Org(BaseModel):
     )
     logo = models.ImageField(
         upload_to="org_logos/", blank=True, null=True, help_text="Company logo"
+    )
+    # Accent colour for outbound email: the CTA button, the wordmark and links.
+    # Blank falls back to the product orange. Button text colour is derived from
+    # this by luminance, so there is only ever one field to set.
+    brand_color = models.CharField(
+        max_length=7,
+        blank=True,
+        default="",
+        validators=[validate_hex_color],
+        help_text="Hex accent colour for emails, e.g. #2563EB.",
     )
     address_line = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True)

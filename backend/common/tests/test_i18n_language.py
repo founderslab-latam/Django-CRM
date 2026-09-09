@@ -187,6 +187,9 @@ class TestLocalizedEmail:
         ctx = brand_context(None)
         assert ctx["email_logo_url"] is None
         assert ctx["email_brand_name"] is None
+        # Always a usable colour, even with no org.
+        assert ctx["email_brand_color"] == "#EA580C"
+        assert ctx["email_brand_text_color"] in ("#ffffff", "#1a1a1a")
 
     def test_logo_url_needs_public_media_url(self, settings, org_a):
         settings.PUBLIC_MEDIA_URL = ""
@@ -197,3 +200,70 @@ class TestLocalizedEmail:
             logo_url_for_email(org_a)
             == "https://media-crm.example.com/media/org_logos/x.png"
         )
+
+
+class TestBrandColor:
+    @pytest.mark.parametrize("good", ["#fff", "#FFFFFF", "#2563EB", "#0a0a0a"])
+    def test_validator_accepts_hex(self, good):
+        from common.validators import validate_hex_color
+
+        validate_hex_color(good)  # no raise
+
+    @pytest.mark.parametrize("bad", ["2563EB", "#12345", "#xyzxyz", "red", "#1234"])
+    def test_validator_rejects_junk(self, bad):
+        from django.core.exceptions import ValidationError
+
+        from common.validators import validate_hex_color
+
+        with pytest.raises(ValidationError):
+            validate_hex_color(bad)
+
+    def test_validator_allows_blank(self):
+        from common.validators import validate_hex_color
+
+        validate_hex_color("")
+
+    def test_contrast_picks_readable_text(self):
+        from common.email_branding import _readable_text_color
+
+        assert _readable_text_color("#111111") == "#ffffff"
+        assert _readable_text_color("#FDE047") == "#1a1a1a"  # pale yellow
+        assert _readable_text_color("#2563EB") == "#ffffff"
+
+    def test_brand_context_uses_org_color(self):
+        from common.models import Org
+
+        ctx = brand_context(Org(name="Acme", brand_color="#FDE047"))
+        assert ctx["email_brand_color"] == "#FDE047"
+        assert ctx["email_brand_text_color"] == "#1a1a1a"
+
+
+@pytest.mark.django_db
+class TestBrandColorApi:
+    def test_org_settings_accepts_and_rejects(self, admin_client, org_a):
+        ok = admin_client.patch(
+            "/api/org/settings/", {"brand_color": "#123abc"}, format="json"
+        )
+        assert ok.status_code == 200
+        org_a.refresh_from_db()
+        assert org_a.brand_color == "#123abc"
+
+        bad = admin_client.patch(
+            "/api/org/settings/", {"brand_color": "not-a-color"}, format="json"
+        )
+        assert bad.status_code == 400
+
+    def test_email_renders_with_org_brand_color(self, org_a):
+        from django.template.loader import render_to_string
+
+        org_a.brand_color = "#0F9D58"
+        html = render_to_string(
+            "assigned_to/leads_assigned.html",
+            {
+                "lead": type("L", (), {"title": "X", "__str__": lambda s: "X"})(),
+                "url": "https://example.test/leads/1",
+                "user": type("U", (), {"first_name": "A", "get_username": lambda s: "a"})(),
+                **brand_context(org_a),
+            },
+        )
+        assert "#0F9D58" in html

@@ -61,16 +61,52 @@ def logo_url_for_email(org):
     return f"{base}{url}"
 
 
+# The product default accent, used when an org has set no `brand_color`. Keep
+# in sync with the literal `default:` filters in the email templates.
+DEFAULT_BRAND_COLOR = "#EA580C"
+
+
+def _readable_text_color(hex_color):
+    """Black or white, whichever reads on ``hex_color`` (a #RGB / #RRGGBB str).
+
+    Uses the WCAG relative-luminance threshold so a pale brand colour gets dark
+    button text and a dark one gets white. Falls back to white on anything
+    unparseable.
+    """
+    value = (hex_color or "").lstrip("#")
+    if len(value) == 3:
+        value = "".join(ch * 2 for ch in value)
+    if len(value) != 6:
+        return "#ffffff"
+    try:
+        r, g, b = (int(value[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    except ValueError:
+        return "#ffffff"
+
+    def _lin(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    luminance = 0.2126 * _lin(r) + 0.7152 * _lin(g) + 0.0722 * _lin(b)
+    return "#1a1a1a" if luminance > 0.45 else "#ffffff"
+
+
 def brand_context(org):
-    """Template vars for ``{% block brandmark %}`` in the root email template.
+    """Template vars for the root email template's brandmark and buttons.
 
     ``email_logo_url`` may be ``None``; the template shows the name then, and
     ``email_brand_name`` is ``None`` too for a message with no org (magic-link,
     welcome), which the template renders as the product default.
+
+    ``email_brand_color`` is always a usable colour (the org's, or the product
+    default) and ``email_brand_text_color`` is the readable foreground for a
+    button filled with it.
     """
+    brand_color = (getattr(org, "brand_color", "") or "").strip() or DEFAULT_BRAND_COLOR
     return {
         "email_logo_url": logo_url_for_email(org),
         "email_brand_name": getattr(org, "name", None) if org else None,
+        "email_brand_color": brand_color,
+        "email_brand_text_color": _readable_text_color(brand_color),
     }
 
 

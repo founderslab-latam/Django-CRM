@@ -75,8 +75,8 @@
 
     .btn-link {
       display: inline-block;
-      background-color: #EA580C;
-      color: #FFFFFF !important;
+      background-color: {{ email_brand_color|default:'#EA580C' }};
+      color: {{ email_brand_text_color|default:'#FFFFFF' }} !important;
       font-size: 16px;
       font-weight: 600;
       text-decoration: none;
@@ -164,7 +164,7 @@
                     {% if email_logo_url %}
                     <img src="{{ email_logo_url }}" alt="{{ email_brand_name|default:'BottleCRM' }}" height="28" style="height:28px;max-height:28px;width:auto;display:block;border:0;outline:none;text-decoration:none;">
                     {% else %}
-                    <span style="font-size: 22px; font-weight: 700; color: #EA580C; text-decoration: none; letter-spacing: -0.5px;">{{ email_brand_name|default:'BottleCRM' }}</span>
+                    <span style="font-size: 22px; font-weight: 700; color: {{ email_brand_color|default:'#EA580C' }}; text-decoration: none; letter-spacing: -0.5px;">{{ email_brand_name|default:'BottleCRM' }}</span>
                     {% endif %}
                     {% endblock brandmark %}
                   </td>

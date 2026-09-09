@@ -2449,6 +2449,8 @@
         "trading_name_hint": "Cómo se llama esta organización en toda la app.",
         "logo": "Logotipo de la empresa",
         "logo_hint": "PNG, JPG, WebP o SVG, hasta 2 MB. Aparece en facturas, presupuestos y el portal del cliente.",
+        "brand_color": "Color de marca",
+        "brand_color_hint": "Color hex para botones, enlaces y el nombre en los correos automáticos. Déjalo en blanco para el predeterminado. El texto del botón se ajusta por contraste.",
         "logo_current": "Logo actual",
         "logo_err_size": "La imagen debe pesar 2 MB o menos.",
         "logo_err_type": "Elegí una imagen PNG, JPG, WebP o SVG.",

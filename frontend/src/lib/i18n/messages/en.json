@@ -2449,6 +2449,8 @@
         "trading_name_hint": "What this organisation is called across the app.",
         "logo": "Company logo",
         "logo_hint": "PNG, JPG, WebP or SVG, up to 2 MB. Appears on invoices, estimates and the customer portal.",
+        "brand_color": "Brand colour",
+        "brand_color_hint": "Hex colour used for buttons, links and the wordmark in automatic emails. Leave blank for the default. Button text adjusts for contrast.",
         "logo_current": "Current logo",
         "logo_err_size": "The image must be 2 MB or smaller.",
         "logo_err_type": "Choose a PNG, JPG, WebP or SVG image.",
