@@ -88,7 +88,7 @@ def send_lead_assigned_emails(lead_id, new_assigned_to_list, org_id):
         # which is the one that runs on an ordinary assignment. That email
         # never rendered, let alone sent.
         "lead": lead_instance,
-        "url": frontend_url(f"/leads/{lead_instance.id}"),
+        "url": frontend_url(f"/leads/{lead_instance.id}", org=org),
     }
     for profile in users:
         if profile.user.email:
@@ -122,7 +122,7 @@ def send_email_to_assigned_user(recipients, lead_id, org_id, source=""):
         if profile:
             recipients_list.append(profile.user.email)
             context = {}
-            context["url"] = frontend_url(f"/leads/{lead.id}")
+            context["url"] = frontend_url(f"/leads/{lead.id}", org=org)
             context["user"] = profile.user
             context["lead"] = lead
             context["created_by"] = created_by

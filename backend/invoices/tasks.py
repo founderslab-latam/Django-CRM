@@ -62,7 +62,7 @@ def send_email(invoice_id, recipients, org_id, domain="localhost", protocol="htt
                 "invoice": invoice,
                 "invoice_title": invoice.invoice_title,
                 "invoice_number": invoice.invoice_number,
-                "url": frontend_url(f"/invoices/{invoice.id}"),
+                "url": frontend_url(f"/invoices/{invoice.id}", org=invoice.org),
                 "user": profile.user,
                 "assigned_by": invoice.created_by.user if invoice.created_by else None,
                 **brand_context(invoice.org),
@@ -125,7 +125,9 @@ def send_invoice_to_client(
     # Build public URL if enabled
     public_url = None
     if invoice.public_link_enabled and invoice.public_token:
-        public_url = frontend_url(f"/portal/invoice/{invoice.public_token}")
+        public_url = frontend_url(
+            f"/portal/invoice/{invoice.public_token}", org=invoice.org
+        )
 
     context = {
         "invoice": invoice,
@@ -423,7 +425,9 @@ def send_payment_reminder(invoice_id, org_id, domain="localhost", protocol="http
 
     public_url = None
     if invoice.public_link_enabled and invoice.public_token:
-        public_url = frontend_url(f"/portal/invoice/{invoice.public_token}")
+        public_url = frontend_url(
+            f"/portal/invoice/{invoice.public_token}", org=invoice.org
+        )
 
     context = {
         "invoice": invoice,
@@ -611,7 +615,9 @@ def send_estimate_to_client(
 
     public_url = None
     if estimate.public_link_enabled and estimate.public_token:
-        public_url = frontend_url(f"/portal/estimate/{estimate.public_token}")
+        public_url = frontend_url(
+            f"/portal/estimate/{estimate.public_token}", org=estimate.org
+        )
 
     context = {
         "estimate": estimate,

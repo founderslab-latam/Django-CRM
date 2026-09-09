@@ -39,7 +39,9 @@ def send_email_to_assigned_user(recipients, opportunity_id, org_id):
         if profile:
             recipients_list.append(profile.user.email)
             context = {}
-            context["url"] = frontend_url(f"/pipeline/{opportunity.id}")
+            context["url"] = frontend_url(
+                f"/pipeline/{opportunity.id}", org=opportunity.org
+            )
             context["user"] = profile.user
             context["opportunity"] = opportunity
             context["created_by"] = created_by
@@ -132,7 +134,7 @@ def send_stale_deals_alert(org, stale_opps):
                 }
                 for opp, days, expected in deals
             ],
-            "url": frontend_url("/pipeline?rotten=true"),
+            "url": frontend_url("/pipeline?rotten=true", org=org),
             "deal_count": len(deals),
             **brand_context(org),
         }
@@ -250,7 +252,7 @@ def _send_goal_milestone_email(profile, goal, milestone_label, percent, achieved
         "milestone": milestone_label,
         "percent": percent,
         "achieved": achieved,
-        "url": frontend_url("/goals"),
+        "url": frontend_url("/goals", org=goal.org),
         **brand_context(goal.org),
     }
     with localized_email(recipient=profile.user, org=goal.org):

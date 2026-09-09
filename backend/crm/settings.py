@@ -1,4 +1,5 @@
 import os
+import re
 import warnings
 from datetime import timedelta
 from urllib.parse import urlparse
@@ -49,6 +50,19 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 # Security: Restrict allowed hosts - set ALLOWED_HOSTS env var in production
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+# Base domain a tenant's branded subdomain and CNAME target hang off:
+# `<org.subdomain>.<TENANT_BASE_DOMAIN>` and
+# `<org.routing_key>.<TENANT_BASE_DOMAIN>`. Per-tenant subdomain routing
+# (`common.tenant_hosts`) resolves an incoming Host under this domain to an Org.
+# Defined up here because ALLOWED_HOSTS / CSRF / CORS below all derive from it.
+TENANT_BASE_DOMAIN = os.environ.get("TENANT_BASE_DOMAIN", "crm.founderslab.cloud")
+# A leading-dot ALLOWED_HOSTS entry is Django's native "this host and any
+# subdomain of it", so one line admits every `<label>.<base>` tenant host.
+if TENANT_BASE_DOMAIN:
+    _tenant_hosts_entry = f".{TENANT_BASE_DOMAIN}"
+    if _tenant_hosts_entry not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_tenant_hosts_entry)
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -496,9 +510,28 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
-# Security: CSRF trusted origins via environment variable
+# Per-tenant subdomain routing: the web app is served from an open set of
+# `<label>.<TENANT_BASE_DOMAIN>` hosts, so CORS cannot be a fixed list. A regex
+# admits exactly those, and only over https. Set CORS_ALLOWED_ORIGIN_REGEXES in
+# the environment to override; the default is derived from TENANT_BASE_DOMAIN.
+_cors_regexes_env = os.environ.get("CORS_ALLOWED_ORIGIN_REGEXES", "").strip()
+if _cors_regexes_env:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r.strip() for r in _cors_regexes_env.split(",") if r.strip()
+    ]
+elif TENANT_BASE_DOMAIN:
+    _base_re = re.escape(TENANT_BASE_DOMAIN)
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        rf"^https://[a-z0-9-]+\.{_base_re}$",
+    ]
+# Security: CSRF trusted origins via environment variable. A `https://*.<base>`
+# entry (Django 4+) covers every tenant subdomain in one line.
 _csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
+if TENANT_BASE_DOMAIN:
+    _tenant_csrf = f"https://*.{TENANT_BASE_DOMAIN}"
+    if _tenant_csrf not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_tenant_csrf)
 
 # Security: HSTS with 1 year duration (recommended minimum)
 SECURE_HSTS_SECONDS = 31536000  # 1 year
@@ -606,6 +639,18 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 # automation via the `X-Operator-Key` header; empty (the default) disables that
 # path, leaving only interactive superusers / superuser PATs.
 OPERATOR_API_KEY = os.environ.get("OPERATOR_API_KEY", "")
-# Base domain a tenant's CNAME target hangs off:
-# `<org.routing_key>.<TENANT_BASE_DOMAIN>`.
-TENANT_BASE_DOMAIN = os.environ.get("TENANT_BASE_DOMAIN", "crm.founderslab.cloud")
+# TENANT_BASE_DOMAIN is defined near ALLOWED_HOSTS (host/CSRF/CORS derive from it).
+
+# Absolute path of a Traefik file-provider config the backend rewrites from the
+# set of active tenant subdomains, so provisioning an org needs no manual
+# router/cert step. Empty (the default) turns the sync off -- a deployment on a
+# single shared host, or one whose Traefik is managed by hand, is unaffected.
+TRAEFIK_DYNAMIC_FILE = os.environ.get("TRAEFIK_DYNAMIC_FILE", "")
+# The compose service name Traefik should route tenant subdomains to, and the
+# entrypoint / cert resolver to put on the generated routers. Defaults match
+# docker-compose.prod.yml.
+TENANT_ROUTER_SERVICE = os.environ.get("TENANT_ROUTER_SERVICE", "crm-web@docker")
+TENANT_ROUTER_ENTRYPOINTS = os.environ.get("TENANT_ROUTER_ENTRYPOINTS", "websecure")
+TENANT_ROUTER_CERTRESOLVER = os.environ.get(
+    "TENANT_ROUTER_CERTRESOLVER", "mytlschallenge"
+)

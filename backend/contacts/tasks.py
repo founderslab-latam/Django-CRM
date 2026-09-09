@@ -22,7 +22,7 @@ def send_email_to_assigned_user(recipients, contact_id, org_id):
         if profile:
             recipients_list.append(profile.user.email)
             context = {}
-            context["url"] = frontend_url(f"/contacts/{contact.id}")
+            context["url"] = frontend_url(f"/contacts/{contact.id}", org=contact.org)
             context["user"] = profile.user
             context["contact"] = contact
             context["created_by"] = created_by

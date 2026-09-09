@@ -28,14 +28,34 @@ value to get right.
 from django.conf import settings
 
 
-def frontend_url(path):
+def frontend_base_url(org=None):
+    """The web app base URL, tenant-aware.
+
+    When ``org`` has a ``subdomain`` and ``TENANT_BASE_DOMAIN`` is configured,
+    the tenant is served at its own host, so a link into the app should point
+    there — ``https://<subdomain>.<base>`` — not at the shared ``FRONTEND_URL``.
+    Falls back to ``FRONTEND_URL`` for an org with no subdomain, or none at all
+    (welcome mail, the magic-link sign-in URL).
+    """
+    base_domain = (getattr(settings, "TENANT_BASE_DOMAIN", "") or "").strip().strip(".")
+    subdomain = (getattr(org, "subdomain", "") or "").strip().lower()
+    if org is not None and subdomain and base_domain:
+        return f"https://{subdomain}.{base_domain}"
+    return (getattr(settings, "FRONTEND_URL", "") or "").rstrip("/")
+
+
+def frontend_url(path, org=None):
     """Return an absolute URL to ``path`` on the web app.
 
     ``path`` is a root-relative path such as ``/portal/invoice/<token>``. The
     leading slash is optional and the base's trailing slash is stripped, so an
     operator who sets ``FRONTEND_URL=https://app.example.com/`` gets the same
     result as one who omits it.
+
+    Pass ``org`` for any link that belongs to a specific tenant (a portal link,
+    a "view this record" link to a colleague): the URL is then built on that
+    tenant's own subdomain when it has one. See :func:`frontend_base_url`.
     """
-    base = (getattr(settings, "FRONTEND_URL", "") or "").rstrip("/")
+    base = frontend_base_url(org).rstrip("/")
     suffix = path if path.startswith("/") else f"/{path}"
     return f"{base}{suffix}"

@@ -3,7 +3,7 @@ import secrets
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -19,6 +19,73 @@ from common.serializer import (
     ProfileSerializer,
     ShowOrganizationListSerializer,
 )
+from common.tenant_hosts import resolve_org_for_host
+
+
+class OrgByHostView(APIView):
+    """Which tenant a host serves, plus the branding a pre-auth page needs.
+
+    Anonymous by design: the web app's SSR layer calls this before anyone is
+    signed in, to decide whether it is on a tenant subdomain and, if so, to
+    paint that tenant's name / logo / colour on the login screen. Returns 404
+    when the host is the bare base domain or an unknown / suspended label --
+    the caller then behaves exactly as it did before this feature.
+
+    It exposes only public branding. Nothing here is org-scoped data.
+    """
+
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    @extend_schema(
+        tags=["organizations"],
+        responses={
+            200: inline_serializer(
+                name="OrgByHostResponse",
+                fields={
+                    "org": inline_serializer(
+                        name="OrgByHostOrg",
+                        fields={
+                            "id": serializers.UUIDField(),
+                            "name": serializers.CharField(),
+                            "subdomain": serializers.CharField(),
+                            "logo_url": serializers.CharField(allow_null=True),
+                            "brand_color": serializers.CharField(allow_blank=True),
+                        },
+                    )
+                },
+            )
+        },
+    )
+    def get(self, request, format=None):
+        # `?host=` lets the SSR server ask about the browser's host explicitly;
+        # otherwise fall back to the request's own Host header.
+        host = request.query_params.get("host") or request.get_host()
+        org = resolve_org_for_host(host)
+        if org is None:
+            return Response(
+                {"detail": _("No organization for this host.")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        logo_url = None
+        if org.logo:
+            try:
+                logo_url = request.build_absolute_uri(org.logo.url)
+            except ValueError:
+                logo_url = None
+
+        return Response(
+            {
+                "org": {
+                    "id": str(org.id),
+                    "name": org.name,
+                    "subdomain": org.subdomain,
+                    "logo_url": logo_url,
+                    "brand_color": org.brand_color or "",
+                }
+            }
+        )
 
 
 class OrgProfileCreateView(APIView):

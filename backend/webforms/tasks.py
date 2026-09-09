@@ -81,7 +81,7 @@ def send_webform_submission_email(submission_id, org_id):
                 "form": form,
                 "submission": submission,
                 "lead": submission.lead,
-                "lead_url": frontend_url(f"/leads/{submission.lead_id}"),
+                "lead_url": frontend_url(f"/leads/{submission.lead_id}", org=org),
                 "is_duplicate": (
                     submission.status == WebFormSubmission.ACCEPTED_DUPLICATE
                 ),

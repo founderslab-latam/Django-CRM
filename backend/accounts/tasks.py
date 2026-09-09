@@ -81,7 +81,7 @@ def send_email_to_assigned_user(recipients, account_id, org_id):
         if profile:
             recipients_list.append(profile.user.email)
             context = {}
-            context["url"] = frontend_url(f"/accounts/{account.id}")
+            context["url"] = frontend_url(f"/accounts/{account.id}", org=account.org)
             context["user"] = profile.user
             context["account"] = account
             context["created_by"] = created_by

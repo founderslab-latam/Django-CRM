@@ -58,7 +58,7 @@ def send_email_to_assigned_user(recipients, case_id, org_id):
         if profile:
             recipients_list.append(profile.user.email)
             context = {}
-            context["url"] = frontend_url(case_link(case.id))
+            context["url"] = frontend_url(case_link(case.id), org=case.org)
             context["user"] = profile.user
             context["case"] = case
             context["created_by"] = created_by
@@ -317,7 +317,7 @@ def send_csat_survey(case_id, org_id):
 
     register_portal_token_hash(survey.token_hash, org_id, "csat", survey.id)
 
-    link = frontend_url(f"/csat/{raw_token}")
+    link = frontend_url(f"/csat/{raw_token}", org=case.org)
     context = {
         "case": case,
         "contact": contact,
@@ -396,7 +396,7 @@ def notify_portal_contacts(case_id, org_id, kind, actor_contact_id=None):
     # staff login, which a customer cannot use. It is an id that already
     # appears in the URL of every portal page, not a credential, and it grants
     # nothing on its own.
-    link = frontend_url(f"/portal/cases/{case.id}?org={case.org_id}")
+    link = frontend_url(f"/portal/cases/{case.id}?org={case.org_id}", org=case.org)
     org_name = case.org.name or ""
     sent = 0
     for contact in recipients:
