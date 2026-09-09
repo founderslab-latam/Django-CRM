@@ -136,3 +136,21 @@ def invoice_post_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender="invoices.Invoice")
 def invoice_post_delete(sender, instance, **kwargs):
     create_activity(instance, "DELETE", "Invoice")
+
+
+# Org signals: keep the Traefik tenant-route file in step with the set of
+# active subdomains. `write_tenant_routes` is a full regeneration and a no-op
+# unless settings.TRAEFIK_DYNAMIC_FILE is configured, so this is inert in tests
+# and on a single shared-host deployment.
+@receiver(post_save, sender="common.Org")
+def org_post_save_sync_routes(sender, instance, created, **kwargs):
+    from common.tenant_routes import write_tenant_routes
+
+    write_tenant_routes()
+
+
+@receiver(post_delete, sender="common.Org")
+def org_post_delete_sync_routes(sender, instance, **kwargs):
+    from common.tenant_routes import write_tenant_routes
+
+    write_tenant_routes()
