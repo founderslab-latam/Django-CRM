@@ -1,6 +1,7 @@
 import hashlib
 import logging
 from datetime import timedelta
+from email.utils import make_msgid
 
 from celery import shared_task
 from django.core.mail import EmailMessage
@@ -11,11 +12,12 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from cases.models import Case, CsatSurvey, EscalationPolicy, TimeEntry
+from cases.models import EmailMessage as CaseEmailMessage
 from cases.notifications import case_link
 from cases.workflow import TERMINAL_STATUSES
 from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
-from common.models import Activity, Org, Profile
+from common.models import Activity, Comment, Org, Profile
 from common.tasks import set_rls_context
 
 logger = logging.getLogger(__name__)
@@ -432,6 +434,116 @@ def notify_portal_contacts(case_id, org_id, kind, actor_contact_id=None):
                 contact.id,
             )
     return sent
+
+
+def _bracketed(message_id: str) -> str:
+    """RFC-5322 wants angle brackets on the wire; our rows store none."""
+    message_id = (message_id or "").strip()
+    if not message_id:
+        return ""
+    return message_id if message_id.startswith("<") else f"<{message_id}>"
+
+
+def _unbracketed(message_id: str) -> str:
+    message_id = (message_id or "").strip()
+    if message_id.startswith("<") and message_id.endswith(">"):
+        return message_id[1:-1]
+    return message_id
+
+
+@shared_task
+def send_case_reply_email(case_id, org_id, comment_id):
+    """Send an agent's public case comment as a real, threaded email reply.
+
+    Until this task existed, a customer-visible comment never left as an
+    actual email: `notify_portal_contacts` only ever sent a "you have a
+    reply, sign in to read it" notice, and `EmailMessage.direction="outbound"`
+    was a value nothing wrote. This is what makes a reply a real email again
+    -- `In-Reply-To`/`References` set from the thread's last inbound message,
+    so it lands in the customer's existing thread instead of as a new one,
+    and `From` is the mailbox they originally wrote to, not a generic sender.
+
+    Callers decide whether to use this (there is a thread to reply into) or
+    fall back to `notify_portal_contacts` (there isn't) -- see
+    `cases.signals.comment_post_save_emit_activity`. This task re-checks the
+    same condition and quietly returns `None` if it no longer holds (the
+    mailbox was deleted since, say), rather than guessing at a fallback of
+    its own.
+    """
+    set_rls_context(org_id)
+    case = Case.objects.filter(id=case_id, org_id=org_id).first()
+    comment = Comment.objects.filter(id=comment_id, org_id=org_id).first()
+    if case is None or comment is None:
+        logger.warning(
+            "send_case_reply_email: case or comment missing (case=%s, comment=%s)",
+            case_id,
+            comment_id,
+        )
+        return None
+
+    latest_inbound = (
+        case.email_messages.filter(direction="inbound")
+        .select_related("mailbox")
+        .order_by("-received_at")
+        .first()
+    )
+    if (
+        latest_inbound is None
+        or latest_inbound.mailbox_id is None
+        or not latest_inbound.from_address
+    ):
+        logger.info(
+            "send_case_reply_email: case=%s has no usable inbound thread, skipping",
+            case_id,
+        )
+        return None
+
+    mailbox_domain = (latest_inbound.mailbox.address.rsplit("@", 1)[-1]) or "localhost"
+    new_message_id = _unbracketed(make_msgid(domain=mailbox_domain))
+    references = f"{latest_inbound.references} {latest_inbound.message_id}".strip()
+    subject = latest_inbound.subject or case.name
+    if not subject.lower().startswith("re:"):
+        subject = f"Re: {subject}"
+
+    msg = EmailMessage(
+        subject=subject,
+        body=comment.comment,
+        from_email=latest_inbound.mailbox.address,
+        to=[latest_inbound.from_address],
+        headers={
+            "Message-ID": _bracketed(new_message_id),
+            "In-Reply-To": _bracketed(latest_inbound.message_id),
+            "References": " ".join(
+                _bracketed(mid) for mid in references.split() if mid
+            ),
+        },
+    )
+    try:
+        msg.send(fail_silently=False)
+    except Exception:
+        logger.exception(
+            "send_case_reply_email: send failed for case=%s comment=%s",
+            case_id,
+            comment_id,
+        )
+        return None
+
+    row = CaseEmailMessage.objects.create(
+        org_id=org_id,
+        case=case,
+        mailbox=latest_inbound.mailbox,
+        comment=comment,
+        direction="outbound",
+        message_id=new_message_id,
+        in_reply_to=latest_inbound.message_id,
+        references=references,
+        from_address=latest_inbound.mailbox.address,
+        to_addresses=latest_inbound.from_address,
+        subject=subject,
+        body_text=comment.comment,
+        received_at=timezone.now(),
+    )
+    return str(row.id)
 
 
 # ---------------------------------------------------------------------------

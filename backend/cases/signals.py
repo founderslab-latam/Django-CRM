@@ -694,28 +694,60 @@ def comment_post_save_emit_activity(sender, instance, created, **kwargs):
         except Exception:  # pragma: no cover - defensive
             logger.exception("notification dispatch failed for comment %s", instance.pk)
 
-        # Customer portal: a public reply is the thing the customer is waiting
-        # for. An internal note must never trigger this, which is the whole
-        # reason is_internal exists, and a customer's own reply must not email
-        # the customer back.
+        # A public reply is the thing the customer is waiting for. An internal
+        # note must never trigger either path below, which is the whole
+        # reason is_internal exists.
         if not instance.is_internal:
-            from cases.tasks import notify_portal_contacts
+            # A customer's own portal reply must not be mailed back to them
+            # as if it were new, but other contacts on a multi-contact case
+            # still might want the "you have a reply" notice -- that part is
+            # unchanged from before this task existed.
+            actor_contact_id = (
+                str(instance.commented_by_contact_id)
+                if instance.commented_by_contact_id
+                else None
+            )
 
-            try:
-                notify_portal_contacts.delay(
-                    str(case.id),
-                    str(case.org_id),
-                    "reply",
-                    actor_contact_id=(
-                        str(instance.commented_by_contact_id)
-                        if instance.commented_by_contact_id
-                        else None
-                    ),
-                )
-            except Exception:  # pragma: no cover - defensive
-                logger.exception(
-                    "portal reply notification failed for comment %s", instance.pk
-                )
+            # Prefer a real, threaded email reply over the generic notice,
+            # but only for an agent's comment (never re-mail a customer's own
+            # words) on a case that actually has an inbound email thread (and
+            # a mailbox still on record for it) to thread the reply into.
+            # Decided here, synchronously and cheaply, so exactly one of the
+            # two tasks below ever fires for a given comment; see
+            # cases.tasks.send_case_reply_email's docstring for why the task
+            # re-checks the same condition rather than trusting this blindly.
+            use_real_email = (
+                bool(instance.commented_by_id)
+                and case.email_messages.filter(
+                    direction="inbound", mailbox__isnull=False
+                ).exists()
+            )
+
+            if use_real_email:
+                from cases.tasks import send_case_reply_email
+
+                try:
+                    send_case_reply_email.delay(
+                        str(case.id), str(case.org_id), str(instance.pk)
+                    )
+                except Exception:  # pragma: no cover - defensive
+                    logger.exception(
+                        "outbound reply email failed for comment %s", instance.pk
+                    )
+            else:
+                from cases.tasks import notify_portal_contacts
+
+                try:
+                    notify_portal_contacts.delay(
+                        str(case.id),
+                        str(case.org_id),
+                        "reply",
+                        actor_contact_id=actor_contact_id,
+                    )
+                except Exception:  # pragma: no cover - defensive
+                    logger.exception(
+                        "portal reply notification failed for comment %s", instance.pk
+                    )
         return
 
     old_is_internal = getattr(instance, "_audit_old_is_internal", None)

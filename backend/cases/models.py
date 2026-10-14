@@ -880,6 +880,16 @@ class EmailMessage(BaseModel):
     direction = models.CharField(
         max_length=16, choices=DIRECTION_CHOICES, default="inbound"
     )
+    # Set only when direction="outbound": the agent Comment this email was
+    # sent for. SET_NULL so deleting the comment keeps the send audit row.
+    # Lets the UI mark a comment as "sent by email" without re-deriving it.
+    comment = models.ForeignKey(
+        "common.Comment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_email_messages",
+    )
     message_id = models.CharField(max_length=512, db_index=True)
     in_reply_to = models.CharField(
         max_length=512, blank=True, default="", db_index=True
