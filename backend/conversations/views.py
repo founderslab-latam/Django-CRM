@@ -12,16 +12,24 @@ second login once per browser session is a one-time cost, not a per-visit one.
 
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.permissions import HasOrgContext
+from common.permissions import HasOrgContext, is_org_admin
 
-from .models import ChatwootConversation
-from .serializer import ChatwootConversationSerializer
+from .models import ChatwootAccount, ChatwootConversation
+from .serializer import ChatwootAccountSerializer, ChatwootConversationSerializer
+
+
+def _admin_required():
+    return Response(
+        {"error": True, "errors": _("Admin access required")},
+        status=status.HTTP_403_FORBIDDEN,
+    )
 
 
 class ChatwootConversationListView(APIView):
@@ -63,3 +71,90 @@ class ChatwootConversationListView(APIView):
 
         queryset = queryset.select_related("chatwoot_account").order_by("-created_at")
         return Response(ChatwootConversationSerializer(queryset, many=True).data)
+
+
+class ChatwootAccountView(APIView):
+    """`/api/conversations/account/`: the org's own ChatwootAccount, admin-only
+    on every verb -- unlike the conversation list above, nothing here needs
+    to be readable by an ordinary member. There is at most one row per org
+    (`ChatwootAccount` enforces that with a UniqueConstraint on `org`), and
+    unlike `cases.views.ReopenPolicyView`'s singleton it is NOT auto-created
+    on first read: `base_url`/`account_id` have no sane default, so GET
+    answers `{"account": null}` until an admin actually configures one via
+    PUT.
+    """
+
+    permission_classes = (IsAuthenticated, HasOrgContext)
+
+    def _get(self, org):
+        return ChatwootAccount.objects.filter(org=org).first()
+
+    @extend_schema(
+        tags=["conversations"],
+        responses={200: ChatwootAccountSerializer},
+    )
+    def get(self, request, *args, **kwargs):
+        if not is_org_admin(request.profile):
+            return _admin_required()
+        account = self._get(request.profile.org)
+        if account is None:
+            return Response({"account": None})
+        return Response(
+            {
+                "account": ChatwootAccountSerializer(
+                    account, context={"request": request}
+                ).data
+            }
+        )
+
+    @extend_schema(
+        tags=["conversations"],
+        request=ChatwootAccountSerializer,
+        responses={200: ChatwootAccountSerializer},
+    )
+    def put(self, request, *args, **kwargs):
+        if not is_org_admin(request.profile):
+            return _admin_required()
+        org = request.profile.org
+        instance = self._get(org)
+        serializer = ChatwootAccountSerializer(
+            instance,
+            data=request.data,
+            partial=instance is not None,
+            context={"request": request},
+        )
+        if not serializer.is_valid():
+            return Response(
+                {"error": True, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save(org=org)
+        return Response({"account": serializer.data})
+
+    @extend_schema(
+        tags=["conversations"],
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "error": {"type": "boolean"},
+                    "message": {"type": "string"},
+                },
+            }
+        },
+    )
+    def delete(self, request, *args, **kwargs):
+        if not is_org_admin(request.profile):
+            return _admin_required()
+        account = self._get(request.profile.org)
+        if account is None:
+            return Response(
+                {"error": True, "errors": _("No Chatwoot account configured")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # CASCADEs to every mirrored ChatwootConversation/ChatwootMessage for
+        # this org -- disconnecting the integration is meant to take its
+        # mirrored history with it, not leave orphaned rows an admin can't
+        # see or clean up through any UI.
+        account.delete()
+        return Response({"error": False, "message": _("Chatwoot account disconnected")})
