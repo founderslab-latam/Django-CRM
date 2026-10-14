@@ -175,6 +175,19 @@ class RequireOrgContext:
         # endpoints resolve their org in GetProfileAndOrg and are meant to be
         # checked here like everything else.
         "/api/portal/login/",
+        # Inbound email webhook (Tier 1 email-to-ticket). Anonymous by design
+        # -- AWS SNS sends no Authorization header, so this request never has
+        # `request.org` set by GetProfileAndOrg. The view itself is already
+        # built for this (`authentication_classes = ()`, `AllowAny`, and it
+        # calls `set_rls_context(mailbox.org_id)` once it has verified the
+        # SNS signature + topic ARN pin) -- this entry is what actually lets
+        # that anonymous request reach it instead of 403ing here first.
+        # Confirmed by direct test that this was unreachable without it: a
+        # real credential-less POST got "Organization context is required"
+        # before the view ever ran, which is exactly what a real SNS
+        # delivery is. Prefix-matched; the only route under this prefix is
+        # the webhook itself (cases/urls.py's `inbound/<uid:mailbox_id>/`).
+        "/api/cases/inbound/",
     ]
 
     # Paths exempt on an EXACT match only, never prefix-matched like
