@@ -24,6 +24,7 @@
  */
 import { error } from '@sveltejs/kit';
 import { apiRequest } from '$lib/api-helpers.js';
+import { getChatwootConversations } from '$lib/server/v2/conversations.js';
 import { attachmentHref } from '$lib/server/v2/files.js';
 import {
   leadFieldDefinitions,
@@ -137,13 +138,17 @@ export async function getLead({ cookies }, id) {
   // sets up for the industry, and they are stored on the lead, so the detail
   // page reads them here rather than leaving them visible only under
   // Settings → Custom fields.
-  const definitions = await leadFieldDefinitions(cookies);
+  const [definitions, conversations] = await Promise.all([
+    leadFieldDefinitions(cookies),
+    getChatwootConversations({ cookies }, { lead: id })
+  ]);
 
   return {
     lead,
     customFields: pairForDisplay(definitions, response.lead_obj.custom_fields),
     activity: buildActivity(response),
-    duplicates: await findDuplicates(cookies, lead)
+    duplicates: await findDuplicates(cookies, lead),
+    conversations
   };
 }
 

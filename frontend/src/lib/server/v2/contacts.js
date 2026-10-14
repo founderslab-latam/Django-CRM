@@ -41,6 +41,7 @@
  */
 import { error } from '@sveltejs/kit';
 import { apiRequest } from '$lib/api-helpers.js';
+import { getChatwootConversations } from '$lib/server/v2/conversations.js';
 import { attachmentHref } from '$lib/server/v2/files.js';
 
 /** See the note on FILTER_FIELDS in tickets.js. */
@@ -166,11 +167,15 @@ export async function listContacts({ cookies }, params) {
  * @param {string} id
  */
 export async function getContact({ cookies }, id) {
-  const response = await fetchDetail(cookies, id);
+  const [response, conversations] = await Promise.all([
+    fetchDetail(cookies, id),
+    getChatwootConversations({ cookies }, { contact: id })
+  ]);
   const contact = toRow(response.contact_obj);
 
   return {
     contact,
+    conversations,
     owners: (response.contact_obj.assigned_to ?? []).map(profileName),
     teams: (response.contact_obj.teams ?? []).map((/** @type {any} */ team) => team.name),
     deals: (response.opportunities ?? []).map((/** @type {any} */ deal) => ({

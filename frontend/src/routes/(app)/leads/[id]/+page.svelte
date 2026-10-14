@@ -23,6 +23,7 @@
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
+  import ChatwootConversations from '$lib/v2/components/ChatwootConversations.svelte';
   import { money, relativeDays, daysSince, shortDate } from '$lib/v2/format.js';
   import { LEAD_STATUS_TONE, industryLabel } from '$lib/v2/enums.js';
   import { leadStatusKey } from '$lib/leads/status-source-labels.js';
@@ -333,6 +334,8 @@
         {:else if form?.error}
           <p class="note-err" style="margin-top:10px">{form.error}</p>
         {/if}
+
+        <ChatwootConversations conversations={data.conversations ?? []} />
 
         {#if lead.description}
           <div class="v2-label" style="margin:22px 0 10px">{$_('leads.detail.about_label')}</div>

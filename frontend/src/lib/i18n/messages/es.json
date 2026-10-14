@@ -4111,5 +4111,11 @@
     "body_generic": "Tu cuenta no es miembro de la organización en esta dirección.",
     "signed_in_as": "Sesión iniciada como {email}.",
     "go_to_main_app": "Ir a la aplicación principal"
+  },
+  "conversations": {
+    "panel": {
+      "heading": "Conversaciones",
+      "open_in_new_tab": "Abrir en Chatwoot"
+    }
   }
 }

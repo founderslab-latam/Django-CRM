@@ -24,6 +24,7 @@
   import NextAction from '$lib/v2/components/NextAction.svelte';
   import Pill from '$lib/v2/components/Pill.svelte';
   import Avatar from '$lib/v2/components/Avatar.svelte';
+  import ChatwootConversations from '$lib/v2/components/ChatwootConversations.svelte';
   import { money, shortDate, relativeDays, daysSince } from '$lib/v2/format.js';
   import { PRIORITY_TONE, CASE_STATUS_TONE, TASK_PRIORITY_TONE } from '$lib/v2/enums.js';
   import { enhance } from '$app/forms';
@@ -369,6 +370,8 @@
             </p>
           {/each}
         </div>
+
+        <ChatwootConversations conversations={data.conversations ?? []} />
 
         {#if contact.description}
           <div class="v2-label" style="margin:0 0 10px">{$_('contacts.detail.about_heading')}</div>
