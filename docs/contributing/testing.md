@@ -49,21 +49,26 @@ markers =
     postgres_only: marks tests that require PostgreSQL
 ```
 
-`postgres_only` is in active use. Exactly six tests carry it, confirmed by collecting the marker
-directly (`uv run pytest -m postgres_only --collect-only` → `6/2776 tests collected`), across four
-files: `common/tests/test_pat_auth.py` (one test), `common/tests/test_pat_model.py` (one),
+`postgres_only` is in active use. Eight tests carry it, confirmed by collecting the marker directly
+(`uv run pytest -m postgres_only --collect-only` → `8/4355 tests collected`), across six files:
+`cases/tests/test_inbound_mailbox_portal_rls.py` (one), `cases/tests/test_portal_cases.py` (one),
+`common/tests/test_pat_auth.py` (one), `common/tests/test_pat_model.py` (one),
 `common/tests/test_rls_pipeline_tables.py` (two), and `invoices/tests/test_portal_rls.py` (two).
 (`common/tests/test_pat_integration.py` mentions `postgres_only` only in a comment explaining that
-its own tests deliberately *don't* carry the marker and run on SQLite instead. It contributes zero
-of the six.) Four of the six assert RLS policy state directly (`pg_policies`,
-`pg_class.relrowsecurity`): the two in `test_rls_pipeline_tables.py`, plus one each in
-`test_pat_model.py` and `test_portal_rls.py` confirming `personal_access_token` and
-`portal_access_token` deliberately carry *no* policy. The other two assert isolation *behaviour*
-under a real, RLS-enforcing role instead of reading policy metadata:
-`test_pat_auth.py::test_cross_org_pat_cannot_read_other_orgs_leads` calls the real `/api/leads/`
-endpoint and checks a foreign org's lead never appears, and
-`test_portal_rls.py::test_resolution_reads_estimate_that_empty_context_hides` exercises the full
-portal-token resolution path. `slow` is declared but,
+its own tests deliberately *don't* carry the marker and run on SQLite instead. It contributes none
+of the eight.) Four assert RLS policy state directly (`pg_policies`, `pg_class.relrowsecurity`):
+the two in `test_rls_pipeline_tables.py`, plus one each in `test_pat_model.py` and
+`test_portal_rls.py` confirming `personal_access_token` and `portal_access_token` deliberately
+carry *no* policy. The rest assert isolation *behaviour* under a real, RLS-enforcing role instead
+of reading policy metadata. `test_pat_auth.py::test_cross_org_pat_cannot_read_other_orgs_leads`
+calls the real `/api/leads/` endpoint and checks a foreign org's lead never appears, and
+`test_portal_cases.py`'s exercises a real portal request end to end. The remaining two are the
+Option-1 resolution chain (see `docs/PORTAL_RLS.md`), repeated for each anonymous caller that
+turned out to need it: `invoices/tests/test_portal_rls.py::test_resolution_reads_estimate_that_empty_context_hides`
+first, then the identical shape for inbound email
+(`cases/tests/test_inbound_mailbox_portal_rls.py`) -- found live, against a real non-superuser
+role, after the view had already shipped and passed every test that used `DBUSER=postgres`.
+`slow` is declared but,
 as of this writing, applied to nothing (`grep -rn "pytest.mark.slow" --include='*.py' .`, excluding
 `venv/`, returns no matches in application code). It's reserved for future use, not a marker you'll
 see filtering anything today.

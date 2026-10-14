@@ -87,6 +87,44 @@ Do not reach for `BYPASSRLS` here. That role exists for the superadmin
 dashboard and every addition to its surface is a step toward the escalation
 path the threat model is built around.
 
+## Addendum: the same bug, in two webhooks (2026-10-14)
+
+Option 1 from the list above shipped as `common.PortalAccessToken` /
+`common.portal_tokens` (see that model's docstring for the final shape). It
+closed the gap for invoice/estimate/CSAT, but two anonymous webhooks built
+afterward hit the identical chicken-and-egg without going through it:
+
+- `cases.inbound_views.InboundMailboxWebhookView` (AWS SNS, inbound email) --
+  `InboundMailbox.objects.filter(pk=mailbox_id)` with no context, same as
+  `CsatSurvey`'s original bug.
+- `conversations.webhook_views.ChatwootWebhookView` (Chatwoot, Live Chat +
+  WhatsApp) -- same shape, found live while wiring up a real Chatwoot
+  instance to a real local backend: every delivery 404'd under the
+  project's actual non-superuser `crm_user` role, despite the middleware
+  being correctly exempt and the account genuinely existing and active.
+
+**Fixed** the same way: `PortalAccessToken.RESOURCE_CHOICES` gained
+`inbound_mailbox` and `chatwoot_webhook`. The inbound-email webhook (the one
+that exists on this branch) now resolves its org from the unscoped lookup
+before touching `InboundMailbox`, same as invoice/estimate/CSAT.
+Registration happens on every `post_save` of the mailbox (`cases.signals` --
+the key is stable after creation, so this fires once in practice and heals a
+pre-existing gap on any later touch) plus a data migration backfilling rows
+that existed before the fix. Regression test:
+`cases/tests/test_inbound_mailbox_portal_rls.py` (same `postgres_only`
+pattern as `invoices/tests/test_portal_rls.py`). The Chatwoot side of the
+fix (`conversations.webhook_views.ChatwootWebhookView`,
+`conversations/tests/test_account_portal_rls.py`) lives on the
+`feature/channels-ai-integration` branch, which that app doesn't exist
+without.
+
+The warning in "This is masked in development" above is the exact trap that
+produced both bugs: every test and every manual check against this dev
+stack's `DBUSER=postgres` superuser connection passed, including the webhook
+view tests written at the time. Only a request against the real `crm_user`
+role -- or, as it happened, a real external caller (Chatwoot) hitting a real
+deployment configured correctly -- ever exercised the failure.
+
 ## What must not be done
 
 - Do not make the app's DB user a superuser to "fix" the portal. That disables

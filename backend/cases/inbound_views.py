@@ -15,6 +15,18 @@ it takes both. The signature alone is not enough:
 
 A mailbox with no pin rejects notifications outright; it acquires one from the
 first signature-verified SubscriptionConfirmation and will not silently re-pin.
+
+There is a third, easy-to-miss requirement underneath both: a genuinely
+anonymous request carries no `Authorization` header, so `GetProfileAndOrg`
+never sets `app.current_org`, and with that context empty RLS's isolation
+policy hides every row of every org-scoped table -- `InboundMailbox` included.
+`InboundMailbox.objects.filter(pk=mailbox_id)` would therefore find nothing
+even for a real, active mailbox, which is why the lookup below goes through
+`common.portal_tokens` first: an unscoped `mailbox_id → org` row (registered
+on every mailbox save, see `cases.signals`) resolves the org *before* any
+org-scoped table is touched, `set_rls_context` runs, and only then is the
+mailbox itself read -- under full RLS, which is what actually re-confirms it
+exists and is active rather than trusting the unscoped row's say-so.
 """
 
 from __future__ import annotations
@@ -41,7 +53,9 @@ from cases.inbound.sns import (
 )
 from cases.models import EmailMessage, InboundMailbox
 from cases.serializer import InboundMailboxSerializer
+from common.models import PortalAccessToken
 from common.permissions import HasOrgContext, is_org_admin
+from common.portal_tokens import portal_token_hash, resolve_portal_org_by_hash
 from common.tasks import set_rls_context
 
 logger = logging.getLogger(__name__)
@@ -141,12 +155,15 @@ class InboundMailboxWebhookView(APIView):
         },
     )
     def post(self, request, mailbox_id, *args, **kwargs):
-        mailbox = (
-            InboundMailbox.objects.filter(pk=mailbox_id, is_active=True)
-            .select_related("org")
-            .first()
+        # With no Authorization header, `app.current_org` is still empty here
+        # -- RLS hides InboundMailbox under that context regardless of what
+        # the ORM filter asks for, so a direct `.filter(pk=mailbox_id)` would
+        # find nothing even for a real, active mailbox. Resolve the org from
+        # the unscoped lookup first; see the module docstring.
+        org_id = resolve_portal_org_by_hash(
+            portal_token_hash(str(mailbox_id)), PortalAccessToken.INBOUND_MAILBOX
         )
-        if mailbox is None:
+        if org_id is None:
             # Don't leak which UUIDs exist; return a generic 404.
             return Response(
                 {"error": True, "errors": _("Mailbox not found")},
@@ -155,7 +172,21 @@ class InboundMailboxWebhookView(APIView):
 
         # The webhook bypasses RLSContextMiddleware, so set it manually before
         # any ORM read/write touches an org-scoped table.
-        set_rls_context(mailbox.org_id)
+        set_rls_context(org_id)
+
+        # Re-read under full RLS now that context is set. This is the real
+        # check -- the unscoped row above only says a mailbox with this id
+        # once existed in this org, not that it still does or is active.
+        mailbox = (
+            InboundMailbox.objects.filter(pk=mailbox_id, is_active=True)
+            .select_related("org")
+            .first()
+        )
+        if mailbox is None:
+            return Response(
+                {"error": True, "errors": _("Mailbox not found")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if mailbox.provider != "ses":
             # Other providers wired into the same URL space land here.

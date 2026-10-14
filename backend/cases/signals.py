@@ -27,9 +27,10 @@ from django.db.models.signals import (
 from django.dispatch import receiver
 from django.utils import timezone
 
-from cases.models import Case, ReopenPolicy, Solution, TimeEntry
+from cases.models import Case, InboundMailbox, ReopenPolicy, Solution, TimeEntry
 from cases.workflow import resolve_sla_targets
-from common.models import Activity, Comment
+from common.models import Activity, Comment, PortalAccessToken
+from common.portal_tokens import portal_token_hash, register_portal_token_hash
 
 REOPEN_TRIGGER_STATUS = "Closed"
 REOPEN_DEFAULTS = {
@@ -728,3 +729,20 @@ def comment_post_save_emit_activity(sender, instance, created, **kwargs):
             "after": new_is_internal,
         }
         _create_activity(case, "COMMENT", metadata, actor=actor)
+
+
+# Keeps common.PortalAccessToken's unscoped mailbox_id -> org lookup current.
+# InboundMailboxWebhookView needs it to resolve the org *before* RLS context
+# is set (a genuinely anonymous SNS POST carries no Authorization header, so
+# nothing else sets it) -- see the module docstring on cases/inbound_views.py.
+# id never changes after creation, so this fires once in practice; wired as
+# post_save rather than only on create so an existing row missing its
+# registration (the gap this closes) heals the next time it's touched too.
+@receiver(post_save, sender=InboundMailbox)
+def inbound_mailbox_post_save_register_portal_token(sender, instance, **kwargs):
+    register_portal_token_hash(
+        portal_token_hash(str(instance.pk)),
+        instance.org_id,
+        PortalAccessToken.INBOUND_MAILBOX,
+        instance.pk,
+    )

@@ -1,6 +1,8 @@
-"""Anonymous portal token → org resolution.
+"""Anonymous token → org resolution.
 
-The public portal endpoints (invoice/estimate links, CSAT surveys) are the only
+The public portal endpoints (invoice/estimate links, CSAT surveys) and the
+third-party webhooks authenticated by a bearer-style secret in their URL
+(``cases.InboundMailbox``, ``conversations.ChatwootAccount``) are the
 anonymous, org-less requests that must read org-scoped rows. RLS hides those
 rows under an empty context, so before the resource query can run the view has
 to learn the org from the token alone. ``common.models.PortalAccessToken`` is
@@ -11,7 +13,9 @@ The lookup key is always ``sha256(url_token)``:
 
 * invoice / estimate. The URL token is the raw ``public_token``;
 * CSAT: the URL token is the signed token, and ``cases.tasks.hash_csat_token``
-  already stores its SHA-256 as ``csat_survey.token_hash``.
+  already stores its SHA-256 as ``csat_survey.token_hash``;
+* a webhook: whatever string in the URL is the actual bearer secret (see
+  ``PortalAccessToken``'s docstring for the inbound-mailbox/Chatwoot cases).
 
 Registration is called from the same place each token is minted, so the lookup
 never drifts from the source of truth. Resolution is deliberately side-effect
