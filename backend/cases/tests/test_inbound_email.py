@@ -773,6 +773,29 @@ class TestMailboxAPI:
 
 @pytest.mark.django_db
 class TestWebhook:
+    def test_reachable_with_no_credential_at_all(self, unauthenticated_client, org_a):
+        """A real AWS SNS delivery carries no Authorization header.
+
+        RequireOrgContext used to 403 this before the view ever ran --
+        "Organization context is required" -- because the webhook path had
+        no entry in its EXEMPT_PATHS, even though the view itself has always
+        been built for anonymous access (`authentication_classes = ()`,
+        `AllowAny`, and it resolves RLS context itself from the mailbox).
+        This is the regression test for that middleware gap, independent of
+        whatever the SNS signature check decides -- the point here is that
+        the request reaches the view (any response but this specific 403) at
+        all, not what the view does with an unsigned payload.
+        """
+        mailbox = _make_mailbox(org_a)
+        response = unauthenticated_client.post(
+            f"/api/cases/inbound/{mailbox.id}/",
+            {"Type": "Notification"},
+            format="json",
+        )
+        assert response.status_code != 403 or "Organization context" not in str(
+            response.content
+        )
+
     def test_subscription_confirmation_calls_subscribe(self, admin_client, org_a):
         mailbox = _make_mailbox(org_a)
         with (
