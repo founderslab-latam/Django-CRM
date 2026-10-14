@@ -1,13 +1,13 @@
 from django.urls import path
 
-from .webhook_views import ChatwootWebhookView
+from .views import ChatwootConversationListView
 
 app_name = "conversations"
 
 urlpatterns = [
     path(
-        "chatwoot/<str:webhook_token>/",
-        ChatwootWebhookView.as_view(),
-        name="chatwoot_webhook",
+        "chatwoot/",
+        ChatwootConversationListView.as_view(),
+        name="chatwoot_conversation_list",
     ),
 ]

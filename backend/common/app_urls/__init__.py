@@ -38,6 +38,13 @@ urlpatterns = [
     # NOT here: they are anonymous and mounted at /api/public/forms/ in
     # crm/urls.py, outside this authenticated tree.
     path("webforms/", include("webforms.urls", namespace="api_webforms")),
+    # Chatwoot conversations (Live Chat + WhatsApp mirror), read-only. The
+    # anonymous ingest webhook lives outside this tree, at
+    # /api/public/conversations/ (see crm/urls.py) -- it carries its own org
+    # context in the URL and has no business being behind JWT auth.
+    path(
+        "conversations/", include("conversations.urls", namespace="api_conversations")
+    ),
     # Public CSAT (Tier 2 csat): anonymous, token-scoped. Lives outside
     # any app namespace because the customer reaches it from an emailed
     # link with no auth context.

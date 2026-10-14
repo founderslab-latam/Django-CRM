@@ -51,7 +51,7 @@ urlpatterns = [
     # routes above.
     path(
         "api/public/conversations/",
-        include("conversations.urls", namespace="public_conversations"),
+        include("conversations.public_urls", namespace="public_conversations"),
     ),
     # Customer self-service portal. Its own credential realm: sign-in under
     # /api/portal/login/ is anonymous, everything else needs a portal token

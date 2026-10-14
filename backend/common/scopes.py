@@ -62,6 +62,12 @@ API_RESOURCES = frozenset(
         "business-hours",
         "cases",
         "contacts",
+        # Read-only Chatwoot conversation list for the Contact/Lead detail
+        # panel. The anonymous ingest webhook lives outside this vocabulary
+        # entirely, at /api/public/conversations/ -- it authenticates by a
+        # URL-embedded token, not a PAT, so it is not a "resource" a PAT
+        # scope could ever name.
+        "conversations",
         "custom-fields",
         "dashboard",
         "documents",
