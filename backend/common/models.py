@@ -1130,14 +1130,19 @@ class PersonalAccessToken(BaseOrgModel):
 
 
 class PortalAccessToken(models.Model):
-    """Unscoped ``token_hash → org`` lookup for anonymous portal requests.
+    """Unscoped ``token_hash → org`` lookup for any anonymous, credential-first
+    request that has to resolve its org before any RLS-gated table is
+    readable at all.
 
-    The public portal endpoints: the invoice and estimate links emailed to
-    customers, and the CSAT survey link, arrive with no auth and no org
-    context. RLS is keyed on ``app.current_org``, so with an empty context the
-    isolation policy hides the very row (invoice / estimate / csat_survey) that
-    would tell us which org the token belongs to. That is a chicken-and-egg:
-    you cannot set the context until you know the org, and you cannot read the
+    The original three rows here are the public portal endpoints: the
+    invoice and estimate links emailed to customers, and the CSAT survey
+    link. Webhooks from a third party we authenticate by a bearer-style
+    secret in the URL (``cases.InboundMailbox``'s id, ``conversations.
+    ChatwootAccount``'s ``webhook_token``) hit the exact same wall and are
+    registered here too: RLS is keyed on ``app.current_org``, so with an
+    empty context the isolation policy hides the very row that would tell
+    the view which org the secret belongs to. That is a chicken-and-egg: you
+    cannot set the context until you know the org, and you cannot read the
     org until the context is set.
 
     This table breaks it. It is deliberately **not** org-scoped. It is absent
@@ -1147,13 +1152,17 @@ class PortalAccessToken(models.Model):
     resource under full RLS. That is the same sanctioned pattern Celery tasks
     and the CSAT view already use; it adds a surface rather than weakening one.
 
-    The key is ``sha256(url_token)``. For invoices and estimates the URL token
-    is the raw ``public_token``; for CSAT it is the signed token whose SHA-256
-    is already the stored ``csat_survey.token_hash``, so a single hash resolves
-    all three. The row leaks only the *existence* of a token to somebody who
-    already holds it; the resource contents stay behind RLS, and a disabled or
-    deleted resource still 404s because the view's own scoped query re-checks
-    ``public_link_enabled`` / existence after the context is set.
+    The key is ``sha256(url_token)``: the raw ``public_token`` for invoices and
+    estimates; for CSAT, the signed token whose SHA-256 is already the stored
+    ``csat_survey.token_hash``; for a webhook, whatever string in the URL is
+    the actual bearer secret (the ``InboundMailbox`` id, which is not itself a
+    secret -- its security comes from the SNS signature checked afterward --
+    or the random ``ChatwootAccount.webhook_token``, which is). The row leaks
+    only the *existence* of a token to somebody who already holds it; the
+    resource contents stay behind RLS, and a disabled or deleted resource
+    still 404s because the view's own scoped query re-checks
+    ``public_link_enabled`` / ``is_active`` / existence after the context is
+    set.
 
     See ``docs/PORTAL_RLS.md``.
     """
@@ -1161,10 +1170,14 @@ class PortalAccessToken(models.Model):
     INVOICE = "invoice"
     ESTIMATE = "estimate"
     CSAT = "csat"
+    INBOUND_MAILBOX = "inbound_mailbox"
+    CHATWOOT_WEBHOOK = "chatwoot_webhook"
     RESOURCE_CHOICES = (
         (INVOICE, "Invoice"),
         (ESTIMATE, "Estimate"),
         (CSAT, "CSAT survey"),
+        (INBOUND_MAILBOX, "Inbound mailbox webhook"),
+        (CHATWOOT_WEBHOOK, "Chatwoot webhook"),
     )
 
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)

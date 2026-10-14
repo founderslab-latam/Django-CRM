@@ -8,6 +8,17 @@ does not sign its deliveries at all, so the secret in the URL path
 second, cryptographic factor to pair it with the way SNS's TopicArn pin backs
 up its signature. Treat the URL itself as a credential: it must never be
 logged, and `webhook_token` is only ever looked up, never returned by any API.
+
+A request with no Authorization header never gets `app.current_org` set by
+`GetProfileAndOrg`, and with that context empty RLS's isolation policy hides
+every row of every org-scoped table -- `ChatwootAccount` included. A direct
+`.filter(webhook_token=...)` would therefore find nothing even for a real,
+active account, so the lookup below goes through `common.portal_tokens`
+first: an unscoped `webhook_token → org` row (registered on every account
+save, see `conversations.signals`) resolves the org *before* any org-scoped
+table is touched. Confirmed this failure mode first-hand, live, against this
+feature's own webhook, which is what prompted the identical fix on the
+inbound-email webhook in `cases/inbound_views.py`.
 """
 
 from __future__ import annotations
@@ -20,6 +31,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.models import PortalAccessToken
+from common.portal_tokens import portal_token_hash, resolve_portal_org_by_hash
 from common.tasks import set_rls_context
 
 from .chatwoot_events import parse_event
@@ -48,6 +61,19 @@ class ChatwootWebhookView(APIView):
         },
     )
     def post(self, request, webhook_token, *args, **kwargs):
+        # See the module docstring: resolve the org from the unscoped lookup
+        # before touching ChatwootAccount at all, or RLS hides it.
+        org_id = resolve_portal_org_by_hash(
+            portal_token_hash(webhook_token), PortalAccessToken.CHATWOOT_WEBHOOK
+        )
+        if org_id is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        set_rls_context(org_id)
+
+        # Re-read under full RLS now that context is set -- the real check.
+        # The unscoped row above only says this token once belonged to this
+        # org, not that the account is still there or still active.
         account = ChatwootAccount.objects.filter(
             webhook_token=webhook_token, is_active=True
         ).first()
@@ -55,8 +81,6 @@ class ChatwootWebhookView(APIView):
             # Same body regardless of "unknown token" vs "deactivated
             # account" -- neither should tell an unauthenticated caller which.
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        set_rls_context(account.org_id)
 
         payload = request.data
         if not isinstance(payload, dict):
