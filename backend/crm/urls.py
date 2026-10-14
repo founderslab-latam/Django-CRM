@@ -44,6 +44,15 @@ urlpatterns = [
         "api/public/forms/",
         include("webforms.public_urls", namespace="public_webforms"),
     ),
+    # Chatwoot webhook (Live Chat + WhatsApp). Anonymous by design: Chatwoot
+    # signs nothing, so the secret in the URL path (ChatwootAccount.
+    # webhook_token) is the entire trust boundary. The view resolves the org
+    # from that token and sets RLS context itself, same shape as the forms
+    # routes above.
+    path(
+        "api/public/conversations/",
+        include("conversations.urls", namespace="public_conversations"),
+    ),
     # Customer self-service portal. Its own credential realm: sign-in under
     # /api/portal/login/ is anonymous, everything else needs a portal token
     # that GetProfileAndOrg refuses anywhere outside this prefix.

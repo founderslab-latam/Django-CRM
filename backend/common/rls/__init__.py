@@ -64,6 +64,10 @@ ORG_SCOPED_TABLES = [
     "email_message",
     "routing_rule",
     "routing_rule_state",
+    # Chatwoot mirror (Live Chat + WhatsApp). See conversations/models.py.
+    "chatwoot_account",
+    "chatwoot_conversation",
+    "chatwoot_message",
     # Kanban pipelines and their stages. All six carry org_id directly.
     # These were stamped out-of-band on existing databases but were absent from
     # this list and from every migration, so a database built purely from

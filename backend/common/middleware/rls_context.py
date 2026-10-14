@@ -163,6 +163,14 @@ class RequireOrgContext:
         # `/api/public/forms/` and nothing else. The org id sits AFTER the
         # fixed prefix for that reason; see webforms/public_urls.py.
         "/api/public/forms/",
+        # Chatwoot webhook (Live Chat + WhatsApp). Anonymous by design --
+        # Chatwoot signs nothing, so the secret in the URL path IS the
+        # authentication; see conversations/webhook_views.py. The view
+        # resolves the org from that token and sets RLS context itself,
+        # same shape as the forms routes above. Deliberately a specific
+        # prefix, not the blanket "/api/public/", for the same reason that
+        # policy is stated for the forms entry above.
+        "/api/public/conversations/",
         # Customer portal sign-in. Anonymous by design: the caller has no org
         # claim yet, so the view takes the org from the URL and sets the RLS
         # context itself before it reads `contacts`.

@@ -62,6 +62,11 @@ LEAD_SOURCE = (
     ("partner", "Partner"),
     ("public relations", "Public Relations"),
     ("compaign", "Campaign"),
+    # Channels ingested via Chatwoot (conversations.resolution). Values match
+    # conversations.models.CHANNEL_CHOICES so a lead's `source` and a mirrored
+    # conversation's `channel` are the same string.
+    ("live_chat", "Live Chat"),
+    ("whatsapp", "WhatsApp"),
     ("other", "Other"),
 )
 
