@@ -18,6 +18,7 @@
  * throw from one of those is a real failure and is left to propagate.
  */
 import { getBusinessHours } from './business-hours.js';
+import { getChatwootAccount } from './chatwoot.js';
 import { getCustomFields } from './custom-fields.js';
 import { getEscalationPolicies } from './escalation.js';
 import { getMailboxes } from './inbound-email.js';
@@ -108,7 +109,8 @@ export async function getSettingsHub(event) {
     macro,
     tag,
     field,
-    webForm
+    webForm,
+    chatwoot
   ] = await Promise.all([
     getOrgSettings(event),
     getBusinessHours(event),
@@ -122,7 +124,8 @@ export async function getSettingsHub(event) {
     getMacros(event),
     getTags(event),
     getCustomFields(event),
-    getWebForms(event)
+    getWebForms(event),
+    getChatwootAccount(event)
   ]);
 
   const now = Date.now();
@@ -145,6 +148,14 @@ export async function getSettingsHub(event) {
     macroTotals: macro.totals,
     tagTotals: tag.totals,
     fieldTotals: field.totals,
-    webFormTotals: webForm.totals
+    webFormTotals: webForm.totals,
+    // `chatwootVisible` is false for a member (getChatwootAccount
+    // short-circuits rather than calling the admin-only endpoint at all) --
+    // the hub hides the value entirely then, same as tokenTotals/
+    // peopleTotals above. An admin sees it regardless of whether an account
+    // is configured yet (`chatwootAccount` is then null, not hidden): "not
+    // connected" is itself the value worth showing, not a reason to hide one.
+    chatwootVisible: chatwoot.can_edit,
+    chatwootAccount: chatwoot.account
   };
 }

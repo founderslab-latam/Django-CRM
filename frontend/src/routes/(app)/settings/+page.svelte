@@ -236,6 +236,21 @@
           body: $_('settings.home.item_templates_body'),
           value: $_('settings.home.value_under_invoices'),
           warn: false
+        },
+        {
+          href: '/settings/chatwoot',
+          title: $_('settings.home.item_chatwoot_title'),
+          body: $_('settings.home.item_chatwoot_body'),
+          // Hidden for a member (the endpoint is admin-only, not merely this
+          // row): same "destination without a value" shape as tokenTotals/
+          // peopleTotals. An admin sees "Not connected" rather than nothing,
+          // because that absence is itself the thing worth noticing here.
+          value: !data.chatwootVisible
+            ? null
+            : data.chatwootAccount
+              ? $_('settings.home.value_chatwoot_connected')
+              : $_('settings.home.value_chatwoot_not_connected'),
+          warn: data.chatwootVisible && data.chatwootAccount && !data.chatwootAccount.is_active
         }
       ]
     }
