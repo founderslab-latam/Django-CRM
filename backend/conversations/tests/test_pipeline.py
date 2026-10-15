@@ -110,6 +110,50 @@ class TestIngest:
         assert Contact.objects.filter(org=org_a).count() == 1
         assert ChatwootMessage.objects.count() == 2
 
+    def test_agent_reply_seen_first_links_the_customer_not_the_agent(
+        self, chatwoot_account, org_a
+    ):
+        """A conversation that existed in Chatwoot before the webhook was
+        wired up: the first event the CRM sees may be an agent's reply."""
+        agent_reply = {
+            **MESSAGE_CREATED,
+            "message_type": "outgoing",
+            "sender": {
+                "id": 1,
+                "name": "Agent",
+                "email": "agent@crm.test",
+                "type": "user",
+            },
+            "conversation": {
+                **MESSAGE_CREATED["conversation"],
+                "meta": {"sender": CONVERSATION_CREATED["meta"]["sender"]},
+            },
+        }
+        result = ingest(parse_event(agent_reply), chatwoot_account)
+
+        assert result.conversation.contact.email == "jamie@example.com"
+        assert result.message.sender_name == "Agent"
+        assert not Contact.objects.filter(org=org_a, email="agent@crm.test").exists()
+
+    def test_agent_reply_without_customer_info_links_nobody(
+        self, chatwoot_account, org_a
+    ):
+        agent_reply = {
+            **MESSAGE_CREATED,
+            "message_type": "outgoing",
+            "sender": {
+                "id": 1,
+                "name": "Agent",
+                "email": "agent@crm.test",
+                "type": "user",
+            },
+        }
+        result = ingest(parse_event(agent_reply), chatwoot_account)
+
+        assert result.conversation.contact is None
+        assert result.conversation.lead is None
+        assert not Contact.objects.filter(org=org_a).exists()
+
     def test_conversation_resolved_marks_resolved(self, chatwoot_account):
         ingest(parse_event(CONVERSATION_CREATED), chatwoot_account)
         result = ingest(parse_event(CONVERSATION_RESOLVED), chatwoot_account)

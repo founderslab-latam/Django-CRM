@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 
 from .chatwoot_events import ChatwootEvent
@@ -29,6 +29,21 @@ class IngestResult:
     message: ChatwootMessage | None
     dropped: bool
     drop_reason: str = ""
+
+
+def _lock_conversation(account: ChatwootAccount, conversation_id: int) -> None:
+    """Chatwoot fires several webhooks for a new conversation at once
+    (conversation_created plus each greeting/visitor message), delivered in
+    parallel. Without this, each sees no conversation yet, each runs
+    resolution, and all but one die on the Contact email unique constraint
+    -- losing those events. Held until the surrounding transaction ends."""
+    if connection.vendor != "postgresql":
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s), %s)",
+            [str(account.id), conversation_id],
+        )
 
 
 def _get_or_create_conversation(event: ChatwootEvent, account: ChatwootAccount):
@@ -51,12 +66,12 @@ def _get_or_create_conversation(event: ChatwootEvent, account: ChatwootAccount):
         )
         return None, False
 
-    sender = event.sender
+    contact = event.contact
     resolved = resolve_prospect(
         account.org,
-        email=sender.email if sender else "",
-        phone=sender.phone if sender else "",
-        name=sender.name if sender else "",
+        email=contact.email if contact else "",
+        phone=contact.phone if contact else "",
+        name=contact.name if contact else "",
         channel=event.channel,
     )
     conversation = ChatwootConversation.objects.create(
@@ -83,6 +98,7 @@ def ingest(event: ChatwootEvent, account: ChatwootAccount) -> IngestResult:
         )
 
     with transaction.atomic():
+        _lock_conversation(account, event.conversation_id)
         conversation, created = _get_or_create_conversation(event, account)
         if conversation is None:
             return IngestResult(

@@ -1,10 +1,4 @@
-"""Parsing Chatwoot's webhook payload shapes.
-
-Payloads here are written from Chatwoot's documented webhook format, not a
-captured real delivery -- see the module docstring on `chatwoot_events.py`
-for why `message_created`'s nested `conversation` object is the one thing
-most worth re-verifying once a real instance is wired up.
-"""
+"""Parsing Chatwoot's webhook payload shapes."""
 
 from conversations.chatwoot_events import parse_event
 
@@ -107,6 +101,51 @@ class TestParseEvent:
         payload = {k: v for k, v in CONVERSATION_RESOLVED.items() if k != "meta"}
         event = parse_event(payload)
         assert event.sender is None
+
+    def test_conversation_created_contact_is_meta_sender(self):
+        event = parse_event(CONVERSATION_CREATED_LIVE_CHAT)
+        assert event.contact.email == "jamie@example.com"
+
+    def test_agent_reply_is_never_the_contact(self):
+        payload = {
+            **MESSAGE_CREATED_WHATSAPP,
+            "message_type": "outgoing",
+            "sender": {
+                "id": 1,
+                "name": "Agent",
+                "email": "agent@crm.test",
+                "type": "user",
+            },
+        }
+        event = parse_event(payload)
+        assert event.sender.sender_type == "user"
+        assert event.contact is None
+
+    def test_agent_reply_takes_contact_from_conversation_meta(self):
+        payload = {
+            **MESSAGE_CREATED_WHATSAPP,
+            "message_type": "outgoing",
+            "sender": {
+                "id": 1,
+                "name": "Agent",
+                "email": "agent@crm.test",
+                "type": "user",
+            },
+            "conversation": {
+                **MESSAGE_CREATED_WHATSAPP["conversation"],
+                "meta": {
+                    "sender": {
+                        "id": 11,
+                        "name": "Jamie",
+                        "phone_number": "+56912345678",
+                    }
+                },
+            },
+        }
+        event = parse_event(payload)
+        assert event.sender.email == "agent@crm.test"
+        assert event.contact.phone == "+56912345678"
+        assert event.contact.sender_type == "contact"
 
     def test_timestamp_parsing_handles_z_suffix(self):
         event = parse_event(CONVERSATION_CREATED_LIVE_CHAT)

@@ -1,10 +1,13 @@
 """Parse a Chatwoot webhook delivery into a shape the ingest pipeline uses.
 
 Chatwoot puts conversation fields at the top level of a `conversation_*`
-payload, but nested under `"conversation"` on a `message_created` payload --
-this is the one thing most worth re-checking against a real delivery from an
-actual Chatwoot instance before trusting it in production; everything below
-is written from Chatwoot's documented webhook shape, not a captured sample.
+payload, but nested under `"conversation"` on a `message_created` payload.
+Verified against real deliveries from a self-hosted Chatwoot instance.
+
+A message's `sender` is whoever wrote that message -- on an agent's reply
+that's the agent (`type: "user"`), not the customer. The customer is the
+conversation's `meta.sender`. Resolution must only ever use the customer,
+or the first agent reply the CRM happens to see becomes a "prospect".
 
 Only `conversation_created`, `message_created` and `conversation_resolved`
 are handled. Everything else `parse_event` returns `None` for, and the
@@ -50,7 +53,8 @@ class ChatwootEvent:
     inbox_id: int | None
     channel: str | None  # already mapped to our choice, or None if unmapped
     status: str
-    sender: ChatwootSender | None
+    sender: ChatwootSender | None  # who wrote this message (may be an agent)
+    contact: ChatwootSender | None  # the customer on the conversation
     message_id: int | None
     message_type: str | None
     content: str
@@ -72,8 +76,7 @@ def _parse_timestamp(value) -> datetime:
     return datetime.now(dt_timezone.utc)
 
 
-def _sender_from(payload: dict) -> ChatwootSender | None:
-    raw = payload.get("sender") or (payload.get("meta") or {}).get("sender")
+def _parse_sender(raw) -> ChatwootSender | None:
     if not isinstance(raw, dict):
         return None
     return ChatwootSender(
@@ -83,6 +86,23 @@ def _sender_from(payload: dict) -> ChatwootSender | None:
         phone=(raw.get("phone_number") or "").strip(),
         sender_type=raw.get("type") or "contact",
     )
+
+
+def _sender_from(payload: dict) -> ChatwootSender | None:
+    return _parse_sender(
+        payload.get("sender") or (payload.get("meta") or {}).get("sender")
+    )
+
+
+def _contact_from(payload: dict, conversation: dict) -> ChatwootSender | None:
+    meta_sender = _parse_sender((conversation.get("meta") or {}).get("sender"))
+    if meta_sender is not None:
+        meta_sender.sender_type = "contact"
+        return meta_sender
+    sender = _parse_sender(payload.get("sender"))
+    if sender is not None and sender.sender_type == "contact":
+        return sender
+    return None
 
 
 def parse_event(payload: dict) -> ChatwootEvent | None:
@@ -115,6 +135,7 @@ def parse_event(payload: dict) -> ChatwootEvent | None:
         channel=CHANNEL_MAP.get(raw_channel),
         status=conversation.get("status") or "",
         sender=_sender_from(payload),
+        contact=_contact_from(payload, conversation),
         message_id=message_id,
         message_type=payload.get("message_type")
         if event == "message_created"
