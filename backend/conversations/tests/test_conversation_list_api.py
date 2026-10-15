@@ -60,6 +60,45 @@ class TestChatwootConversationListView:
         assert resp.status_code == 200
         assert len(resp.json()) == 1
 
+    def test_includes_the_transcript_in_order_without_empty_prompts(
+        self, admin_client, chatwoot_account
+    ):
+        result = ingest(parse_event(CONVERSATION_CREATED), chatwoot_account)
+
+        def message(msg_id, content, message_type, minute, sender):
+            return {
+                "event": "message_created",
+                "id": msg_id,
+                "content": content,
+                "message_type": message_type,
+                "created_at": f"2026-10-14T10:{minute:02d}:00.000Z",
+                "conversation": {
+                    "id": 45,
+                    "inbox_id": 3,
+                    "channel": "Channel::WebWidget",
+                },
+                "sender": sender,
+                "account": {"id": 7},
+            }
+
+        jamie = CONVERSATION_CREATED["meta"]["sender"]
+        agent = {"id": 1, "name": "Agent", "type": "user"}
+        for payload in (
+            message(503, "Te cotizo enseguida", "outgoing", 7, agent),
+            message(501, "Hola, necesito ayuda", "incoming", 5, jamie),
+            message(502, "", "template", 6, agent),
+        ):
+            ingest(parse_event(payload), chatwoot_account)
+
+        resp = admin_client.get(URL, {"contact": str(result.conversation.contact.id)})
+        transcript = resp.json()[0]["messages"]
+        assert [m["content"] for m in transcript] == [
+            "Hola, necesito ayuda",
+            "Te cotizo enseguida",
+        ]
+        assert transcript[0]["message_type"] == "incoming"
+        assert transcript[1]["sender_name"] == "Agent"
+
     def test_unknown_contact_is_an_empty_list_not_404(self, admin_client):
         import uuid
 

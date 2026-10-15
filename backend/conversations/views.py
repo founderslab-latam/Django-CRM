@@ -12,6 +12,7 @@ second login once per browser session is a one-time cost, not a per-visit one.
 
 from __future__ import annotations
 
+from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -21,7 +22,7 @@ from rest_framework.views import APIView
 
 from common.permissions import HasOrgContext, is_org_admin
 
-from .models import ChatwootAccount, ChatwootConversation
+from .models import ChatwootAccount, ChatwootConversation, ChatwootMessage
 from .serializer import ChatwootAccountSerializer, ChatwootConversationSerializer
 
 
@@ -69,7 +70,18 @@ class ChatwootConversationListView(APIView):
                 org=org, lead_id=lead_id, lead__org=org
             )
 
-        queryset = queryset.select_related("chatwoot_account").order_by("-created_at")
+        # Empty-content messages are Chatwoot's form prompts (e.g. the
+        # "get notified by email" input), nothing a transcript can show.
+        transcript = (
+            ChatwootMessage.objects.filter(org=org)
+            .exclude(content="")
+            .order_by("occurred_at", "chatwoot_message_id")
+        )
+        queryset = (
+            queryset.select_related("chatwoot_account")
+            .prefetch_related(Prefetch("messages", queryset=transcript))
+            .order_by("-created_at")
+        )
         return Response(ChatwootConversationSerializer(queryset, many=True).data)
 
 

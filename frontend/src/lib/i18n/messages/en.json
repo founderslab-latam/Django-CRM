@@ -4150,7 +4150,8 @@
   "conversations": {
     "panel": {
       "heading": "Conversations",
-      "open_in_new_tab": "Open in Chatwoot"
+      "open_in_new_tab": "Open in Chatwoot",
+      "no_messages": "No messages yet"
     }
   }
 }

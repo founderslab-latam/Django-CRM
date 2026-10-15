@@ -2,7 +2,14 @@ from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import ChatwootAccount, ChatwootConversation
+from .models import ChatwootAccount, ChatwootConversation, ChatwootMessage
+
+
+class ChatwootMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatwootMessage
+        fields = ["id", "message_type", "content", "sender_name", "occurred_at"]
+        read_only_fields = fields
 
 
 class ChatwootConversationSerializer(serializers.ModelSerializer):
@@ -22,6 +29,7 @@ class ChatwootConversationSerializer(serializers.ModelSerializer):
         source="get_channel_display", read_only=True
     )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    messages = ChatwootMessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = ChatwootConversation
@@ -35,6 +43,7 @@ class ChatwootConversationSerializer(serializers.ModelSerializer):
             "embed_url",
             "created_at",
             "resolved_at",
+            "messages",
         ]
         read_only_fields = fields
 
