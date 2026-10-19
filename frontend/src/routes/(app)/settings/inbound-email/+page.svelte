@@ -32,7 +32,7 @@
   import SettingsFormPanel from '$lib/v2/components/SettingsFormPanel.svelte';
   import ConfirmAction from '$lib/v2/components/ConfirmAction.svelte';
   import { _ } from '$lib/i18n/index.js';
-  import { count, relativeDays } from '$lib/v2/format.js';
+  import { count, relativeDays, relativeTime } from '$lib/v2/format.js';
   import { PRIORITY_TONE } from '$lib/v2/enums.js';
   import { mailboxProviderKey } from '$lib/settings/labels.js';
   import { casePriorityKey, caseTypeKey } from '$lib/cases/labels.js';
@@ -69,12 +69,81 @@
   // never be open for edit at once.
   let editing = $state(/** @type {any} */ (null));
 
+  // The provider select drives which fields render; the IMAP/SMTP fields are
+  // bound so a preset can fill them in. Passwords are deliberately not here:
+  // they are never loaded, and a blank one on submit means "keep it".
+  let provider = $state('ses');
+  let preset = $state('hosting');
+  let server = $state(serverFields(null));
+  let testing = $state(false);
+  let testResult = $state(/** @type {any} */ (null));
+  let testFailed = $state(false);
+
+  /** @param {any} m */
+  function serverFields(m) {
+    return {
+      imap_host: m?.imap_host ?? '',
+      imap_port: m?.imap_port ?? 993,
+      imap_security: m?.imap_security ?? 'ssl',
+      imap_username: m?.imap_username ?? '',
+      imap_folder: m?.imap_folder || 'INBOX',
+      smtp_host: m?.smtp_host ?? '',
+      smtp_port: m?.smtp_port ?? 587,
+      smtp_security: m?.smtp_security ?? 'starttls',
+      smtp_username: m?.smtp_username ?? ''
+    };
+  }
+
+  // Google's own servers are fixed; a hosting provider's are not, so that
+  // preset only sets the standard ports and leaves the hosts as typed.
+  function applyPreset() {
+    Object.assign(server, {
+      imap_port: 993,
+      imap_security: 'ssl',
+      smtp_port: 587,
+      smtp_security: 'starttls',
+      ...(preset === 'google' ? { imap_host: 'imap.gmail.com', smtp_host: 'smtp.gmail.com' } : {})
+    });
+  }
+
+  /** @param {any} m */
+  function resetForm(m) {
+    provider = m?.provider ?? 'ses';
+    server = serverFields(m);
+    preset = m?.imap_host === 'imap.gmail.com' ? 'google' : 'hosting';
+    testResult = null;
+    testFailed = false;
+  }
+
   function openCreate() {
     editing = 'new';
+    resetForm(null);
   }
 
   function openEdit(m) {
     editing = m;
+    resetForm(m);
+  }
+
+  /** @param {MouseEvent & { currentTarget: HTMLButtonElement }} event */
+  async function testConnection(event) {
+    const formEl = event.currentTarget.form;
+    if (!formEl) return;
+    testing = true;
+    testFailed = false;
+    testResult = null;
+    try {
+      const res = await fetch(resolve('/settings/inbound-email/test-connection'), {
+        method: 'POST',
+        body: new FormData(formEl)
+      });
+      if (res.ok) testResult = await res.json();
+      else testFailed = true;
+    } catch {
+      testFailed = true;
+    } finally {
+      testing = false;
+    }
   }
 
   // The stored default assignee when the picker cannot offer it, because the
@@ -145,19 +214,192 @@
 
           <div class="v2-field">
             <label for="m-provider">{$_('settings.inbound_email.field_provider')}</label>
-            <select id="m-provider" class="v2-input" name="provider">
+            <select id="m-provider" class="v2-input" name="provider" bind:value={provider}>
               {#each PROVIDERS as p (p)}
                 {@const pc = providerChoiceLabel(p, $_(mailboxProviderKey(p)))}
-                <option
-                  value={p}
-                  selected={editing === 'new' ? p === 'ses' : editing.provider === p}
-                >
-                  {$_(pc.key, { values: pc.values })}
-                </option>
+                <option value={p}>{$_(pc.key, { values: pc.values })}</option>
               {/each}
             </select>
             <p class="v2-hint">{$_('settings.inbound_email.provider_hint')}</p>
           </div>
+
+          {#if provider === 'imap'}
+            {@const keepImap = editing !== 'new' && editing.has_imap_password}
+            {@const keepSmtp = editing !== 'new' && editing.has_smtp_password}
+            <div class="v2-field">
+              <label for="m-preset">{$_('settings.inbound_email.server_preset')}</label>
+              <select id="m-preset" class="v2-input" bind:value={preset} onchange={applyPreset}>
+                <option value="hosting">{$_('settings.inbound_email.preset_hosting')}</option>
+                <option value="google">{$_('settings.inbound_email.preset_google')}</option>
+              </select>
+              {#if preset === 'google'}
+                <p class="v2-hint">{$_('settings.inbound_email.google_hint')}</p>
+              {/if}
+            </div>
+
+            <div class="v2-label">{$_('settings.inbound_email.imap_heading')}</div>
+            <div class="v2-mbx-server">
+              <div class="v2-field v2-mbx-host">
+                <label for="m-imap-host">{$_('settings.inbound_email.field_host')}</label>
+                <input
+                  id="m-imap-host"
+                  class="v2-input"
+                  name="imap_host"
+                  required
+                  bind:value={server.imap_host}
+                />
+              </div>
+              <div class="v2-field">
+                <label for="m-imap-port">{$_('settings.inbound_email.field_port')}</label>
+                <input
+                  id="m-imap-port"
+                  class="v2-input"
+                  type="number"
+                  name="imap_port"
+                  bind:value={server.imap_port}
+                />
+              </div>
+              <div class="v2-field">
+                <label for="m-imap-sec">{$_('settings.inbound_email.field_security')}</label>
+                <select
+                  id="m-imap-sec"
+                  class="v2-input"
+                  name="imap_security"
+                  bind:value={server.imap_security}
+                >
+                  <option value="ssl">{$_('settings.inbound_email.security.ssl')}</option>
+                  <option value="starttls">{$_('settings.inbound_email.security.starttls')}</option>
+                </select>
+              </div>
+            </div>
+            <div class="v2-field">
+              <label for="m-imap-user">{$_('settings.inbound_email.field_username')}</label>
+              <input
+                id="m-imap-user"
+                class="v2-input"
+                name="imap_username"
+                autocomplete="off"
+                required
+                bind:value={server.imap_username}
+              />
+            </div>
+            <div class="v2-field">
+              <label for="m-imap-pass">{$_('settings.inbound_email.field_password')}</label>
+              <input
+                id="m-imap-pass"
+                class="v2-input"
+                type="password"
+                name="imap_password"
+                autocomplete="new-password"
+                required={!keepImap}
+              />
+              {#if keepImap}
+                <p class="v2-hint">{$_('settings.inbound_email.password_keep_hint')}</p>
+              {/if}
+            </div>
+            <div class="v2-field">
+              <label for="m-imap-folder">{$_('settings.inbound_email.field_folder')}</label>
+              <input
+                id="m-imap-folder"
+                class="v2-input"
+                name="imap_folder"
+                bind:value={server.imap_folder}
+              />
+              <p class="v2-hint">{$_('settings.inbound_email.first_poll_hint')}</p>
+            </div>
+
+            <div class="v2-label">{$_('settings.inbound_email.smtp_heading')}</div>
+            <div class="v2-mbx-server">
+              <div class="v2-field v2-mbx-host">
+                <label for="m-smtp-host">{$_('settings.inbound_email.field_host')}</label>
+                <input
+                  id="m-smtp-host"
+                  class="v2-input"
+                  name="smtp_host"
+                  required
+                  bind:value={server.smtp_host}
+                />
+              </div>
+              <div class="v2-field">
+                <label for="m-smtp-port">{$_('settings.inbound_email.field_port')}</label>
+                <input
+                  id="m-smtp-port"
+                  class="v2-input"
+                  type="number"
+                  name="smtp_port"
+                  bind:value={server.smtp_port}
+                />
+              </div>
+              <div class="v2-field">
+                <label for="m-smtp-sec">{$_('settings.inbound_email.field_security')}</label>
+                <select
+                  id="m-smtp-sec"
+                  class="v2-input"
+                  name="smtp_security"
+                  bind:value={server.smtp_security}
+                >
+                  <option value="ssl">{$_('settings.inbound_email.security.ssl')}</option>
+                  <option value="starttls">{$_('settings.inbound_email.security.starttls')}</option>
+                </select>
+              </div>
+            </div>
+            <div class="v2-field">
+              <label for="m-smtp-user">{$_('settings.inbound_email.field_username')}</label>
+              <input
+                id="m-smtp-user"
+                class="v2-input"
+                name="smtp_username"
+                autocomplete="off"
+                bind:value={server.smtp_username}
+              />
+            </div>
+            <div class="v2-field">
+              <label for="m-smtp-pass">{$_('settings.inbound_email.field_password')}</label>
+              <input
+                id="m-smtp-pass"
+                class="v2-input"
+                type="password"
+                name="smtp_password"
+                autocomplete="new-password"
+              />
+              <p class="v2-hint">
+                {keepSmtp
+                  ? $_('settings.inbound_email.password_keep_hint')
+                  : $_('settings.inbound_email.smtp_same_hint')}
+              </p>
+            </div>
+
+            <div class="v2-mbx-test">
+              <button
+                class="v2-btn v2-btn-sm"
+                type="button"
+                disabled={testing}
+                onclick={testConnection}
+              >
+                {testing
+                  ? $_('settings.inbound_email.testing')
+                  : $_('settings.inbound_email.test_button')}
+              </button>
+              {#if testResult}
+                {#each [['imap', 'imap_heading'], ['smtp', 'smtp_heading']] as [half, heading] (half)}
+                  {@const r = testResult[half]}
+                  <p class={r?.ok ? 'v2-sub' : 'v2-error'} style="margin:0;font-size:12px">
+                    {$_(`settings.inbound_email.${heading}`)}:
+                    {r?.ok
+                      ? $_('settings.inbound_email.test_ok')
+                      : $_('settings.inbound_email.test_failed', {
+                          values: { error: r?.error ?? '' }
+                        })}
+                  </p>
+                {/each}
+              {/if}
+              {#if testFailed}
+                <p class="v2-error" style="margin:0;font-size:12px">
+                  {$_('settings.inbound_email.test_error')}
+                </p>
+              {/if}
+            </div>
+          {/if}
 
           <div class="v2-field">
             <label for="m-priority">{$_('settings.inbound_email.field_priority')}</label>
@@ -285,7 +527,20 @@
                 )}
                 {relativeDays(m.last_received_at)}
               {/if}
+              {#if m.provider === 'imap'}
+                ·
+                {m.last_polled_at
+                  ? $_('settings.inbound_email.last_checked', {
+                      values: { when: relativeTime(m.last_polled_at) }
+                    })
+                  : $_('settings.inbound_email.never_checked')}
+              {/if}
             </div>
+            {#if data.can_edit && m.last_poll_error}
+              <p class="v2-error" style="font-size:11.5px;margin:6px 0 0">
+                {$_('settings.inbound_email.poll_error', { values: { error: m.last_poll_error } })}
+              </p>
+            {/if}
             {#if why}
               <p class="v2-sub" style="font-size:11.5px;margin:6px 0 0;line-height:1.5">
                 {$_(why.key, { values: why.values })}
@@ -358,22 +613,26 @@
       sitting in the payload behind a click-to-reveal, and no field for either
       on the form above.
     -->
-    <div class="v2-card" style="padding:15px 16px;margin-top:20px">
-      <div style="display:flex;gap:10px;align-items:flex-start">
-        <KeyRound size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
-        <div>
-          <div style="font-weight:600;font-size:13px">
-            {$_('settings.inbound_email.proof_heading')}
+    <!-- SES-only: an org receiving through its own IMAP server has no SNS
+         delivery to prove, and a card about one would only confuse. -->
+    {#if mailboxes.some((m) => m.provider === 'ses')}
+      <div class="v2-card" style="padding:15px 16px;margin-top:20px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <KeyRound size={16} style="color:var(--v2-slate);flex:none;margin-top:2px" />
+          <div>
+            <div style="font-weight:600;font-size:13px">
+              {$_('settings.inbound_email.proof_heading')}
+            </div>
+            <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
+              {$_('settings.inbound_email.proof_body1')}
+            </p>
+            <p class="v2-sub" style="font-size:12.5px;margin:8px 0 0;line-height:1.5">
+              {$_('settings.inbound_email.proof_body2')}
+            </p>
           </div>
-          <p class="v2-sub" style="font-size:12.5px;margin:5px 0 0;line-height:1.5">
-            {$_('settings.inbound_email.proof_body1')}
-          </p>
-          <p class="v2-sub" style="font-size:12.5px;margin:8px 0 0;line-height:1.5">
-            {$_('settings.inbound_email.proof_body2')}
-          </p>
         </div>
       </div>
-    </div>
+    {/if}
 
     <p class="v2-sub" style="font-size:11.5px;margin-top:14px">
       {$_('settings.inbound_email.footer_before')}
@@ -398,6 +657,22 @@
     flex-wrap: wrap;
     margin-top: 9px;
     font-size: 11.5px;
+  }
+  .v2-mbx-server {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.4fr;
+    gap: 10px;
+  }
+  .v2-mbx-test {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  @media (max-width: 640px) {
+    .v2-mbx-server {
+      grid-template-columns: 1fr;
+    }
   }
   .v2-mbx-banner {
     display: flex;

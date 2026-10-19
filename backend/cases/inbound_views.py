@@ -44,15 +44,20 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from cases.inbound import imap, smtp
+from cases.inbound.hosts import MailHostError
+from cases.inbound.imap import ImapError
 from cases.inbound.parser import parse_raw_email
 from cases.inbound.pipeline import ingest
+from cases.inbound.smtp import SmtpError
 from cases.inbound.sns import (
     SNSVerificationError,
     confirm_subscription,
     verify_sns_message,
 )
 from cases.models import EmailMessage, InboundMailbox
-from cases.serializer import InboundMailboxSerializer
+from cases.serializer import InboundMailboxSerializer, MailboxConnectionTestSerializer
+from common.credentials import CredentialError
 from common.models import PortalAccessToken
 from common.permissions import HasOrgContext, is_org_admin
 from common.portal_tokens import portal_token_hash, resolve_portal_org_by_hash
@@ -365,6 +370,92 @@ class InboundMailboxListCreateView(APIView):
             )
         serializer.save(org=org)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class InboundMailboxTestConnectionView(APIView):
+    """`POST /api/cases/mailboxes/test-connection/`: try the IMAP login +
+    folder and the SMTP login with the settings as typed, before saving.
+    Admin-only; sends no mail and reads none. Both halves always run, so the
+    form can show which one is wrong."""
+
+    permission_classes = (IsAuthenticated, HasOrgContext)
+
+    @extend_schema(
+        tags=["InboundEmail"],
+        request=MailboxConnectionTestSerializer,
+        responses={
+            200: inline_serializer(
+                name="MailboxConnectionTestResponse",
+                fields={
+                    "imap": serializers.DictField(),
+                    "smtp": serializers.DictField(),
+                },
+            )
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        if not is_org_admin(request.profile):
+            return _admin_required()
+        serializer = MailboxConnectionTestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"error": True, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        data = serializer.validated_data
+
+        stored = None
+        if data.get("mailbox_id"):
+            stored = InboundMailbox.objects.filter(
+                pk=data["mailbox_id"], org=request.profile.org
+            ).first()
+
+        def stored_password(field):
+            if stored is None:
+                return ""
+            try:
+                if field == "imap":
+                    return stored.imap_password()
+                return stored.smtp_login()[1] if stored.smtp_username else ""
+            except CredentialError:
+                return ""
+
+        imap_password = data.get("imap_password") or stored_password("imap")
+        smtp_username = data.get("smtp_username") or data["imap_username"]
+        smtp_password = data.get("smtp_password") or (
+            stored_password("smtp") if data.get("smtp_username") else imap_password
+        )
+
+        def outcome(check):
+            try:
+                check()
+            except (ImapError, SmtpError, MailHostError) as exc:
+                return {"ok": False, "error": str(exc)}
+            return {"ok": True, "error": ""}
+
+        return Response(
+            {
+                "imap": outcome(
+                    lambda: imap.check_connection(
+                        data["imap_host"],
+                        data.get("imap_port"),
+                        data["imap_security"],
+                        data["imap_username"],
+                        imap_password,
+                        data.get("imap_folder") or "INBOX",
+                    )
+                ),
+                "smtp": outcome(
+                    lambda: smtp.check_connection(
+                        data["smtp_host"],
+                        data.get("smtp_port"),
+                        data["smtp_security"],
+                        smtp_username,
+                        smtp_password,
+                    )
+                ),
+            }
+        )
 
 
 class InboundMailboxDetailView(APIView):

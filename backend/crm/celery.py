@@ -69,6 +69,11 @@ app.conf.beat_schedule = {
         "task": "cases.tasks.auto_stop_stale_timers",
         "schedule": crontab(minute="*/30"),
     },
+    # Fetch new mail from IMAP mailboxes - every minute
+    "poll-imap-mailboxes": {
+        "task": "cases.tasks.poll_imap_mailboxes",
+        "schedule": 60.0,
+    },
     # Drop rotated/expired refresh token records - daily at 3:30 AM
     "flush-expired-refresh-tokens": {
         "task": "common.tasks.flush_expired_refresh_tokens",

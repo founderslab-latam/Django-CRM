@@ -43,9 +43,26 @@ export async function getMailboxes({ cookies }) {
   const { mailboxes, totals } = await apiRequest('/cases/mailboxes/', {}, { cookies });
   return {
     // Rebuild each row from a fixed allowlist of fields; webhook_secret and the
-    // imap_* columns are deliberately not among them, so a secret can never ride
-    // along into the page even if the serializer starts returning one.
+    // IMAP/SMTP passwords are deliberately not among them (the backend never
+    // returns those either -- only `has_*_password` booleans), so a secret can
+    // never ride along into the page even if the serializer starts returning one.
+    // Server settings (hosts, usernames, last error) are admin-only on the
+    // backend; for a member they arrive undefined and the page shows none.
     mailboxes: (mailboxes ?? []).map((m) => ({
+      imap_host: m.imap_host,
+      imap_port: m.imap_port ?? null,
+      imap_security: m.imap_security,
+      imap_username: m.imap_username,
+      imap_folder: m.imap_folder,
+      has_imap_password: m.has_imap_password === true,
+      smtp_host: m.smtp_host,
+      smtp_port: m.smtp_port ?? null,
+      smtp_security: m.smtp_security,
+      smtp_username: m.smtp_username,
+      has_smtp_password: m.has_smtp_password === true,
+      last_polled_at: m.last_polled_at ?? null,
+      last_poll_error: m.last_poll_error ?? '',
+      has_poll_error: m.has_poll_error === true,
       id: m.id,
       address: m.address,
       provider: m.provider,
@@ -72,6 +89,41 @@ export async function getMailboxes({ cookies }) {
   };
 }
 
+/** The customer's own mail server, for `provider: 'imap'`. The two passwords
+ *  travel browser → here → backend only when typed: `buildBody` drops a blank
+ *  one, which the backend reads as "keep the stored password", and nothing
+ *  ever sends one back to the browser. */
+const IMAP_SMTP_FIELDS = [
+  'imap_host',
+  'imap_port',
+  'imap_security',
+  'imap_username',
+  'imap_password',
+  'imap_folder',
+  'smtp_host',
+  'smtp_port',
+  'smtp_security',
+  'smtp_username',
+  'smtp_password'
+];
+
+/**
+ * The IMAP/SMTP fields from a submitted form, only those the form rendered
+ * (it renders them for provider "imap" only). An absent field stays out of
+ * the result, which `buildBody` skips, so saving an SES address never blanks
+ * a server setting it isn't showing.
+ *
+ * @param {FormData} form
+ */
+export function readServerFields(form) {
+  /** @type {Record<string, string>} */
+  const values = {};
+  for (const name of IMAP_SMTP_FIELDS) {
+    if (form.has(name)) values[name] = form.get(name)?.toString().trim() ?? '';
+  }
+  return values;
+}
+
 /** No `webhook_secret`, no `topic_arn`.
  *
  *  `webhook_secret` is reserved for providers that sign deliveries with a
@@ -94,7 +146,8 @@ const CREATE_FIELDS = [
   'default_priority',
   'default_case_type',
   'default_assignee_id',
-  'is_active'
+  'is_active',
+  ...IMAP_SMTP_FIELDS
 ];
 
 /** `address` is the mailbox's identity and its uniqueness key. It is not
@@ -115,8 +168,11 @@ function buildBody(allowed, values) {
   // Two nullable fields whose "none selected" option is an empty `<option>`
   // value. `''` fails the ChoiceField and the PK lookup alike; `null` is what
   // clears them, and both are `allow_null=True` on the serializer.
-  for (const nullable of ['default_case_type', 'default_assignee_id']) {
+  for (const nullable of ['default_case_type', 'default_assignee_id', 'imap_port', 'smtp_port']) {
     if (body[nullable] === '') body[nullable] = null;
+  }
+  for (const secret of ['imap_password', 'smtp_password']) {
+    if (!body[secret]) delete body[secret];
   }
   if (body.is_active !== undefined) body.is_active = Boolean(body.is_active);
   if (body.address !== undefined) {
@@ -137,6 +193,24 @@ export async function updateMailbox({ cookies }, id, values) {
   if (!id) throw new Error('Which mailbox? No mailbox id was given.');
   const body = buildBody(UPDATE_FIELDS, values);
   return await apiRequest(`/cases/mailboxes/${id}/`, { method: 'PUT', body }, { cookies });
+}
+
+/**
+ * Try the IMAP and SMTP logins with the settings as typed, before saving.
+ * Returns `{ imap: { ok, error }, smtp: { ok, error } }`. With `mailbox_id`, a
+ * blank password means the one already stored on that mailbox.
+ *
+ * @param {{ cookies: import('@sveltejs/kit').Cookies }} event
+ * @param {Record<string, any>} values
+ */
+export async function testMailboxConnection({ cookies }, values) {
+  const body = buildBody(IMAP_SMTP_FIELDS, values);
+  if (values.mailbox_id) body.mailbox_id = values.mailbox_id;
+  return await apiRequest(
+    '/cases/mailboxes/test-connection/',
+    { method: 'POST', body },
+    { cookies }
+  );
 }
 
 /**

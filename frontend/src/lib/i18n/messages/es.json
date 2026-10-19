@@ -3088,7 +3088,7 @@
       "field_address": "Dirección",
       "address_hint": "El correo a la dirección anterior deja de convertirse en tickets.",
       "field_provider": "Proveedor",
-      "provider_hint": "Solo AWS SES está implementado. Los otros tres se guardan y se aceptan, y el correo enviado a una dirección que use uno de ellos no se convierte en nada hasta que exista esa integración.",
+      "provider_hint": "Amazon SES e IMAP / SMTP están implementados. Mailgun y Postmark se guardan y se aceptan, pero el correo enviado a una dirección que los use no crea nada hasta que exista esa integración.",
       "field_priority": "Se abre con prioridad",
       "field_type": "Se abre con tipo",
       "type_none": "Ninguno",
@@ -3122,12 +3122,16 @@
         "off": "No crea nada",
         "unsupported": "Proveedor sin conectar",
         "unconfirmed": "Todavía sin conectar",
-        "live": "Crea tickets"
+        "live": "Crea tickets",
+        "pending": "Esperando la primera revisión",
+        "failing": "Conexión fallando"
       },
       "delivery_why": {
         "off": "El correo sigue llegando aquí y no se abre ningún ticket. Nada rebota, así que quien escribió recibe silencio en lugar de un error.",
         "unsupported": "Las entregas de {provider} no están implementadas. El webhook las rechaza, así que el correo a esta dirección no se convierte en nada, sea lo que sea que esté configurado aquí. Solo AWS SES está conectado.",
-        "unconfirmed": "A la espera de la primera entrega confirmada de SNS. Hasta que se confirme la suscripción al tema, se rechaza toda notificación, así que esta dirección todavía no recibe."
+        "unconfirmed": "A la espera de la primera entrega confirmada de SNS. Hasta que se confirme la suscripción al tema, se rechaza toda notificación, así que esta dirección todavía no recibe.",
+        "pending": "El servidor se revisa cada minuto. Solo el correo que llegue después de la primera revisión se convierte en ticket.",
+        "failing": "La última revisión de este buzón falló, así que el correo nuevo no se está convirtiendo en tickets. Queda en el buzón y se recoge cuando la conexión vuelva a funcionar."
       },
       "provider_choice_plain": "{label}",
       "provider_choice_not_wired": "{label} (todavía sin conectar)",
@@ -3136,7 +3140,7 @@
           "ses": "Amazon SES",
           "mailgun": "Mailgun",
           "postmark": "Postmark",
-          "imap": "IMAP"
+          "imap": "IMAP / SMTP"
         }
       },
       "error_forbidden": "Solo un administrador puede cambiar los buzones de entrada.",
@@ -3144,7 +3148,34 @@
       "error_update_fallback": "No se pudo guardar la dirección.",
       "error_deactivate_fallback": "No se pudo desactivar la dirección.",
       "error_activate_fallback": "No se pudo activar la dirección.",
-      "error_remove_fallback": "No se pudo eliminar la dirección."
+      "error_remove_fallback": "No se pudo eliminar la dirección.",
+      "server_preset": "Tipo de servidor",
+      "preset_hosting": "Hosting (Postfix, cPanel, etc.)",
+      "preset_google": "Google Workspace",
+      "google_hint": "Usa una contraseña de aplicación, no la de la cuenta (requiere verificación en 2 pasos). El buzón debe ser una cuenta de usuario, no un grupo, y debe tener IMAP habilitado.",
+      "imap_heading": "Correo entrante (IMAP)",
+      "smtp_heading": "Correo saliente (SMTP)",
+      "field_host": "Servidor",
+      "field_port": "Puerto",
+      "field_security": "Seguridad",
+      "field_username": "Usuario",
+      "field_password": "Contraseña",
+      "field_folder": "Carpeta",
+      "password_keep_hint": "Guardada. Déjala en blanco para conservarla.",
+      "smtp_same_hint": "Deja usuario y contraseña en blanco para usar la cuenta de entrada.",
+      "first_poll_hint": "Solo el correo que llegue después de conectar se convierte en ticket. El correo anterior del buzón no se toca.",
+      "test_button": "Probar conexión",
+      "testing": "Probando…",
+      "test_ok": "Funciona",
+      "test_failed": "Falló: {error}",
+      "test_error": "No se pudo ejecutar la prueba.",
+      "last_checked": "revisado {when}",
+      "never_checked": "aún no revisado",
+      "poll_error": "Último error: {error}",
+      "security": {
+        "ssl": "SSL/TLS",
+        "starttls": "STARTTLS"
+      }
     },
     "chatwoot": {
       "title": "Chatwoot",

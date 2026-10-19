@@ -90,6 +90,31 @@ class TestSendCaseReplyEmail:
         assert sent.extra_headers["References"] == "<first@customer.example>"
         assert sent.extra_headers["Message-ID"].startswith("<")
 
+    def test_imap_mailbox_replies_through_its_own_smtp(
+        self, org_a, threaded_case, mailbox, admin_profile
+    ):
+        from django.core.mail import get_connection
+
+        case, _inbound = threaded_case
+        mailbox.provider = "imap"
+        mailbox.smtp_host = "mail.acme.com"
+        mailbox.save()
+        comment = _make_comment(org_a, case, commented_by=admin_profile)
+        mail.outbox.clear()
+        own_smtp = get_connection("django.core.mail.backends.locmem.EmailBackend")
+
+        with (
+            patch("cases.tasks.smtp.connection_for", return_value=own_smtp) as chosen,
+            patch.object(
+                own_smtp, "send_messages", wraps=own_smtp.send_messages
+            ) as sent_through,
+        ):
+            send_case_reply_email(str(case.id), str(org_a.id), str(comment.id))
+
+        assert chosen.call_args.args[0].pk == mailbox.pk
+        assert sent_through.call_count == 1
+        assert len(mail.outbox) == 1
+
     def test_writes_the_audit_row_threaded_to_the_inbound_message(
         self, org_a, threaded_case, admin_profile
     ):

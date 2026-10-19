@@ -769,7 +769,11 @@ class InboundMailbox(BaseModel):
         ("ses", "AWS SES (SNS direct delivery)"),
         ("mailgun", "Mailgun"),
         ("postmark", "Postmark"),
-        ("imap", "IMAP"),
+        ("imap", "IMAP / SMTP"),
+    ]
+    SECURITY_CHOICES = [
+        ("ssl", "SSL/TLS"),
+        ("starttls", "STARTTLS"),
     ]
 
     org = models.ForeignKey(
@@ -798,11 +802,35 @@ class InboundMailbox(BaseModel):
         "notifications are rejected.",
     )
 
-    # Reserved for future IMAP support (Tier 1+ follow-up).
+    # provider="imap": mail is polled from the customer's own server over IMAP
+    # (cases.tasks.poll_imap_mailboxes) and replies go out through their SMTP.
+    # Passwords are encrypted with common.credentials, never stored in clear.
     imap_host = models.CharField(max_length=255, blank=True, default="")
     imap_port = models.PositiveIntegerField(blank=True, null=True)
+    imap_security = models.CharField(
+        max_length=16, choices=SECURITY_CHOICES, default="ssl"
+    )
     imap_username = models.CharField(max_length=255, blank=True, default="")
     imap_password_enc = models.CharField(max_length=512, blank=True, default="")
+    imap_folder = models.CharField(max_length=255, blank=True, default="INBOX")
+    # Read cursor. Null means "not started": the next poll records the current
+    # newest UID and imports nothing, so connecting a mailbox never turns its
+    # whole history into tickets. Reset whenever the server/account/folder
+    # changes, or when the server reports a new UIDVALIDITY.
+    imap_uidvalidity = models.BigIntegerField(blank=True, null=True)
+    imap_last_uid = models.BigIntegerField(blank=True, null=True)
+
+    smtp_host = models.CharField(max_length=255, blank=True, default="")
+    smtp_port = models.PositiveIntegerField(blank=True, null=True)
+    smtp_security = models.CharField(
+        max_length=16, choices=SECURITY_CHOICES, default="starttls"
+    )
+    # Blank means "same as IMAP" -- true for almost every hosted mailbox.
+    smtp_username = models.CharField(max_length=255, blank=True, default="")
+    smtp_password_enc = models.CharField(max_length=512, blank=True, default="")
+
+    last_polled_at = models.DateTimeField(blank=True, null=True)
+    last_poll_error = models.TextField(blank=True, default="")
 
     default_priority = models.CharField(
         max_length=64, choices=PRIORITY_CHOICE, default="Normal"
@@ -843,6 +871,32 @@ class InboundMailbox(BaseModel):
 
     def __str__(self):
         return f"InboundMailbox({self.address}, org={self.org_id})"
+
+    def set_imap_password(self, raw: str) -> None:
+        from common.credentials import encrypt_secret
+
+        self.imap_password_enc = encrypt_secret(raw)
+
+    def set_smtp_password(self, raw: str) -> None:
+        from common.credentials import encrypt_secret
+
+        self.smtp_password_enc = encrypt_secret(raw)
+
+    def imap_password(self) -> str:
+        from common.credentials import decrypt_secret
+
+        return decrypt_secret(self.imap_password_enc) if self.imap_password_enc else ""
+
+    def smtp_login(self) -> tuple[str, str]:
+        """SMTP username/password, falling back to the IMAP ones."""
+        from common.credentials import decrypt_secret
+
+        if self.smtp_username:
+            password = (
+                decrypt_secret(self.smtp_password_enc) if self.smtp_password_enc else ""
+            )
+            return self.smtp_username, password
+        return self.imap_username, self.imap_password()
 
 
 class EmailMessage(BaseModel):

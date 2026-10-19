@@ -3088,7 +3088,7 @@
       "field_address": "Address",
       "address_hint": "Mail to the old address stops becoming tickets.",
       "field_provider": "Provider",
-      "provider_hint": "Only AWS SES is implemented. The other three are stored and accepted, and mail sent to an address using one becomes nothing until that integration exists.",
+      "provider_hint": "Amazon SES and IMAP / SMTP are implemented. Mailgun and Postmark are stored and accepted, but mail sent to an address using one becomes nothing until that integration exists.",
       "field_priority": "Opens as priority",
       "field_type": "Opens as type",
       "type_none": "None",
@@ -3122,12 +3122,16 @@
         "off": "Creating nothing",
         "unsupported": "Provider not wired up",
         "unconfirmed": "Not connected yet",
-        "live": "Creating tickets"
+        "live": "Creating tickets",
+        "pending": "Waiting for first check",
+        "failing": "Connection failing"
       },
       "delivery_why": {
         "off": "Mail still arrives here and no ticket is opened. Nothing bounces, so whoever wrote gets silence rather than an error.",
         "unsupported": "{provider} deliveries are not implemented. The webhook refuses them, so mail to this address becomes nothing whatever else is set here. Only AWS SES is wired up.",
-        "unconfirmed": "Waiting on the first confirmed delivery from SNS. Until the topic subscription is confirmed, every notification is rejected, so this address is not receiving yet."
+        "unconfirmed": "Waiting on the first confirmed delivery from SNS. Until the topic subscription is confirmed, every notification is rejected, so this address is not receiving yet.",
+        "pending": "The server is checked every minute. Only mail that arrives after the first check becomes a ticket.",
+        "failing": "The last check of this mailbox failed, so new mail isn't becoming tickets. It stays in the mailbox and is picked up once the connection works again."
       },
       "provider_choice_plain": "{label}",
       "provider_choice_not_wired": "{label} (not wired up yet)",
@@ -3136,7 +3140,7 @@
           "ses": "Amazon SES",
           "mailgun": "Mailgun",
           "postmark": "Postmark",
-          "imap": "IMAP"
+          "imap": "IMAP / SMTP"
         }
       },
       "error_forbidden": "Only an admin can change inbound mailboxes.",
@@ -3144,7 +3148,34 @@
       "error_update_fallback": "Could not save the address.",
       "error_deactivate_fallback": "Could not turn the address off.",
       "error_activate_fallback": "Could not turn the address on.",
-      "error_remove_fallback": "Could not delete the address."
+      "error_remove_fallback": "Could not delete the address.",
+      "server_preset": "Server type",
+      "preset_hosting": "Hosting (Postfix, cPanel, etc.)",
+      "preset_google": "Google Workspace",
+      "google_hint": "Use an app password, not the account password (it requires 2-Step Verification). The mailbox must be a user account, not a group, and IMAP must be enabled for it.",
+      "imap_heading": "Incoming mail (IMAP)",
+      "smtp_heading": "Outgoing mail (SMTP)",
+      "field_host": "Server",
+      "field_port": "Port",
+      "field_security": "Security",
+      "field_username": "Username",
+      "field_password": "Password",
+      "field_folder": "Folder",
+      "password_keep_hint": "Saved. Leave blank to keep it.",
+      "smtp_same_hint": "Leave username and password blank to use the incoming account.",
+      "first_poll_hint": "Only mail that arrives after connecting becomes a ticket. Older mail in the mailbox is left alone.",
+      "test_button": "Test connection",
+      "testing": "Testing…",
+      "test_ok": "Works",
+      "test_failed": "Failed: {error}",
+      "test_error": "Could not run the test.",
+      "last_checked": "checked {when}",
+      "never_checked": "not checked yet",
+      "poll_error": "Last error: {error}",
+      "security": {
+        "ssl": "SSL/TLS",
+        "starttls": "STARTTLS"
+      }
     },
     "chatwoot": {
       "title": "Chatwoot",

@@ -118,6 +118,11 @@ urlpatterns = [
         name="inbound_mailbox_list_create",
     ),
     path(
+        "mailboxes/test-connection/",
+        inbound_views.InboundMailboxTestConnectionView.as_view(),
+        name="inbound_mailbox_test_connection",
+    ),
+    path(
         "mailboxes/<uid:pk>/",
         inbound_views.InboundMailboxDetailView.as_view(),
         name="inbound_mailbox_detail",

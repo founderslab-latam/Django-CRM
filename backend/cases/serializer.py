@@ -4,6 +4,9 @@ from rest_framework import serializers
 
 from accounts.serializer import AccountSerializer
 from cases.approvals import Approval, ApprovalRule
+from cases.inbound.hosts import IMAP_PORTS, SMTP_PORTS, MailHostError, check_mail_host
+from cases.inbound.imap import DEFAULT_PORTS as IMAP_DEFAULT_PORTS
+from cases.inbound.smtp import DEFAULT_PORTS as SMTP_DEFAULT_PORTS
 from cases.models import (
     Case,
     CasePipeline,
@@ -603,6 +606,40 @@ class InboundMailboxSerializer(serializers.ModelSerializer):
     # report `is_active` and would draw a never-connected address as working.
     # The ARN itself stays admin-only below, since it embeds the AWS account id.
     has_topic_arn = serializers.SerializerMethodField()
+    # IMAP/SMTP passwords: write-only, stored encrypted, never read back.
+    # Blank or absent on update means "keep the stored one".
+    imap_password = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, max_length=256
+    )
+    smtp_password = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, max_length=256
+    )
+    has_imap_password = serializers.SerializerMethodField()
+    has_smtp_password = serializers.SerializerMethodField()
+    # Delivery status, like `has_topic_arn`: every viewer needs to know an
+    # IMAP mailbox is failing; only admins get the server's error text.
+    has_poll_error = serializers.SerializerMethodField()
+
+    # Integration config only an admin manages; members see delivery status
+    # (`last_polled_at`) but not hosts, usernames or server error text.
+    ADMIN_ONLY_FIELDS = (
+        "has_webhook_secret",
+        "topic_arn",
+        "imap_host",
+        "imap_port",
+        "imap_security",
+        "imap_username",
+        "imap_folder",
+        "has_imap_password",
+        "smtp_host",
+        "smtp_port",
+        "smtp_security",
+        "smtp_username",
+        "has_smtp_password",
+        "last_poll_error",
+    )
+    # Changing any of these points the read cursor at a different mailbox.
+    IMAP_CURSOR_FIELDS = ("imap_host", "imap_port", "imap_username", "imap_folder")
 
     class Meta:
         model = InboundMailbox
@@ -614,6 +651,22 @@ class InboundMailboxSerializer(serializers.ModelSerializer):
             "has_webhook_secret",
             "has_topic_arn",
             "topic_arn",
+            "imap_host",
+            "imap_port",
+            "imap_security",
+            "imap_username",
+            "imap_password",
+            "has_imap_password",
+            "imap_folder",
+            "smtp_host",
+            "smtp_port",
+            "smtp_security",
+            "smtp_username",
+            "smtp_password",
+            "has_smtp_password",
+            "last_polled_at",
+            "last_poll_error",
+            "has_poll_error",
             "default_priority",
             "default_case_type",
             "default_assignee",
@@ -622,7 +675,13 @@ class InboundMailboxSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at")
+        read_only_fields = (
+            "id",
+            "last_polled_at",
+            "last_poll_error",
+            "created_at",
+            "updated_at",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -659,6 +718,89 @@ class InboundMailboxSerializer(serializers.ModelSerializer):
     def get_has_topic_arn(self, instance) -> bool:
         return bool(instance.topic_arn)
 
+    def get_has_imap_password(self, instance) -> bool:
+        return bool(instance.imap_password_enc)
+
+    def get_has_smtp_password(self, instance) -> bool:
+        return bool(instance.smtp_password_enc)
+
+    def get_has_poll_error(self, instance) -> bool:
+        return bool(instance.last_poll_error)
+
+    def validate(self, attrs):
+        def current(name, default=None):
+            if name in attrs:
+                return attrs[name]
+            return getattr(self.instance, name, default)
+
+        if current("provider", "ses") != "imap":
+            return attrs
+
+        errors = {}
+        for name in ("imap_host", "imap_username", "smtp_host"):
+            if not current(name):
+                errors[name] = _("This field is required for IMAP/SMTP mailboxes.")
+        if not attrs.get("imap_password") and not getattr(
+            self.instance, "imap_password_enc", ""
+        ):
+            errors["imap_password"] = _(
+                "This field is required for IMAP/SMTP mailboxes."
+            )
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        imap_security = current("imap_security", "ssl")
+        smtp_security = current("smtp_security", "starttls")
+        checks = (
+            (
+                "imap_host",
+                current("imap_host"),
+                current("imap_port") or IMAP_DEFAULT_PORTS[imap_security],
+                IMAP_PORTS,
+            ),
+            (
+                "smtp_host",
+                current("smtp_host"),
+                current("smtp_port") or SMTP_DEFAULT_PORTS[smtp_security],
+                SMTP_PORTS,
+            ),
+        )
+        for name, host, port, allowed in checks:
+            try:
+                check_mail_host(host, port, allowed)
+            except MailHostError as exc:
+                errors[name] = str(exc)
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+    def _apply_passwords(self, instance, imap_password, smtp_password):
+        if imap_password:
+            instance.set_imap_password(imap_password)
+        if smtp_password:
+            instance.set_smtp_password(smtp_password)
+
+    def create(self, validated_data):
+        imap_password = validated_data.pop("imap_password", "")
+        smtp_password = validated_data.pop("smtp_password", "")
+        instance = InboundMailbox(**validated_data)
+        self._apply_passwords(instance, imap_password, smtp_password)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        imap_password = validated_data.pop("imap_password", "")
+        smtp_password = validated_data.pop("smtp_password", "")
+        moved = any(
+            name in validated_data and validated_data[name] != getattr(instance, name)
+            for name in self.IMAP_CURSOR_FIELDS + ("provider",)
+        )
+        if moved:
+            instance.imap_uidvalidity = None
+            instance.imap_last_uid = None
+        self._apply_passwords(instance, imap_password, smtp_password)
+        return super().update(instance, validated_data)
+
     def to_representation(self, instance):
         """`topic_arn` is the webhook's TopicArn pin and embeds the AWS account
         id, so it is shown only to admins, who manage the integration, and only
@@ -682,9 +824,40 @@ class InboundMailboxSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         profile = getattr(request, "profile", None) if request else None
         if not is_org_admin(profile):
-            data.pop("has_webhook_secret", None)
-            data.pop("topic_arn", None)
+            for name in self.ADMIN_ONLY_FIELDS:
+                data.pop(name, None)
         return data
+
+
+class MailboxConnectionTestSerializer(serializers.Serializer):
+    """Input for `POST /api/cases/mailboxes/test-connection/`: the IMAP/SMTP
+    settings as typed in the form, before saving. With `mailbox_id`, a blank
+    password means the one already stored on that mailbox."""
+
+    mailbox_id = serializers.UUIDField(required=False)
+    imap_host = serializers.CharField(max_length=255)
+    imap_port = serializers.IntegerField(required=False, allow_null=True)
+    imap_security = serializers.ChoiceField(
+        choices=InboundMailbox.SECURITY_CHOICES, default="ssl"
+    )
+    imap_username = serializers.CharField(max_length=255)
+    imap_password = serializers.CharField(
+        required=False, allow_blank=True, max_length=256
+    )
+    imap_folder = serializers.CharField(
+        required=False, allow_blank=True, max_length=255, default="INBOX"
+    )
+    smtp_host = serializers.CharField(max_length=255)
+    smtp_port = serializers.IntegerField(required=False, allow_null=True)
+    smtp_security = serializers.ChoiceField(
+        choices=InboundMailbox.SECURITY_CHOICES, default="starttls"
+    )
+    smtp_username = serializers.CharField(
+        required=False, allow_blank=True, max_length=255
+    )
+    smtp_password = serializers.CharField(
+        required=False, allow_blank=True, max_length=256
+    )
 
 
 class EmailMessageSerializer(serializers.ModelSerializer):

@@ -27,18 +27,28 @@
  * `mobile/lib/data/models/mailbox.dart` carries the same rules.
  */
 
-/** The providers the webhook actually handles. Everything else 501s. */
-export const SUPPORTED_PROVIDERS = ['ses'];
+/** The providers that actually turn mail into tickets. Everything else 501s. */
+export const SUPPORTED_PROVIDERS = ['ses', 'imap'];
 
 /**
  * The first gate mail to this address would fail, or `'live'`.
  *
- * @param {{ is_active?: boolean, provider?: string, has_topic_arn?: boolean }} mailbox
- * @returns {'off' | 'unsupported' | 'unconfirmed' | 'live'}
+ * IMAP has no SNS pin; its gates are the poller's. Before the first check
+ * (`last_polled_at` null) nothing is being read yet, and once a check fails
+ * (`has_poll_error`) new mail sits in the mailbox until the connection works.
+ *
+ * @param {{ is_active?: boolean, provider?: string, has_topic_arn?: boolean,
+ *   last_polled_at?: string|null, has_poll_error?: boolean }} mailbox
+ * @returns {'off' | 'unsupported' | 'unconfirmed' | 'pending' | 'failing' | 'live'}
  */
 export function deliveryState(mailbox) {
   if (!mailbox?.is_active) return 'off';
   if (!SUPPORTED_PROVIDERS.includes(mailbox.provider)) return 'unsupported';
+  if (mailbox.provider === 'imap') {
+    if (mailbox.has_poll_error) return 'failing';
+    if (!mailbox.last_polled_at) return 'pending';
+    return 'live';
+  }
   if (!mailbox.has_topic_arn) return 'unconfirmed';
   return 'live';
 }
@@ -52,6 +62,8 @@ const LABEL_KEY = {
   off: 'settings.inbound_email.delivery_label.off',
   unsupported: 'settings.inbound_email.delivery_label.unsupported',
   unconfirmed: 'settings.inbound_email.delivery_label.unconfirmed',
+  pending: 'settings.inbound_email.delivery_label.pending',
+  failing: 'settings.inbound_email.delivery_label.failing',
   live: 'settings.inbound_email.delivery_label.live'
 };
 
@@ -59,6 +71,8 @@ const TONE = {
   off: 'clay',
   unsupported: 'rust',
   unconfirmed: 'clay',
+  pending: 'clay',
+  failing: 'rust',
   live: 'moss'
 };
 
@@ -94,6 +108,9 @@ export function deliveryExplanation(state, providerLabel) {
   if (state === 'unconfirmed') {
     return { key: 'settings.inbound_email.delivery_why.unconfirmed' };
   }
+  if (state === 'pending' || state === 'failing') {
+    return { key: `settings.inbound_email.delivery_why.${state}` };
+  }
   return null;
 }
 
@@ -122,7 +139,7 @@ export function deliveringCount(mailboxes) {
 export function silentMailboxes(mailboxes) {
   return (mailboxes ?? []).filter((m) => {
     const state = deliveryState(m);
-    return state === 'unsupported' || state === 'unconfirmed';
+    return state === 'unsupported' || state === 'unconfirmed' || state === 'failing';
   });
 }
 

@@ -6,15 +6,22 @@ from email.utils import make_msgid
 from celery import shared_task
 from django.core.mail import EmailMessage
 from django.core.signing import TimestampSigner
+from django.db import connection
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from cases.models import Case, CsatSurvey, EscalationPolicy, TimeEntry
+from cases.inbound import smtp
+from cases.inbound.hosts import MailHostError
+from cases.inbound.imap import ImapError, fetch_new
+from cases.inbound.parser import parse_raw_email
+from cases.inbound.pipeline import ingest
+from cases.models import Case, CsatSurvey, EscalationPolicy, InboundMailbox, TimeEntry
 from cases.models import EmailMessage as CaseEmailMessage
 from cases.notifications import case_link
 from cases.workflow import TERMINAL_STATUSES
+from common.credentials import CredentialError
 from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Activity, Comment, Org, Profile
@@ -519,6 +526,7 @@ def send_case_reply_email(case_id, org_id, comment_id):
         },
     )
     try:
+        msg.connection = smtp.connection_for(latest_inbound.mailbox)
         msg.send(fail_silently=False)
     except Exception:
         logger.exception(
@@ -595,3 +603,115 @@ def auto_stop_stale_timers(threshold_hours=TIME_ENTRY_AUTO_STOP_HOURS):
         with connection.cursor() as cursor:
             cursor.execute("SELECT set_config('app.current_org', '', false)")
     return stopped
+
+
+# ---------------------------------------------------------------------------
+# IMAP polling (InboundMailbox.provider == "imap")
+# ---------------------------------------------------------------------------
+
+
+def _try_mailbox_lock(mailbox_id) -> bool:
+    """Skip a mailbox whose previous poll is still running instead of
+    fetching the same messages twice. Session-level, so no transaction is
+    held open across the network round-trips to the IMAP server."""
+    if connection.vendor != "postgresql":
+        return True
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_try_advisory_lock(hashtext('imap-poll'), hashtext(%s))",
+            [str(mailbox_id)],
+        )
+        return cursor.fetchone()[0]
+
+
+def _release_mailbox_lock(mailbox_id) -> None:
+    if connection.vendor != "postgresql":
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_unlock(hashtext('imap-poll'), hashtext(%s))",
+            [str(mailbox_id)],
+        )
+
+
+def poll_mailbox(mailbox: InboundMailbox) -> int:
+    """Fetch and ingest new mail for one IMAP mailbox; returns how many
+    messages were ingested. Never raises for a mailbox-level problem (wrong
+    password, server down): that is recorded on `last_poll_error` for the
+    settings screen to show, and retried on the next poll."""
+    if not _try_mailbox_lock(mailbox.id):
+        return 0
+    try:
+        return _poll_locked(mailbox)
+    finally:
+        _release_mailbox_lock(mailbox.id)
+
+
+def _poll_locked(mailbox: InboundMailbox) -> int:
+    polled_at = timezone.now()
+    try:
+        result = fetch_new(mailbox)
+    except (ImapError, MailHostError, CredentialError) as exc:
+        mailbox.last_polled_at = polled_at
+        mailbox.last_poll_error = str(exc)[:1000]
+        mailbox.save(update_fields=["last_polled_at", "last_poll_error"])
+        return 0
+
+    if result.baseline_uid is not None:
+        mailbox.imap_uidvalidity = result.uidvalidity
+        mailbox.imap_last_uid = result.baseline_uid
+        mailbox.last_polled_at = polled_at
+        mailbox.last_poll_error = ""
+        mailbox.save(
+            update_fields=[
+                "imap_uidvalidity",
+                "imap_last_uid",
+                "last_polled_at",
+                "last_poll_error",
+            ]
+        )
+        return 0
+
+    ingested = 0
+    error = ""
+    for uid, raw in result.messages:
+        if raw is not None:
+            try:
+                ingest(parse_raw_email(raw), mailbox)
+                ingested += 1
+            except Exception:
+                # A message the pipeline can't handle must not wedge the
+                # mailbox forever: log it, record it, move past it.
+                logger.exception(
+                    "IMAP poll: ingest failed for mailbox=%s uid=%s", mailbox.id, uid
+                )
+                error = f"A message (UID {uid}) could not be processed."
+        mailbox.imap_last_uid = uid
+        mailbox.save(update_fields=["imap_last_uid"])
+
+    mailbox.last_polled_at = polled_at
+    mailbox.last_poll_error = error
+    mailbox.save(update_fields=["last_polled_at", "last_poll_error"])
+    return ingested
+
+
+@shared_task
+def poll_imap_mailboxes():
+    """Every minute via Celery beat: fetch new mail for every active IMAP
+    mailbox of every active org. Orgs aren't RLS-protected, mailboxes are,
+    so context is set per org before looking for its mailboxes."""
+    total = 0
+    for org_id in Org.objects.filter(status="ACTIVE").values_list("id", flat=True):
+        set_rls_context(org_id)
+        mailboxes = InboundMailbox.objects.filter(
+            org_id=org_id, provider="imap", is_active=True
+        ).select_related("org")
+        for mailbox in mailboxes:
+            try:
+                total += poll_mailbox(mailbox)
+            except Exception:
+                logger.exception("IMAP poll failed for mailbox=%s", mailbox.id)
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT set_config('app.current_org', '', false)")
+    return total

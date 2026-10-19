@@ -5,7 +5,8 @@ import {
   getMailboxes,
   createMailbox,
   updateMailbox,
-  deleteMailbox
+  deleteMailbox,
+  readServerFields
 } from '$lib/server/v2/inbound-email.js';
 import { getOrgPeopleAndTeams } from '$lib/server/v2/org-people.js';
 import { readableError } from '$lib/server/v2/form-errors.js';
@@ -47,7 +48,8 @@ function readValues(form) {
     provider: form.get('provider')?.toString() ?? '',
     default_priority: form.get('default_priority')?.toString() ?? '',
     default_case_type: form.get('default_case_type')?.toString() ?? '',
-    default_assignee_id: form.get('default_assignee_id')?.toString() ?? ''
+    default_assignee_id: form.get('default_assignee_id')?.toString() ?? '',
+    ...readServerFields(form)
   };
 }
 

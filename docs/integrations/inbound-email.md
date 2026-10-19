@@ -53,13 +53,10 @@ That gives admins a forensic trail even for the mail that never became a ticket,
 `backend/cases/inbound_views.py`), admin-only for every write (`POST`, `PUT`, `DELETE` all check
 `role == "ADMIN"` or `is_admin`; a non-admin gets `403`). Reads are open to any org member.
 
-The model declares four provider choices (`ses`, `mailgun`, `postmark`, `imap`), but **only `ses`
-is actually implemented today**. The webhook itself checks this: any mailbox whose `provider` is
-not `"ses"` returns `501 Not Implemented` for every notification it receives
-(`InboundMailboxWebhookView.post`, `backend/cases/inbound_views.py`). The `imap_host` /
-`imap_port` / `imap_username` / `imap_password_enc` fields exist on the model already so that a
-future IMAP implementation doesn't need a schema migration, but nothing reads them yet, setting
-`provider` to anything but `ses` configures a mailbox that will reject every message sent to it.
+The model declares four provider choices (`ses`, `mailgun`, `postmark`, `imap`). **`ses` and `imap`
+are implemented**; `mailgun` and `postmark` are stored but receive nothing (the webhook answers
+`501 Not Implemented` for them). `ses` receives through the SNS webhook below; `imap` reads the
+customer's own mail server, see [IMAP/SMTP mailboxes](#imapsmtp-mailboxes).
 
 Fields worth knowing when creating one:
 
@@ -83,6 +80,52 @@ an inbound message through that mailbox (a reply to an older case doesn't count 
 `last_received_at` is the newest inbound message's `received_at`, including dropped ones, the
 address still received mail even if the pipeline discarded it. Neither field is present on
 `GET /api/cases/mailboxes/{id}/`, which returns only the plain serializer.
+
+## IMAP/SMTP mailboxes
+
+With `provider: "imap"`, the CRM connects to the customer's own mail server instead of receiving a
+webhook: hosted mail (Postfix/Dovecot, cPanel and similar) or Google Workspace with an
+[app password](https://support.google.com/accounts/answer/185833) (the mailbox must be a user
+account with 2-Step Verification on, not a group, and IMAP must be allowed for it). Microsoft 365
+no longer accepts password logins for IMAP/SMTP and is not supported this way.
+
+**Receiving.** `cases.tasks.poll_imap_mailboxes` runs every minute (Celery beat) and, for every
+active `imap` mailbox of every active org, fetches new messages and hands each one to the same
+`ingest()` pipeline SES mail goes through. The folder (`imap_folder`, `INBOX` by default) is opened
+read-only and messages are fetched with `BODY.PEEK`, so the customer's own mail client keeps its
+read/unread state. New mail is tracked by UID (`imap_last_uid` + `imap_uidvalidity`):
+
+- The **first poll imports nothing**; it records the current newest UID. Connecting a mailbox
+  never turns its history into tickets.
+- Changing the host, port, username or folder, or the server reporting a new `UIDVALIDITY`,
+  restarts the cursor the same way.
+- At most 50 messages are processed per poll; the rest follow on the next one.
+- A connection failure is stored on `last_poll_error` (shown to admins in the settings page; every
+  member sees `has_poll_error`) and retried next minute without moving the cursor. A single message
+  the pipeline can't process is logged and skipped, so it can't block the mailbox forever.
+
+**Replying.** Agent replies on a case from an `imap` mailbox go out through that mailbox's own SMTP
+server (`cases.inbound.smtp.connection_for`), not the deployment's global email backend, so they
+pass the customer domain's SPF/DKIM with no DNS changes. A blank `smtp_username` reuses the IMAP
+login. Gmail stores sent mail in "Sent" itself; nothing is appended there by the CRM.
+
+**Credentials.** `imap_password` and `smtp_password` are write-only in the API and stored encrypted
+(`common.credentials`, Fernet). The key is `CREDENTIALS_ENCRYPTION_KEY` if set, otherwise derived
+from `SECRET_KEY`. Set the dedicated key in production: without it, rotating `SECRET_KEY` makes
+every stored mailbox password undecryptable and admins have to re-enter them. Generate one with
+`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+
+**Network restrictions.** Hosts and ports come from tenant admins, so both the poller and the test
+endpoint refuse anything that isn't a standard mail port (IMAP 143/993, SMTP 25/465/587/2525) or
+that resolves to a private, loopback or reserved address (`cases/inbound/hosts.py`). TLS
+certificates are always verified; there is no plaintext option. `ALLOW_PRIVATE_MAIL_HOSTS=True`
+lifts the address check for local development against a mail server container. Never set it in
+production.
+
+**Testing settings before saving.** `POST /api/cases/mailboxes/test-connection/` (admin-only) logs
+in to IMAP (and opens the folder) and to SMTP with the settings as typed, sending and reading
+nothing, and reports each half separately: `{"imap": {"ok", "error"}, "smtp": {"ok", "error"}}`.
+With `mailbox_id`, a blank password means the one already stored.
 
 ## The SNS webhook
 

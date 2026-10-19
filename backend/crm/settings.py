@@ -13,6 +13,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
+CREDENTIALS_ENCRYPTION_KEY = os.environ.get("CREDENTIALS_ENCRYPTION_KEY", "")
+# Local development only: lets IMAP/SMTP mailboxes point at a mail server on a
+# private network. See cases/inbound/hosts.py.
+ALLOW_PRIVATE_MAIL_HOSTS = (
+    os.environ.get("ALLOW_PRIVATE_MAIL_HOSTS", "False").lower() == "true"
+)
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-dev-key-please-change-in-production"
 )
@@ -317,8 +323,7 @@ if EMAIL_BACKEND.endswith("smtp.EmailBackend"):
     # for, it wins and TLS is forced off so the two never contradict.
     EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
     EMAIL_USE_TLS = (
-        not EMAIL_USE_SSL
-        and os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+        not EMAIL_USE_SSL and os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
     )
 
 

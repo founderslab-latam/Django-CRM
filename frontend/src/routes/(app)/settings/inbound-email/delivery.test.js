@@ -32,9 +32,32 @@ describe('deliveryState', () => {
   });
 
   it('is unsupported for a provider the webhook answers 501 for', () => {
-    for (const provider of ['mailgun', 'postmark', 'imap']) {
+    for (const provider of ['mailgun', 'postmark']) {
       expect(deliveryState(mailbox({ provider }))).toBe('unsupported');
     }
+  });
+
+  it('is pending for an IMAP mailbox the poller has not checked yet', () => {
+    expect(deliveryState(mailbox({ provider: 'imap', has_topic_arn: false }))).toBe('pending');
+  });
+
+  it('is failing for an IMAP mailbox whose last check failed', () => {
+    const failing = mailbox({
+      provider: 'imap',
+      last_polled_at: '2026-10-19T12:00:00Z',
+      has_poll_error: true
+    });
+    expect(deliveryState(failing)).toBe('failing');
+  });
+
+  it('is live for an IMAP mailbox checked without error, with no SNS pin', () => {
+    const ok = mailbox({
+      provider: 'imap',
+      has_topic_arn: false,
+      last_polled_at: '2026-10-19T12:00:00Z',
+      has_poll_error: false
+    });
+    expect(deliveryState(ok)).toBe('live');
   });
 
   it('is unconfirmed for an SES address with no topic pin', () => {
@@ -69,7 +92,7 @@ describe('deliveryState', () => {
 // resolves them with `$_`. Same move as `tickets/[id]/close.js`.
 describe('deliveryLabel and deliveryTone', () => {
   it('never says creating tickets about an address that creates none', () => {
-    for (const state of ['off', 'unsupported', 'unconfirmed']) {
+    for (const state of ['off', 'unsupported', 'unconfirmed', 'pending', 'failing']) {
       expect(deliveryLabel(state)).not.toBe('settings.inbound_email.delivery_label.live');
       expect(deliveryTone(state)).not.toBe('moss');
     }
@@ -103,6 +126,15 @@ describe('deliveryExplanation', () => {
     });
   });
 
+  it('has its own key for each IMAP state', () => {
+    expect(deliveryExplanation('pending', 'IMAP')).toEqual({
+      key: 'settings.inbound_email.delivery_why.pending'
+    });
+    expect(deliveryExplanation('failing', 'IMAP')).toEqual({
+      key: 'settings.inbound_email.delivery_why.failing'
+    });
+  });
+
   it('has nothing to explain about a live address', () => {
     expect(deliveryExplanation('live', 'AWS SES')).toBeNull();
   });
@@ -131,11 +163,14 @@ describe('silentMailboxes', () => {
   it('is the rows that are on and creating nothing', () => {
     const rows = [
       mailbox({ id: 'a' }),
-      mailbox({ id: 'b', provider: 'imap' }),
+      mailbox({ id: 'b', provider: 'mailgun' }),
       mailbox({ id: 'c', has_topic_arn: false }),
-      mailbox({ id: 'd', is_active: false })
+      mailbox({ id: 'd', is_active: false }),
+      mailbox({ id: 'e', provider: 'imap', last_polled_at: 'x', has_poll_error: true }),
+      // Not checked yet is not silent: the first poll is at most a minute away.
+      mailbox({ id: 'f', provider: 'imap' })
     ];
-    expect(silentMailboxes(rows).map((m) => m.id)).toEqual(['b', 'c']);
+    expect(silentMailboxes(rows).map((m) => m.id)).toEqual(['b', 'c', 'e']);
   });
 
   it('leaves a turned-off address out, because somebody chose that', () => {
@@ -144,14 +179,16 @@ describe('silentMailboxes', () => {
 });
 
 describe('providerChoiceLabel', () => {
-  it('leaves the one implemented provider unmarked', () => {
-    expect(providerChoiceLabel('ses', 'AWS SES')).toEqual({
-      key: 'settings.inbound_email.provider_choice_plain',
-      values: { label: 'AWS SES' }
-    });
+  it('leaves the implemented providers unmarked', () => {
+    for (const value of ['ses', 'imap']) {
+      expect(providerChoiceLabel(value, value)).toEqual({
+        key: 'settings.inbound_email.provider_choice_plain',
+        values: { label: value }
+      });
+    }
   });
 
-  it('marks the three that are not', () => {
+  it('marks the two that are not', () => {
     expect(providerChoiceLabel('mailgun', 'Mailgun')).toEqual({
       key: 'settings.inbound_email.provider_choice_not_wired',
       values: { label: 'Mailgun' }
@@ -161,7 +198,7 @@ describe('providerChoiceLabel', () => {
   it('keeps every model choice selectable, marked rather than hidden', () => {
     // Hiding them would silently rewrite a mailbox already set to one.
     const values = ['ses', 'mailgun', 'postmark', 'imap'];
-    expect(values.filter((v) => SUPPORTED_PROVIDERS.includes(v))).toEqual(['ses']);
+    expect(values.filter((v) => SUPPORTED_PROVIDERS.includes(v))).toEqual(['ses', 'imap']);
     for (const value of values) {
       expect(providerChoiceLabel(value, value).values.label).toBe(value);
     }
