@@ -164,7 +164,9 @@ class InboundEmailScreen extends ConsumerWidget {
                     onTurnOn: () => _turnOn(context, ref, mailbox),
                     onDelete: () => _delete(context, ref, mailbox),
                   ),
-                const _AuthNote(),
+                // SES-only: an IMAP / SMTP address has no SNS delivery to prove.
+                if (state.mailboxes.any((m) => m.provider == 'ses'))
+                  const _AuthNote(),
               ],
             ),
           );

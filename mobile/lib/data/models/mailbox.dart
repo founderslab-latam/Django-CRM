@@ -15,23 +15,30 @@ import 'lookup_models.dart';
 
 /// What an address actually does with mail, as opposed to what its switch says.
 ///
-/// `isActive` is one of three gates, and the settings pages used to draw it as
-/// the only one. Two states read as working and are silent:
+/// `isActive` is one of several gates, and the settings pages used to draw it
+/// as the only one. These states read as working and are silent:
 ///
-/// - [unsupported]: `InboundMailboxWebhookView.post` answers 501 for every
-///   provider except SES, and the model offers four.
+/// - [unsupported]: `InboundMailboxWebhookView.post` answers 501 for Mailgun
+///   and Postmark; only SES and IMAP / SMTP are implemented.
 /// - [unconfirmed]: an SES address with no SNS topic pin rejects every
 ///   notification. The pin arrives with the first verified
 ///   SubscriptionConfirmation, so a freshly added address is here until AWS is
 ///   wired up to it.
+/// - [failing]: an IMAP / SMTP address whose last check of the mail server
+///   failed. New mail waits in the mailbox until the connection works again.
 ///
-/// Ordered as the webhook checks them, so this answers "which gate does a
+/// [pending] is an IMAP / SMTP address the poller hasn't checked yet; it runs
+/// every minute, so that is a wait, not a fault.
+///
+/// Ordered as the gates are checked, so this answers "which gate does a
 /// delivery fail first". None of it is a security control: every gate is
-/// enforced in `cases/inbound_views.py`.
+/// enforced on the server.
 enum MailboxDelivery {
   off('Creating nothing'),
   unsupported('Provider not wired up'),
   unconfirmed('Not connected yet'),
+  pending('Waiting for first check'),
+  failing('Connection failing'),
   live('Creating tickets');
 
   const MailboxDelivery(this.label);
@@ -41,20 +48,20 @@ enum MailboxDelivery {
   bool get isLive => this == MailboxDelivery.live;
 }
 
-/// The providers the webhook actually handles. Everything else 501s.
-const List<String> supportedMailboxProviders = ['ses'];
+/// The providers that actually turn mail into tickets. Everything else 501s.
+const List<String> supportedMailboxProviders = ['ses', 'imap'];
 
 /// `InboundMailbox.PROVIDER_CHOICES`, in the model's order.
 const Map<String, String> mailboxProviderLabels = {
   'ses': 'AWS SES',
   'mailgun': 'Mailgun',
   'postmark': 'Postmark',
-  'imap': 'IMAP',
+  'imap': 'IMAP / SMTP',
 };
 
 /// The label a provider picker shows.
 ///
-/// The three unimplemented providers stay selectable: the column accepts them,
+/// The unimplemented providers stay selectable: the column accepts them,
 /// an admin may be recording an address before the integration exists, and
 /// hiding them would silently rewrite a mailbox already set to one.
 String mailboxProviderLabel(String provider) {
@@ -76,6 +83,9 @@ class Mailbox {
     this.defaultAssignee,
     this.casesLast30d = 0,
     this.lastReceivedAt,
+    this.lastPolledAt,
+    this.hasPollError = false,
+    this.lastPollError = '',
   });
 
   final String id;
@@ -103,6 +113,19 @@ class Mailbox {
 
   final DateTime? lastReceivedAt;
 
+  /// IMAP / SMTP only: when the poller last checked the mail server. Null
+  /// until the first check.
+  final DateTime? lastPolledAt;
+
+  /// IMAP / SMTP only: whether that last check failed. Every viewer gets this.
+  final bool hasPollError;
+
+  /// The server's error text from that check. Admin-only on the server, so for
+  /// anyone else it is empty even when [hasPollError] is true. Server
+  /// settings and passwords are never parsed here: IMAP / SMTP is set up from
+  /// the web app.
+  final String lastPollError;
+
   factory Mailbox.fromJson(Map<String, dynamic> json) {
     final assignee = json['default_assignee'];
     return Mailbox(
@@ -123,14 +146,26 @@ class Mailbox {
       lastReceivedAt: json['last_received_at'] == null
           ? null
           : DateTime.tryParse(json['last_received_at'].toString())?.toLocal(),
+      lastPolledAt: json['last_polled_at'] == null
+          ? null
+          : DateTime.tryParse(json['last_polled_at'].toString())?.toLocal(),
+      hasPollError: json['has_poll_error'] == true,
+      lastPollError: json['last_poll_error']?.toString() ?? '',
     );
   }
 
   /// The first gate mail to this address would fail, or [MailboxDelivery.live].
+  ///
+  /// IMAP / SMTP has no SNS pin; its gates are the poller's.
   MailboxDelivery get delivery {
     if (!isActive) return MailboxDelivery.off;
     if (!supportedMailboxProviders.contains(provider)) {
       return MailboxDelivery.unsupported;
+    }
+    if (provider == 'imap') {
+      if (hasPollError) return MailboxDelivery.failing;
+      if (lastPolledAt == null) return MailboxDelivery.pending;
+      return MailboxDelivery.live;
     }
     if (!hasTopicArn) return MailboxDelivery.unconfirmed;
     return MailboxDelivery.live;
@@ -146,11 +181,22 @@ class Mailbox {
         final label = mailboxProviderLabels[provider] ?? provider;
         return '$label deliveries are not implemented. The webhook refuses '
             'them, so mail to this address becomes nothing whatever else is '
-            'set here. Only AWS SES is wired up.';
+            'set here. Only AWS SES and IMAP / SMTP are wired up.';
       case MailboxDelivery.unconfirmed:
         return 'Waiting on the first confirmed delivery from SNS. Until the '
             'topic subscription is confirmed, every notification is rejected, '
             'so this address is not receiving yet.';
+      case MailboxDelivery.pending:
+        return 'The mail server is checked every minute. Only mail that '
+            'arrives after the first check becomes a ticket.';
+      case MailboxDelivery.failing:
+        final base =
+            "The last check of this mailbox failed, so new mail isn't "
+            'becoming tickets. It stays in the mailbox and is picked up once '
+            'the connection works again.';
+        return lastPollError.isEmpty
+            ? base
+            : '$base Last error: $lastPollError';
       case MailboxDelivery.live:
         return null;
     }
@@ -181,12 +227,14 @@ int deliveringMailboxCount(List<Mailbox> mailboxes) =>
 /// The rows worth a banner: switched on, and creating nothing.
 ///
 /// A turned-off address is left out on purpose. Somebody chose that, and it is
-/// the one state of the three the row already read correctly.
+/// the one state the row already read correctly. So is [MailboxDelivery
+/// .pending]: the first check is at most a minute away.
 List<Mailbox> silentMailboxes(List<Mailbox> mailboxes) => mailboxes
     .where(
       (m) =>
           m.delivery == MailboxDelivery.unsupported ||
-          m.delivery == MailboxDelivery.unconfirmed,
+          m.delivery == MailboxDelivery.unconfirmed ||
+          m.delivery == MailboxDelivery.failing,
     )
     .toList(growable: false);
 
@@ -251,6 +299,20 @@ Map<String, dynamic> mailboxPayload({
 Map<String, dynamic> mailboxActivePayload(bool isActive) => {
   'is_active': isActive,
 };
+
+/// Why the phone can't save this provider choice, or null.
+///
+/// IMAP / SMTP needs the mail server's settings and passwords, which this
+/// form doesn't carry, so the server would refuse a new one anyway. Editing an
+/// address that is already IMAP / SMTP is fine: a partial update leaves its
+/// server settings alone.
+String? mailboxProviderProblem(String provider, {String? existingProvider}) {
+  if (provider == 'imap' && existingProvider != 'imap') {
+    return 'Set up IMAP / SMTP from the web app: it needs the mail '
+        "server's settings and password.";
+  }
+  return null;
+}
 
 /// What a create or edit has to fix before it is worth sending, or null.
 ///

@@ -83,7 +83,7 @@ void main() {
     });
 
     test('is unsupported for a provider the webhook answers 501 for', () {
-      for (final provider in ['mailgun', 'postmark', 'imap']) {
+      for (final provider in ['mailgun', 'postmark']) {
         expect(
           build(mailboxJson(provider: provider)).delivery,
           MailboxDelivery.unsupported,
@@ -91,6 +91,30 @@ void main() {
         );
       }
     });
+
+    test('is pending for an IMAP mailbox the poller has not checked yet', () {
+      expect(
+        build(mailboxJson(provider: 'imap', hasTopicArn: false)).delivery,
+        MailboxDelivery.pending,
+      );
+    });
+
+    test('is failing for an IMAP mailbox whose last check failed', () {
+      final json = mailboxJson(provider: 'imap')
+        ..['last_polled_at'] = '2026-10-19T12:00:00Z'
+        ..['has_poll_error'] = true;
+      expect(build(json).delivery, MailboxDelivery.failing);
+    });
+
+    test(
+      'is live for an IMAP mailbox checked without error, no pin needed',
+      () {
+        final json = mailboxJson(provider: 'imap', hasTopicArn: false)
+          ..['last_polled_at'] = '2026-10-19T12:00:00Z'
+          ..['has_poll_error'] = false;
+        expect(build(json).delivery, MailboxDelivery.live);
+      },
+    );
 
     test('is unconfirmed for an SES address with no topic pin', () {
       // The state neither client could see before `has_topic_arn` existed:
@@ -128,11 +152,27 @@ void main() {
       expect(text, contains('no ticket is opened'));
     });
 
-    test('names the provider and says only SES is wired up', () {
+    test('names the provider and says which ones are wired up', () {
       final text = build(mailboxJson(provider: 'mailgun')).deliveryExplanation!;
       expect(text, contains('Mailgun'));
-      expect(text, contains('Only AWS SES'));
+      expect(text, contains('Only AWS SES and IMAP / SMTP'));
     });
+
+    test(
+      'shows a failing IMAP address its error only when the server sent it',
+      () {
+        final json = mailboxJson(provider: 'imap')
+          ..['last_polled_at'] = '2026-10-19T12:00:00Z'
+          ..['has_poll_error'] = true;
+        // A member gets the flag but not the text (admin-only on the server).
+        expect(build(json).deliveryExplanation, isNot(contains('Last error')));
+        json['last_poll_error'] = 'AUTHENTICATIONFAILED';
+        expect(
+          build(json).deliveryExplanation,
+          contains('Last error: AUTHENTICATIONFAILED'),
+        );
+      },
+    );
 
     test('says an unconfirmed address is not receiving yet', () {
       expect(
@@ -174,13 +214,19 @@ void main() {
 
   group('silentMailboxes', () {
     test('is the rows that are on and creating nothing', () {
+      final failingImap = mailboxJson(id: 'e', provider: 'imap')
+        ..['last_polled_at'] = '2026-10-19T12:00:00Z'
+        ..['has_poll_error'] = true;
       final rows = [
         build(mailboxJson(id: 'a')),
-        build(mailboxJson(id: 'b', provider: 'imap')),
+        build(mailboxJson(id: 'b', provider: 'mailgun')),
         build(mailboxJson(id: 'c', hasTopicArn: false)),
         build(mailboxJson(id: 'd', isActive: false)),
+        build(failingImap),
+        // Not checked yet is not silent: the first check is a minute away.
+        build(mailboxJson(id: 'f', provider: 'imap')),
       ];
-      expect(silentMailboxes(rows).map((m) => m.id), ['b', 'c']);
+      expect(silentMailboxes(rows).map((m) => m.id), ['b', 'c', 'e']);
     });
   });
 
@@ -205,13 +251,14 @@ void main() {
   });
 
   group('mailboxProviderLabel', () {
-    test('leaves the one implemented provider alone', () {
+    test('leaves the implemented providers alone', () {
       expect(mailboxProviderLabel('ses'), 'AWS SES');
+      expect(mailboxProviderLabel('imap'), 'IMAP / SMTP');
     });
 
-    test('marks the three that are not', () {
+    test('marks the two that are not', () {
       expect(mailboxProviderLabel('mailgun'), 'Mailgun (not wired up yet)');
-      expect(supportedMailboxProviders, ['ses']);
+      expect(supportedMailboxProviders, ['ses', 'imap']);
     });
 
     test('keeps every model choice offerable, marked rather than hidden', () {
@@ -269,6 +316,25 @@ void main() {
     test('carries the one key, so a save cannot rewrite the address', () {
       expect(mailboxActivePayload(true), {'is_active': true});
       expect(mailboxActivePayload(false), {'is_active': false});
+    });
+  });
+
+  group('mailboxProviderProblem', () {
+    test('refuses a new IMAP / SMTP address, which needs the web form', () {
+      expect(mailboxProviderProblem('imap'), contains('web app'));
+      expect(
+        mailboxProviderProblem('imap', existingProvider: 'ses'),
+        isNotNull,
+      );
+    });
+
+    test('lets an existing IMAP / SMTP address be edited', () {
+      expect(mailboxProviderProblem('imap', existingProvider: 'imap'), isNull);
+    });
+
+    test('has nothing to say about the other providers', () {
+      expect(mailboxProviderProblem('ses'), isNull);
+      expect(mailboxProviderProblem('mailgun'), isNull);
     });
   });
 

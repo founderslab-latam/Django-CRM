@@ -63,7 +63,12 @@ class _MailboxFormSheetState extends ConsumerState<_MailboxFormSheet> {
   }
 
   void _submit() {
-    final problem = mailboxAddressProblem(_address.text);
+    final problem =
+        mailboxAddressProblem(_address.text) ??
+        mailboxProviderProblem(
+          _provider,
+          existingProvider: widget.existing?.provider,
+        );
     if (problem != null) {
       setState(() => _error = problem);
       return;
@@ -129,14 +134,16 @@ class _MailboxFormSheetState extends ConsumerState<_MailboxFormSheet> {
             DropdownButtonFormField<String>(
               initialValue: _provider,
               isExpanded: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Provider',
-                helperText:
-                    'Only AWS SES is implemented. Mail to an address using one '
-                    'of the others becomes nothing until that integration '
-                    'exists.',
+                helperText: _provider == 'imap'
+                    ? 'The mail server settings for IMAP / SMTP are managed '
+                          'from the web app.'
+                    : 'AWS SES and IMAP / SMTP are implemented. Mail to an '
+                          'address using one of the others becomes nothing '
+                          'until that integration exists.',
                 helperMaxLines: 4,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               items: [
                 for (final provider in mailboxProviderLabels.keys)
