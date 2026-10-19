@@ -64,18 +64,24 @@ def send_email_to_assigned_user(recipients, contact_id, org_id):
 Any task queued from a view already has `org_id` available (`request.profile.org.id`) to pass along
 as an argument. Pass it, and call `set_rls_context` with it before the first query, every time.
 
-A task that has to sweep every org rather than act on one record calls `set_rls_context` once per
-org, inside the loop, immediately before that org's queries, for example
+A task that has to sweep every org rather than act on one record loops over
+`common.tasks.orgs_with_rls_context()`, which lists active orgs (`Org` itself isn't RLS-protected,
+so that needs no context), sets each one's context before yielding it, and clears it at the end.
+Every org-scoped query goes **inside** the loop, scoped to the yielded org. For example
 `cases.tasks.scan_for_breached_cases`:
 
 ```python
-for org in Org.objects.filter(id__in=list(org_ids)):
-    set_rls_context(org.id)
+for org in orgs_with_rls_context():
+    if not EscalationPolicy.objects.filter(org=org, is_active=True).exists():
+        continue
     try:
         total += _scan_org(org)
     except Exception:
         logger.exception("Escalation scan failed for org=%s", org.id)
 ```
+
+Never "find the rows first, then set each row's org": that first query runs with an empty context
+and sees nothing.
 
 Two kinds of task legitimately skip this call. First, a task whose table isn't org-scoped at all:
 `flush_expired_refresh_tokens` operates on simplejwt's `OutstandingToken` table, which carries no
@@ -90,9 +96,17 @@ Stated plainly, because it's the one rule this page exists to make impossible to
 task that reads or writes an org-scoped table must call `set_rls_context(org_id)` before its first
 query against that table.** Nothing else establishes tenancy for a worker process.
 
-This codebase has a live example of what happens when a task skips it.
-`purge_read_notifications` (`backend/common/tasks.py:381-397`) deletes read notifications older
-than a cutoff:
+This codebase has had several live examples of what happens when a task gets it wrong. Until
+October 2026, six beat tasks (`scan_for_breached_cases`, `generate_recurring_invoices`,
+`check_overdue_invoices`, `process_payment_reminders`, `check_expired_estimates` and
+`auto_stop_stale_timers`) each queried every org's rows *first* and set each row's org context
+afterwards. That first query ran with an empty context, so in production SLA escalations never
+fired, no recurring invoice was generated, nothing was marked overdue or expired, no payment
+reminder was sent and no forgotten timer was stopped, while every one of them passed its tests
+on SQLite. They now all use `orgs_with_rls_context()`.
+
+The first example found was `purge_read_notifications`, since fixed, which deleted read
+notifications older than a cutoff like this:
 
 ```python
 @shared_task
