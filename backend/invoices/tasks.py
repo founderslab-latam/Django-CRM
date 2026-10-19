@@ -10,7 +10,6 @@ Tasks include:
 """
 
 import logging
-from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
@@ -23,7 +22,7 @@ from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
 from common.models import Profile
 from common.org_time import activate_org_timezone
-from common.tasks import set_rls_context
+from common.tasks import orgs_with_rls_context, set_rls_context
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +235,19 @@ def create_invoice_history(invoice_id, updated_by_user_id, changed_fields, org_i
     logger.info("Created history entry for invoice %s", invoice_id)
 
 
+def _per_org(build_queryset):
+    """Rows from every active org, each org's fetched with its RLS context set
+    and its timezone active, so `today` is that org's own calendar day.
+
+    These sweeps used to query every org's rows first and set each row's
+    context afterwards; under RLS the first query saw nothing, so none of them
+    ever did anything in production. See `common.tasks.orgs_with_rls_context`.
+    """
+    for org in orgs_with_rls_context():
+        activate_org_timezone(org)
+        yield from build_queryset(org, timezone.localdate())
+
+
 @shared_task
 def generate_recurring_invoices():
     """
@@ -246,21 +258,18 @@ def generate_recurring_invoices():
 
     logger.info("Starting recurring invoice generation")
 
-    # Widened by a day and re-checked per org, same as `check_overdue_invoices`:
-    # generating a month's invoice a day early because the server is in a
-    # different timezone from the customer is a billing error, not a rounding
-    # one.
-    recurring_invoices = RecurringInvoice.objects.filter(
-        is_active=True,
-        next_generation_date__lte=timezone.localdate() + timedelta(days=1),
-    ).select_related("org", "account", "contact")
+    # "Today" is each org's own: generating a month's invoice a day early
+    # because the server is in a different timezone from the customer is a
+    # billing error, not a rounding one.
+    recurring_invoices = _per_org(
+        lambda org, today: RecurringInvoice.objects.filter(
+            org=org, is_active=True, next_generation_date__lte=today
+        ).select_related("org", "account", "contact")
+    )
 
     try:
         for recurring in recurring_invoices:
-            activate_org_timezone(recurring.org)
             today = timezone.localdate()
-            if recurring.next_generation_date > today:
-                continue
 
             # Check end date
             if recurring.end_date and recurring.end_date < today:
@@ -271,9 +280,6 @@ def generate_recurring_invoices():
                     recurring.id,
                 )
                 continue
-
-            # Set RLS context for this org
-            set_rls_context(str(recurring.org.id))
 
             try:
                 # Create new invoice
@@ -360,23 +366,20 @@ def check_overdue_invoices():
     logger.info("Checking for overdue invoices")
 
     # A daily sweep across every org cannot use one "today": each org's day
-    # starts at a different instant. Query one day wider than UTC's (offsets run
-    # from UTC-12 to UTC+14, so a day either side covers every zone) and let each
-    # invoice's own org decide whether it is actually late yet. Marking a New
-    # York customer's invoice overdue four hours before their day ends is the
-    # kind of thing they email about.
-    overdue_invoices = Invoice.objects.filter(
-        due_date__lt=timezone.localdate() + timedelta(days=1),
-        status__in=["Sent", "Viewed", "Partially_Paid"],
-    ).select_related("org")
+    # starts at a different instant, so each org is queried against its own.
+    # Marking a New York customer's invoice overdue four hours before their
+    # day ends is the kind of thing they email about.
+    overdue_invoices = _per_org(
+        lambda org, today: Invoice.objects.filter(
+            org=org,
+            due_date__lt=today,
+            status__in=["Sent", "Viewed", "Partially_Paid"],
+        )
+    )
 
     count = 0
     try:
         for invoice in overdue_invoices:
-            set_rls_context(str(invoice.org.id))
-            activate_org_timezone(invoice.org)
-            if invoice.due_date >= timezone.localdate():
-                continue
             invoice.status = "Overdue"
             invoice.save()
             count += 1
@@ -474,22 +477,24 @@ def process_payment_reminders():
     logger.info("Processing payment reminders")
 
     # Get invoices with reminders enabled
-    invoices = (
-        Invoice.objects.filter(
-            reminder_enabled=True,
-            status__in=["Sent", "Viewed", "Partially_Paid", "Overdue"],
+    invoices = _per_org(
+        lambda org, today: (
+            Invoice.objects.filter(
+                org=org,
+                reminder_enabled=True,
+                status__in=["Sent", "Viewed", "Partially_Paid", "Overdue"],
+            )
+            .exclude(client_email__isnull=True)
+            .exclude(client_email="")
+            .select_related("org")
         )
-        .exclude(client_email__isnull=True)
-        .exclude(client_email="")
-        .select_related("org")
     )
 
     try:
         for invoice in invoices:
-            set_rls_context(str(invoice.org.id))
             # "Three days before it is due" has to mean three days on the
-            # customer's calendar, not the server's.
-            activate_org_timezone(invoice.org)
+            # customer's calendar, not the server's: `_per_org` has the
+            # invoice's org timezone active here.
             today = timezone.localdate()
 
             # Check if we should send a reminder
@@ -559,19 +564,18 @@ def check_expired_estimates():
 
     logger.info("Checking for expired estimates")
 
-    # Widened and re-checked per org, same as `check_overdue_invoices`.
-    expired_estimates = Estimate.objects.filter(
-        expiry_date__lt=timezone.localdate() + timedelta(days=1),
-        status__in=["Draft", "Sent", "Viewed"],
-    ).select_related("org")
+    # Each org against its own "today", same as `check_overdue_invoices`.
+    expired_estimates = _per_org(
+        lambda org, today: Estimate.objects.filter(
+            org=org,
+            expiry_date__lt=today,
+            status__in=["Draft", "Sent", "Viewed"],
+        )
+    )
 
     count = 0
     try:
         for estimate in expired_estimates:
-            set_rls_context(str(estimate.org.id))
-            activate_org_timezone(estimate.org)
-            if estimate.expiry_date >= timezone.localdate():
-                continue
             estimate.status = "Expired"
             estimate.save()
             count += 1

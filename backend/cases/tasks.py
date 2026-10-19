@@ -15,8 +15,8 @@ from cases.notifications import case_link
 from cases.workflow import TERMINAL_STATUSES
 from common.email_branding import brand_context, localized_email
 from common.links import frontend_url
-from common.models import Activity, Org, Profile
-from common.tasks import set_rls_context
+from common.models import Activity, Profile
+from common.tasks import orgs_with_rls_context, set_rls_context
 
 logger = logging.getLogger(__name__)
 
@@ -213,25 +213,16 @@ def scan_for_breached_cases():
     Activity(action='ESCALATED').
     """
     total = 0
-    org_ids = (
-        EscalationPolicy.objects.filter(is_active=True)
-        .values_list("org_id", flat=True)
-        .distinct()
-    )
-    for org in Org.objects.filter(id__in=list(org_ids)):
-        set_rls_context(org.id)
+    # Policies are looked up per org, inside its context: the old version
+    # collected org ids from EscalationPolicy before setting any context,
+    # which under RLS returns nothing, so no escalation ever fired.
+    for org in orgs_with_rls_context():
+        if not EscalationPolicy.objects.filter(org=org, is_active=True).exists():
+            continue
         try:
             total += _scan_org(org)
         except Exception:  # pragma: no cover
             logger.exception("Escalation scan failed for org=%s", org.id)
-    # Reset RLS context so the worker doesn't leak the last org's context to
-    # whatever task runs next on the same connection. set_rls_context() no-ops
-    # on falsy values, so clear the session variable directly.
-    from django.db import connection
-
-    if connection.vendor == "postgresql":
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT set_config('app.current_org', '', false)")
     return total
 
 
@@ -455,18 +446,12 @@ def auto_stop_stale_timers(threshold_hours=TIME_ENTRY_AUTO_STOP_HOURS):
     now = timezone.now()
     cutoff = now - timedelta(hours=threshold_hours)
 
-    org_ids = list(
-        TimeEntry.objects.filter(ended_at__isnull=True, started_at__lt=cutoff)
-        .values_list("org_id", flat=True)
-        .distinct()
-    )
     stopped = 0
-    for org_id in org_ids:
-        set_rls_context(org_id)
+    for org in orgs_with_rls_context():
         try:
             stale = list(
                 TimeEntry.objects.filter(
-                    org_id=org_id, ended_at__isnull=True, started_at__lt=cutoff
+                    org=org, ended_at__isnull=True, started_at__lt=cutoff
                 )
             )
             for entry in stale:
@@ -475,11 +460,5 @@ def auto_stop_stale_timers(threshold_hours=TIME_ENTRY_AUTO_STOP_HOURS):
                 entry.save()
                 stopped += 1
         except Exception:  # pragma: no cover
-            logger.exception("auto_stop_stale_timers failed for org=%s", org_id)
-    # Reset RLS context (same idiom as scan_for_breached_cases).
-    from django.db import connection
-
-    if connection.vendor == "postgresql":
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT set_config('app.current_org', '', false)")
+            logger.exception("auto_stop_stale_timers failed for org=%s", org.id)
     return stopped

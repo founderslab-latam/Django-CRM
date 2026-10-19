@@ -63,6 +63,26 @@ def clear_rls_context():
         cursor.execute("SELECT set_config('app.current_org', '', false)")
 
 
+def orgs_with_rls_context():
+    """Yield every active org with the RLS context set to it, then clear it.
+
+    The one safe shape for a periodic task that sweeps all tenants. `Org` is
+    not RLS-protected, so it can be listed with no context; every org-scoped
+    table is, and under the non-superuser role production runs as, a query
+    made before `set_rls_context` sees zero rows -- silently, with no error.
+    Six beat tasks were written query-first ("find the overdue invoices, then
+    set each one's org") and so did nothing in production, while passing
+    their tests on SQLite, which has no RLS. Query inside the loop, scoped to
+    the yielded org.
+    """
+    try:
+        for org in Org.objects.filter(is_active=True).order_by("id").iterator():
+            set_rls_context(org.id)
+            yield org
+    finally:
+        clear_rls_context()
+
+
 @shared_task
 def send_welcome_email(user_id):
     """Send welcome email to newly created users."""
