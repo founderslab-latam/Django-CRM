@@ -104,12 +104,14 @@ nothing. `flush_expired_refresh_tokens` is a legitimate case where no context is
 operates on simplejwt's `OutstandingToken` table, which isn't in `ORG_SCOPED_TABLES` and carries no
 `org_id` column, so there's no per-org filtering to get right in the first place.
 
-`purge_read_notifications` is not the same kind of case, despite its own docstring's claim that "RLS
-does not need a per-org context here." `notification` **is** in `ORG_SCOPED_TABLES`
-(`backend/common/rls/__init__.py`) and gets the same `FORCE ROW LEVEL SECURITY` policy as every other
-org-scoped table, and this task never calls `set_rls_context`. On the non-superuser database role
-this project requires, it therefore runs with an empty RLS context, and its `DELETE` matches zero
-rows, so instead of purging old read notifications across every org, it silently purges nothing at
-all. This is exactly the failure mode described above, not an exception to it: a live bug in this
-codebase's own scheduled task, worth knowing if you're relying on it to keep the `notification` table
-from growing unbounded.
+A scheduled task that sweeps every org loops over `common.tasks.orgs_with_rls_context()`, which sets
+each org's context before yielding it and clears it afterwards, and runs its org-scoped queries
+inside that loop. Querying "all orgs' rows" first and setting each row's org afterwards hits exactly
+the failure mode above, because the first query runs with an empty context.
+
+**If you run an older deployment**, several scheduled jobs did nothing at all on the non-superuser
+role, for that reason: `purge_read_notifications` (fixed earlier) and, until October 2026,
+`scan_for_breached_cases` (SLA escalations), `generate_recurring_invoices`,
+`check_overdue_invoices`, `process_payment_reminders`, `check_expired_estimates` and
+`auto_stop_stale_timers`. After upgrading, the first runs catch up on everything that piled up:
+expect a batch of escalations, overdue/expired status changes and payment reminders at once.
