@@ -16,6 +16,7 @@ from django.utils.timesince import timesince
 from django.utils.translation import gettext_lazy as _
 
 from common.base import BaseModel, BaseOrgModel
+from common.custom_domains import validate_custom_domain
 from common.i18n import LANGUAGE_CHOICES
 from common.utils import (
     COUNTRIES,
@@ -168,6 +169,17 @@ class Org(BaseModel):
         editable=False,
         default=generate_routing_key,
     )
+    # A customer-owned domain (`crm.cliente.cl`) CNAMEd to the routing_key
+    # host. Stored normalized (lowercase, no trailing dot). Not routed until
+    # verified; changing it clears the verification. See common.custom_domains.
+    custom_domain = models.CharField(
+        max_length=253,
+        blank=True,
+        default="",
+        validators=[validate_custom_domain],
+        help_text="Customer-owned domain, e.g. 'crm.example.com'.",
+    )
+    custom_domain_verified_at = models.DateTimeField(null=True, blank=True)
 
     # Company Profile (for invoices, documents, etc.)
     company_name = models.CharField(
@@ -261,6 +273,11 @@ class Org(BaseModel):
                 Lower("subdomain"),
                 name="unique_org_subdomain",
                 condition=~models.Q(subdomain=""),
+            ),
+            models.UniqueConstraint(
+                fields=["custom_domain"],
+                name="unique_org_custom_domain",
+                condition=~models.Q(custom_domain=""),
             ),
         ]
 

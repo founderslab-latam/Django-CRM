@@ -4087,7 +4087,19 @@
       "restore": "Restaurar",
       "empty": "Ninguna organización coincide.",
       "error_bad_request": "No se pudo procesar la solicitud.",
-      "error_fallback": "No se pudo guardar el cambio."
+      "error_fallback": "No se pudo guardar el cambio.",
+      "domain_heading": "Dominio propio",
+      "domain_none": "Ninguno",
+      "domain_placeholder": "crm.cliente.com",
+      "domain_save": "Guardar",
+      "domain_remove": "Quitar",
+      "domain_verify": "Verificar DNS",
+      "domain_verified": "Verificado",
+      "domain_pending": "Esperando DNS",
+      "domain_instructions": "DNS del cliente: CNAME {host} → {target}",
+      "domain_hint": "Solo se enruta, y se usa en los enlaces de los correos, una vez verificado.",
+      "domain_check_ok": "El DNS está correcto: {detail}",
+      "domain_check_failed": "No verificado: {detail}"
     },
     "new": {
       "title": "Nueva organización",

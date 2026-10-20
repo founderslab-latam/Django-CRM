@@ -1,8 +1,10 @@
 """Serializers for the superuser operator console (`/api/operator/`)."""
 
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from common.custom_domains import normalize_host, validate_custom_domain
 from common.models import Org
 from common.validators import validate_org_subdomain
 
@@ -30,6 +32,8 @@ class OperatorOrgSerializer(serializers.ModelSerializer):
             "subdomain",
             "routing_key",
             "cname_target",
+            "custom_domain",
+            "custom_domain_verified_at",
             "default_currency",
             "default_country",
             "member_count",
@@ -42,6 +46,7 @@ class OperatorOrgSerializer(serializers.ModelSerializer):
             "deleted_at",
             "routing_key",
             "cname_target",
+            "custom_domain_verified_at",
             "member_count",
             "created_at",
         )
@@ -63,6 +68,33 @@ class OperatorOrgSerializer(serializers.ModelSerializer):
         if clash.exists():
             raise serializers.ValidationError("That subdomain is already taken.")
         return value
+
+    def validate_custom_domain(self, value):
+        value = normalize_host(value)
+        if not value:
+            return ""
+        try:
+            validate_custom_domain(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages) from exc
+        clash = Org.objects.filter(custom_domain=value)
+        if self.instance is not None:
+            clash = clash.exclude(pk=self.instance.pk)
+        if clash.exists():
+            raise serializers.ValidationError(
+                "That domain is already assigned to another organization."
+            )
+        return value
+
+    def update(self, instance, validated_data):
+        # A new domain hasn't been shown to point here yet: drop the
+        # verification so it isn't routed (or put in links) until checked.
+        if (
+            "custom_domain" in validated_data
+            and validated_data["custom_domain"] != instance.custom_domain
+        ):
+            instance.custom_domain_verified_at = None
+        return super().update(instance, validated_data)
 
 
 class OperatorOrgCreateSerializer(serializers.ModelSerializer):

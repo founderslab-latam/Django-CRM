@@ -793,8 +793,19 @@ class MagicLinkRequestView(APIView):
             ip_address=request.META.get("REMOTE_ADDR"),
         )
 
+        # The tenant whose address the user is on, if any, so the link can
+        # bring them back there (`common.tasks._sign_in_org` decides).
+        from common.tenant_hosts import resolve_org_for_host
+
+        host = serializer_obj.validated_data.get("host", "")
+        host_org = resolve_org_for_host(host) if host else None
+
         # Send email via Celery. Pass raw_code only when delivery is "code".
-        send_magic_link_email.delay(str(token_obj.id), raw_code=raw_code)
+        send_magic_link_email.delay(
+            str(token_obj.id),
+            raw_code=raw_code,
+            host_org_id=str(host_org.id) if host_org else None,
+        )
 
         return Response(
             {"message": _("If this email is valid, you will receive a sign-in link.")},

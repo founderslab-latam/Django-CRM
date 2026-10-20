@@ -4087,7 +4087,19 @@
       "restore": "Restore",
       "empty": "No organizations match.",
       "error_bad_request": "That request could not be processed.",
-      "error_fallback": "The change could not be saved."
+      "error_fallback": "The change could not be saved.",
+      "domain_heading": "Custom domain",
+      "domain_none": "None",
+      "domain_placeholder": "crm.customer.com",
+      "domain_save": "Save",
+      "domain_remove": "Remove",
+      "domain_verify": "Verify DNS",
+      "domain_verified": "Verified",
+      "domain_pending": "Waiting for DNS",
+      "domain_instructions": "Customer's DNS: CNAME {host} → {target}",
+      "domain_hint": "Only routed, and used in email links, once verified.",
+      "domain_check_ok": "DNS is correct: {detail}",
+      "domain_check_failed": "Not verified: {detail}"
     },
     "new": {
       "title": "New organization",

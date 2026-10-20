@@ -55,13 +55,17 @@ def resolve_org_for_host(host: str):
     """The active Org served at ``host``, or ``None``.
 
     Matches the sub-label against ``Org.subdomain`` (case-insensitively) and
-    then ``Org.routing_key``. Only ``status="ACTIVE"`` orgs resolve — a
-    suspended or deleted tenant's subdomain stops routing, which is the point
-    of the operator console's state machine.
+    then ``Org.routing_key``; a host outside the base domain is then tried as
+    a verified customer-owned domain (`common.custom_domains`). Only
+    ``status="ACTIVE"`` orgs resolve — a suspended or deleted tenant's
+    subdomain stops routing, which is the point of the operator console's
+    state machine.
     """
     label = tenant_label(host)
     if label is None:
-        return None
+        from common.custom_domains import verified_org_for_domain
+
+        return verified_org_for_domain(host)
 
     from django.db.models import Q
 

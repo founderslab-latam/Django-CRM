@@ -41,13 +41,18 @@ def _routes_payload():
 
     pairs = []
     qs = Org.objects.filter(status="ACTIVE").order_by("routing_key")
-    for org in qs.only("subdomain", "routing_key"):
+    fields = ("subdomain", "routing_key", "custom_domain", "custom_domain_verified_at")
+    for org in qs.only(*fields):
         key = org.routing_key
         sub = (org.subdomain or "").strip().lower()
         if sub:
             pairs.append((f"tenant-{key}-sub", f"{sub}.{base}"))
         if key:
             pairs.append((f"tenant-{key}-key", f"{key}.{base}"))
+        # Verified only: a router for a name that doesn't point here yet would
+        # just fail its ACME challenge.
+        if org.custom_domain and org.custom_domain_verified_at:
+            pairs.append((f"tenant-{key}-custom", org.custom_domain))
     return pairs
 
 

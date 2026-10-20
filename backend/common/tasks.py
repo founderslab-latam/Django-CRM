@@ -115,13 +115,42 @@ def send_welcome_email(user_id):
         logger.exception("SES rejected welcome email for user %s", user_id)
 
 
+def _sign_in_org(recipient, host_org_id):
+    """The tenant whose own address a sign-in link may point at, or None for
+    the main app (`FRONTEND_URL`).
+
+    Cookies belong to the host that set them, so a user who asked for a link
+    on `crm.cliente.cl` has to sign in *there* to stay there. But a customer
+    controls its own domain's DNS, and could re-point it after verification
+    to capture sign-in tokens. So the tenant's address is only used for a user
+    whose one and only membership is that tenant -- an account whose data the
+    tenant already controls -- and never for a superuser. Everyone else, and
+    anyone in several orgs, signs in on the main app.
+    """
+    if not host_org_id or recipient is None or recipient.is_superuser:
+        return None
+    memberships = {
+        str(org_id)
+        for org_id in Profile.objects.filter(
+            user=recipient, is_active=True, is_operator_access=False
+        ).values_list("org_id", flat=True)
+    }
+    if memberships != {str(host_org_id)}:
+        return None
+    return Org.objects.filter(pk=host_org_id, status="ACTIVE").first()
+
+
 @shared_task
-def send_magic_link_email(token_id, raw_code=None):
+def send_magic_link_email(token_id, raw_code=None, host_org_id=None):
     """Send a magic-link or OTP-code email for passwordless authentication.
 
     For `delivery == "code"` rows, the caller passes `raw_code` (the plaintext
     OTP), only the hash is stored on the token row, so the plaintext can't be
     recovered from the DB by this task.
+
+    `host_org_id` is the tenant whose address (subdomain or own domain) the
+    request came from, already resolved by the view; see `_sign_in_org` for
+    when the link actually points there.
     """
     magic_token = MagicLinkToken.objects.filter(id=token_id).first()
     if not magic_token:
@@ -137,6 +166,7 @@ def send_magic_link_email(token_id, raw_code=None):
         return
 
     recipient = User.objects.filter(email__iexact=email).first()
+    sign_in_org = _sign_in_org(recipient, host_org_id)
     if magic_token.delivery == "code":
         if not raw_code:
             logger.warning(
@@ -148,17 +178,17 @@ def send_magic_link_email(token_id, raw_code=None):
             subject = _("Your BottleCRM sign-in code: %(code)s") % {"code": raw_code}
             html_content = render_to_string(
                 "magic_link_code_email.html",
-                {"code": raw_code, **brand_context(None)},
+                {"code": raw_code, **brand_context(sign_in_org)},
             )
     else:
-        magic_link_url = (
-            f"{settings.FRONTEND_URL}/login/verify?token={magic_token.token}"
+        magic_link_url = frontend_url(
+            f"/login/verify?token={magic_token.token}", org=sign_in_org
         )
         with localized_email(recipient=recipient):
             subject = _("Your BottleCRM sign-in link")
             html_content = render_to_string(
                 "magic_link_email.html",
-                {"magic_link_url": magic_link_url, **brand_context(None)},
+                {"magic_link_url": magic_link_url, **brand_context(sign_in_org)},
             )
 
     msg = EmailMessage(

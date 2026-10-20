@@ -1088,6 +1088,11 @@ class MagicLinkRequestSerializer(serializers.Serializer):
     delivery = serializers.ChoiceField(
         choices=("link", "code"), required=False, default="link"
     )
+    # The browser-facing host the request came from. Only ever used to look up
+    # a known tenant (`resolve_org_for_host`); never echoed into a link as-is.
+    host = serializers.CharField(
+        required=False, allow_blank=True, max_length=255, default=""
+    )
 
     def validate_email(self, value):
         domain = value.rsplit("@", 1)[-1].lower()

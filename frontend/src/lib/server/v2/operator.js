@@ -35,6 +35,15 @@ export async function updateOrg(event, id, body) {
 }
 
 /**
+ * Check the org's custom domain resolves to the platform; marks it verified
+ * (and so routed) when it does. Returns `{ verified, detail, organization }`.
+ * @param {import('@sveltejs/kit').RequestEvent} event
+ */
+export async function verifyOrgDomain(event, id) {
+  return await apiRequest(`/operator/orgs/${id}/verify-domain/`, { method: 'POST' }, event);
+}
+
+/**
  * One of: 'suspend' | 'delete' | 'reactivate' | 'restore'.
  * @param {import('@sveltejs/kit').RequestEvent} event
  */

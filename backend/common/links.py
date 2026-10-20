@@ -34,9 +34,13 @@ def frontend_base_url(org=None):
     When ``org`` has a ``subdomain`` and ``TENANT_BASE_DOMAIN`` is configured,
     the tenant is served at its own host, so a link into the app should point
     there — ``https://<subdomain>.<base>`` — not at the shared ``FRONTEND_URL``.
-    Falls back to ``FRONTEND_URL`` for an org with no subdomain, or none at all
-    (welcome mail, the magic-link sign-in URL).
+    A verified customer-owned domain wins over the subdomain: it is the
+    address the customer chose to give their people. Falls back to
+    ``FRONTEND_URL`` for an org with neither, or none at all (welcome mail).
     """
+    custom = (getattr(org, "custom_domain", "") or "").strip().lower()
+    if org is not None and custom and getattr(org, "custom_domain_verified_at", None):
+        return f"https://{custom}"
     base_domain = (getattr(settings, "TENANT_BASE_DOMAIN", "") or "").strip().strip(".")
     subdomain = (getattr(org, "subdomain", "") or "").strip().lower()
     if org is not None and subdomain and base_domain:

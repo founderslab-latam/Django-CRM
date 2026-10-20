@@ -193,7 +193,7 @@ async function generateOAuthUrl(cookies) {
 
 /** @type {import('@sveltejs/kit').Actions} */
 export const actions = {
-  default: async ({ request }) => {
+  default: async ({ request, url }) => {
     const formData = await request.formData();
     const email = formData.get('email');
 
@@ -203,9 +203,12 @@ export const actions = {
 
     try {
       const apiUrl = publicEnv.PUBLIC_DJANGO_API_URL;
+      // `host` lets the backend send the link back to the tenant address the
+      // user is on (subdomain or own domain), so they stay signed in there.
+      // It only ever selects a known tenant; see common.tasks._sign_in_org.
       await axios.post(
         `${apiUrl}/api/auth/magic-link/request/`,
-        { email },
+        { email, host: url.host },
         { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
       );
       return { success: true };

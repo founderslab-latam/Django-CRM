@@ -233,6 +233,58 @@ A signed-in user who opens a subdomain they are not a member of gets a
 "wrong workspace" page linking back to the bare domain — the session is never
 switched silently.
 
+## Customer-owned domains
+
+A customer can use their own address, e.g. `crm.cliente.cl`. It needs the
+per-tenant subdomain setup above (the wildcard DNS record especially), and
+nothing else on the VPS: the domain gets its own router and its own
+certificate in the same `tenant-routes.yml`.
+
+**The operator:**
+
+1. In the operator console (`/operator`), open the org's **Custom domain**
+   block, enter the domain and save. It shows the CNAME the customer must
+   create: `crm.cliente.cl → <routing_key>.crm.founderslab.cloud`.
+2. Send the customer the instructions below.
+3. When they confirm, press **Verify DNS**. It checks the domain resolves to
+   this VPS. Once it passes, the domain is routed (Traefik requests the
+   certificate on the first HTTPS visit, usually within a minute), recognised
+   as that org, accepted for CORS and used in that org's email links.
+   Nothing is routed before it passes, so an unready domain never burns
+   Let's Encrypt attempts. If it fails, the message says why (not created
+   yet, pointing elsewhere, or the platform's own wildcard missing).
+
+Changing or clearing the domain drops its verification immediately. A failed
+re-check of an already-verified domain does not take it offline; clear it if
+it should stop working.
+
+**Instructions for the customer** (whoever manages their domain's DNS):
+
+1. Create a record:
+   ```
+   Name:   crm                       (the part before your domain)
+   Type:   CNAME
+   Value:  <routing_key>.crm.founderslab.cloud
+   TTL:    3600 (or the provider's default)
+   ```
+   Use exactly the value the operator gave you. Don't proxy it (in
+   Cloudflare, set it to "DNS only", grey cloud) — the certificate is issued
+   on this side.
+2. If the domain has CAA records, add one allowing Let's Encrypt:
+   `cliente.cl. CAA 0 issue "letsencrypt.org"`. No CAA records at all is
+   fine as it is.
+3. Let the operator know. New records can take from minutes to a few hours
+   to propagate.
+
+**Signing in on a customer domain.** Session cookies belong to the address
+that set them, so a user who asks for a sign-in link on `crm.cliente.cl` gets
+a link back to `crm.cliente.cl` — but only if that org is their **only**
+membership and they are not a superuser. Everyone else gets a link to the
+main domain. A customer controls their own domain's DNS and could re-point it
+to capture sign-in links; this keeps that from reaching any account with
+access beyond their own organization. Users in several organizations use the
+main domain.
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |

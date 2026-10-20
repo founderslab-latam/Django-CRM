@@ -111,6 +111,74 @@
               {:else}
                 <span class="v2-sub">—</span>
               {/if}
+              <details class="op-domain" open={form?.domainCheck?.id === org.id}>
+                <summary class="v2-sub">
+                  {$_('operator.list.domain_heading')}:
+                  {#if org.custom_domain}
+                    <span class="v2-num">{org.custom_domain}</span>
+                    <span
+                      class="op-pill op-pill-{org.custom_domain_verified_at ? 'moss' : 'slate'}"
+                    >
+                      {org.custom_domain_verified_at
+                        ? $_('operator.list.domain_verified')
+                        : $_('operator.list.domain_pending')}
+                    </span>
+                  {:else}
+                    {$_('operator.list.domain_none')}
+                  {/if}
+                </summary>
+                <form method="POST" action="?/setDomain" use:enhance class="op-domain-form">
+                  <input type="hidden" name="id" value={org.id} />
+                  <input
+                    class="v2-input"
+                    name="custom_domain"
+                    value={org.custom_domain ?? ''}
+                    placeholder={$_('operator.list.domain_placeholder')}
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button class="v2-btn v2-btn-sm" type="submit"
+                    >{$_('operator.list.domain_save')}</button
+                  >
+                </form>
+                {#if org.custom_domain}
+                  <p class="v2-sub op-domain-note">
+                    {$_('operator.list.domain_instructions', {
+                      values: { host: org.custom_domain, target: org.cname_target }
+                    })}
+                  </p>
+                  <div class="op-domain-actions">
+                    <form method="POST" action="?/verifyDomain" use:enhance>
+                      <input type="hidden" name="id" value={org.id} />
+                      <button class="v2-btn v2-btn-sm" type="submit"
+                        >{$_('operator.list.domain_verify')}</button
+                      >
+                    </form>
+                    <form method="POST" action="?/setDomain" use:enhance>
+                      <input type="hidden" name="id" value={org.id} />
+                      <input type="hidden" name="custom_domain" value="" />
+                      <button class="v2-btn v2-btn-sm" type="submit"
+                        >{$_('operator.list.domain_remove')}</button
+                      >
+                    </form>
+                  </div>
+                  {#if form?.domainCheck?.id === org.id}
+                    <p
+                      class={form.domainCheck.verified ? 'v2-sub' : 'v2-error'}
+                      style="font-size:11.5px;margin:6px 0 0"
+                    >
+                      {form.domainCheck.verified
+                        ? $_('operator.list.domain_check_ok', {
+                            values: { detail: form.domainCheck.detail }
+                          })
+                        : $_('operator.list.domain_check_failed', {
+                            values: { detail: form.domainCheck.detail }
+                          })}
+                    </p>
+                  {/if}
+                {/if}
+                <p class="v2-sub op-domain-note">{$_('operator.list.domain_hint')}</p>
+              </details>
             </td>
             <td class="v2-num">{org.member_count}</td>
             <td class="v2-sub" style="font-size:12px">{shortDate(org.created_at)}</td>
@@ -248,5 +316,31 @@
   .op-pill-slate {
     background: color-mix(in srgb, var(--v2-ink-3, #889) 15%, transparent);
     color: var(--v2-ink-3, #889);
+  }
+  .op-domain {
+    margin-top: 6px;
+    font-size: 11.5px;
+    max-width: 320px;
+  }
+  .op-domain summary {
+    cursor: pointer;
+  }
+  .op-domain-form,
+  .op-domain-actions {
+    display: flex;
+    gap: 6px;
+    margin: 6px 0 0;
+  }
+  .op-domain-form .v2-input {
+    flex: 1;
+    min-width: 0;
+  }
+  .op-domain-actions form {
+    margin: 0;
+  }
+  .op-domain-note {
+    font-size: 11px;
+    margin: 6px 0 0;
+    overflow-wrap: anywhere;
   }
 </style>

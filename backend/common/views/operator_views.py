@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.audit_log import audit_log
+from common.custom_domains import check_custom_domain
 from common.models import Org
 from common.operator_invite import invite_org_admin
 from common.operator_serializers import (
@@ -76,6 +77,34 @@ class OperatorOrgDetailView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response({"organization": OperatorOrgSerializer(org).data})
+
+
+class OperatorOrgVerifyDomainView(APIView):
+    """`POST /api/operator/orgs/<id>/verify-domain/`: check the org's custom
+    domain resolves to the platform and, if so, mark it verified -- which is
+    what puts it in the Traefik routes (the Org save signal regenerates them),
+    in host routing and in email links.
+
+    A failed check does not un-verify a domain that was verified before: one
+    bad DNS lookup must not take a working customer domain offline. Clearing
+    or changing the domain is how it stops being routed.
+    """
+
+    permission_classes = (IsOperator,)
+
+    def post(self, request, pk):
+        org = get_object_or_404(Org, pk=pk)
+        ok, detail = check_custom_domain(org)
+        if ok and org.custom_domain_verified_at is None:
+            org.custom_domain_verified_at = timezone.now()
+            org.save(update_fields=["custom_domain_verified_at", "updated_at"])
+        return Response(
+            {
+                "verified": ok,
+                "detail": detail,
+                "organization": OperatorOrgSerializer(org).data,
+            }
+        )
 
 
 class _OrgStatusChangeView(APIView):
