@@ -18,6 +18,16 @@ DATABASES = {
 CELERY_BROKER_URL = "memory://"
 CELERY_RESULT_BACKEND = "cache+memory://"
 
+# Celery reads the CELERY_BROKER_URL / CELERY_RESULT_BACKEND env vars ahead of
+# the settings above, so inside the docker-compose backend container (which
+# sets both to the dev Redis) every .delay() from a test was queued for the
+# real worker -- which, with SMTP configured, mailed fixture addresses like
+# user@test.com. Pin the env too.
+import os  # noqa: E402
+
+os.environ["CELERY_BROKER_URL"] = CELERY_BROKER_URL
+os.environ["CELERY_RESULT_BACKEND"] = CELERY_RESULT_BACKEND
+
 # The default PBKDF2 hasher costs ~190ms per hash. Fixtures create users on
 # nearly every test, so that dominates the run. MD5 is fine here: it is never
 # used outside crm.test_settings, and no test asserts on the hash algorithm.
