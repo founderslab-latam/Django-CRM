@@ -41,7 +41,12 @@ export async function load({ cookies, params, url }) {
 
   try {
     const data = await getCase(token, params.id);
-    return { case: data.case, comments: data.comments ?? [] };
+    return {
+      case: data.case,
+      comments: data.comments ?? [],
+      orgName: data.org_name ?? '',
+      reopensOnReply: Boolean(data.reopens_on_reply)
+    };
   } catch (err) {
     if (err instanceof PortalError) {
       if (err.status === 401 || err.status === 403) toLogin(cookies, url);

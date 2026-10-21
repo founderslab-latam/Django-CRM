@@ -25,6 +25,7 @@ from cases.portal_serializers import (
     PortalSolutionDetailSerializer,
     PortalSolutionSerializer,
 )
+from cases.signals import reply_would_reopen
 from common.models import Comment
 from common.portal_auth import IsPortalContact, PortalContactAuthentication
 from common.utils import STATUS_CHOICE
@@ -146,6 +147,9 @@ class PortalCaseDetailView(PortalBaseView):
         return Response(
             {
                 "case": PortalCaseDetailSerializer(case).data,
+                # Who the customer is dealing with, to name the team's replies.
+                "org_name": request.org.name,
+                "reopens_on_reply": reply_would_reopen(case),
                 "comments": PortalCommentSerializer(
                     comments,
                     many=True,

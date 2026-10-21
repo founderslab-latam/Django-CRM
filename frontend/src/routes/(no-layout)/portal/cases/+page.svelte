@@ -7,7 +7,8 @@
   import { enhance } from '$app/forms';
   import { resolve } from '$app/paths';
   import PortalShell from '$lib/v2/components/PortalShell.svelte';
-  import { _ } from '$lib/i18n/index.js';
+  import { caseStatusKey } from '$lib/cases/labels.js';
+  import { _, locale } from '$lib/i18n/index.js';
 
   let { data, form } = $props();
 
@@ -54,7 +55,7 @@
 
   function formatDate(value) {
     if (!value) return '';
-    return new Date(value).toLocaleDateString(undefined, {
+    return new Date(value).toLocaleDateString($locale ?? undefined, {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
@@ -134,7 +135,7 @@
   {#if data.cases.length === 0}
     <p class="empty">
       {data.status
-        ? $_('portal.cases.empty_filtered', { values: { status: data.status } })
+        ? $_('portal.cases.empty_filtered', { values: { status: $_(caseStatusKey(data.status)) } })
         : $_('portal.cases.empty_all')}
     </p>
   {:else}
@@ -144,7 +145,10 @@
           <a href={resolve(`/portal/cases/${item.id}`)}>
             <span class="name">{item.name}</span>
             <span class="meta">
-              <span class="tag" class:open={OPEN_STATUSES.has(item.status)}>{item.status}</span>
+              {#if item.reference}<span class="ref">#{item.reference}</span>{/if}
+              <span class="tag" class:open={OPEN_STATUSES.has(item.status)}
+                >{$_(caseStatusKey(item.status))}</span
+              >
               <span class="when">{formatDate(item.created_at)}</span>
             </span>
           </a>
@@ -318,6 +322,9 @@
     display: block;
     font-weight: 500;
     margin-bottom: 8px;
+  }
+  .ref {
+    font-family: var(--v2-mono);
   }
   .meta {
     display: flex;

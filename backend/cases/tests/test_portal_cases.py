@@ -141,6 +141,57 @@ class TestPortalCaseDetail:
         body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
         assert body["comments"][0]["author"] == "Support"
         assert body["comments"][0]["is_mine"] is False
+        assert body["comments"][0]["is_support"] is True
+
+    def test_my_own_reply_is_not_marked_as_support(self, pat, pats_case, org_a):
+        Comment.objects.create(
+            org=org_a,
+            content_type=ContentType.objects.get_for_model(Case),
+            object_id=pats_case.id,
+            comment="Still broken.",
+            commented_by_contact=pat,
+            is_internal=False,
+        )
+        body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
+        assert body["comments"][0]["is_support"] is False
+
+    def test_detail_carries_reference_and_org_name(self, pat, pats_case, org_a):
+        body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
+        expected = str(pats_case.id).replace("-", "")[:8].upper()
+        assert body["case"]["reference"] == expected
+        assert body["case"]["updated_at"]
+        assert body["org_name"] == org_a.name
+        # Still none of the agent-side fields.
+        assert "assigned_to" not in body["case"]
+        assert "teams" not in body["case"]
+
+    def test_list_carries_the_reference_too(self, pat, pats_case):
+        cases = _client(pat).get(LIST_URL).json()["cases"]
+        assert cases[0]["reference"] == str(pats_case.id).replace("-", "")[:8].upper()
+
+    def test_open_case_does_not_promise_a_reopen(self, pat, pats_case):
+        body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
+        assert body["reopens_on_reply"] is False
+
+    def test_recently_closed_case_reopens_on_reply(self, pat, pats_case):
+        from django.utils import timezone
+
+        Case.objects.filter(pk=pats_case.pk).update(
+            status="Closed", closed_on=timezone.localdate()
+        )
+        body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
+        assert body["reopens_on_reply"] is True
+
+    def test_case_closed_past_the_window_does_not_reopen(self, pat, pats_case):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        Case.objects.filter(pk=pats_case.pk).update(
+            status="Closed", closed_on=timezone.localdate() - timedelta(days=30)
+        )
+        body = _client(pat).get(f"{LIST_URL}{pats_case.id}/").json()
+        assert body["reopens_on_reply"] is False
 
 
 @pytest.mark.django_db

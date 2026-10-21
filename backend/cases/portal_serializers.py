@@ -10,6 +10,7 @@ future edit to a shared serializer, and cannot be mass-assigned on the way in.
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from cases.inbound.threading import short_case_id
 from cases.models import Case, Solution
 from common.models import COMMENT_MAX_LENGTH, Comment
 
@@ -17,10 +18,11 @@ from common.models import COMMENT_MAX_LENGTH, Comment
 class PortalCommentSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
+    is_support = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ("id", "comment", "commented_on", "author", "is_mine")
+        fields = ("id", "comment", "commented_on", "author", "is_mine", "is_support")
 
     def get_author(self, obj):
         """Name the customer, but never name the agent.
@@ -37,23 +39,48 @@ class PortalCommentSerializer(serializers.ModelSerializer):
         contact = self.context.get("portal_contact")
         return bool(contact and obj.commented_by_contact_id == contact.id)
 
+    def get_is_support(self, obj):
+        """Lets the portal label the team's replies in the reader's language,
+        rather than showing the English `author` placeholder."""
+        return not obj.commented_by_contact_id
 
-class PortalCaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Case
-        fields = ("id", "name", "status", "priority", "created_at", "closed_on")
+
+class _CaseReferenceMixin(serializers.Serializer):
+    """The short id the case's emails carry in their subject (`[Case #...]`),
+    so a customer can quote the same number on the phone or in a new mail."""
+
+    reference = serializers.SerializerMethodField()
+
+    def get_reference(self, obj):
+        return short_case_id(obj).upper()
 
 
-class PortalCaseDetailSerializer(serializers.ModelSerializer):
+class PortalCaseSerializer(_CaseReferenceMixin, serializers.ModelSerializer):
     class Meta:
         model = Case
         fields = (
             "id",
+            "reference",
+            "name",
+            "status",
+            "priority",
+            "created_at",
+            "closed_on",
+        )
+
+
+class PortalCaseDetailSerializer(_CaseReferenceMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Case
+        fields = (
+            "id",
+            "reference",
             "name",
             "status",
             "priority",
             "description",
             "created_at",
+            "updated_at",
             "closed_on",
         )
 

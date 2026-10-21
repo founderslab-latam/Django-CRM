@@ -488,6 +488,21 @@ def _resolve_reopen_policy(org_id):
     }
 
 
+def reply_would_reopen(case):
+    """Whether a customer's reply to `case` right now would reopen it.
+
+    Lets the portal say so up front, from the same policy `_evaluate_reopen`
+    applies once the reply actually lands.
+    """
+    if case.status != REOPEN_TRIGGER_STATUS or not case.closed_on:
+        return False
+    policy = _resolve_reopen_policy(case.org_id)
+    if not policy["is_enabled"]:
+        return False
+    days_since_close = (timezone.localdate() - case.closed_on).days
+    return days_since_close <= policy["reopen_window_days"]
+
+
 def _evaluate_reopen(case, comment):
     """Check whether a new external comment should reopen the case.
 
