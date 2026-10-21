@@ -2,6 +2,7 @@ import os
 import re
 import warnings
 from datetime import timedelta
+from email.utils import parseaddr
 from urllib.parse import urlparse
 
 from corsheaders.defaults import default_headers
@@ -298,6 +299,12 @@ elif ENV_TYPE == "prod":
 PUBLIC_MEDIA_URL = os.environ.get("PUBLIC_MEDIA_URL", "").rstrip("/")
 
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@localhost")
+# Domain for the Message-ID (and SMTP EHLO name) of mail Django builds; see
+# common/apps.py. Empty = the domain of DEFAULT_FROM_EMAIL.
+EMAIL_MESSAGE_ID_DOMAIN = (
+    os.environ.get("EMAIL_MESSAGE_ID_DOMAIN", "").strip()
+    or parseaddr(DEFAULT_FROM_EMAIL)[1].rpartition("@")[2]
+)
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@localhost")
 
 # AWS SES settings (loaded when EMAIL_BACKEND is django_ses.SESBackend)

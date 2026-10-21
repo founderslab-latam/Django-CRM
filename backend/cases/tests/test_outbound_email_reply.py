@@ -82,7 +82,7 @@ class TestSendCaseReplyEmail:
         assert row_id is not None
         assert len(mail.outbox) == 1
         sent = mail.outbox[0]
-        assert sent.from_email == "support@acme.com"
+        assert sent.from_email == f"{org_a.name} <support@acme.com>"
         assert sent.to == ["customer@example.com"]
         assert sent.body == comment.comment
         assert sent.subject == "Re: Can't log in"

@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from datetime import timedelta
-from email.utils import make_msgid
+from email.utils import formataddr, make_msgid
 
 from celery import shared_task
 from django.core.mail import EmailMessage
@@ -503,10 +503,13 @@ def send_case_reply_email(case_id, org_id, comment_id):
     if not subject.lower().startswith("re:"):
         subject = f"Re: {subject}"
 
+    # The org's name as the display name: a bare address reads as automated
+    # mail to the customer and to spam filters alike. formataddr, not an
+    # f-string, so a name with a comma ("Acme, Inc.") stays one name.
     msg = EmailMessage(
         subject=subject,
         body=comment.comment,
-        from_email=latest_inbound.mailbox.address,
+        from_email=formataddr((case.org.name, latest_inbound.mailbox.address)),
         to=[latest_inbound.from_address],
         headers={
             "Message-ID": _bracketed(new_message_id),
