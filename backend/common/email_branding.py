@@ -61,9 +61,19 @@ def logo_url_for_email(org):
     return f"{base}{url}"
 
 
+def product_logo_url():
+    """Absolute URL of the QwidX CRM wordmark, for mail sent on no org's behalf.
+
+    The frontend serves it from its static root (``frontend/static``), so it is
+    reachable anonymously at ``FRONTEND_URL`` -- unlike an org logo, which
+    needs ``PUBLIC_MEDIA_URL``.
+    """
+    return f"{settings.FRONTEND_URL.rstrip('/')}/qwidx-logo-email.png"
+
+
 # The product default accent, used when an org has set no `brand_color`. Keep
 # in sync with the literal `default:` filters in the email templates.
-DEFAULT_BRAND_COLOR = "#EA580C"
+DEFAULT_BRAND_COLOR = "#1E4A8A"
 
 
 def _readable_text_color(hex_color):
@@ -93,9 +103,10 @@ def _readable_text_color(hex_color):
 def brand_context(org):
     """Template vars for the root email template's brandmark and buttons.
 
-    ``email_logo_url`` may be ``None``; the template shows the name then, and
-    ``email_brand_name`` is ``None`` too for a message with no org (magic-link,
-    welcome), which the template renders as the product default.
+    ``email_logo_url`` is ``None`` for an org without a usable logo; the
+    template shows the org's name then. A message with no org (magic-link,
+    welcome) gets the product wordmark instead, and ``email_brand_name`` is
+    ``None``, which the template renders as the product default.
 
     ``email_brand_color`` is always a usable colour (the org's, or the product
     default) and ``email_brand_text_color`` is the readable foreground for a
@@ -103,7 +114,7 @@ def brand_context(org):
     """
     brand_color = (getattr(org, "brand_color", "") or "").strip() or DEFAULT_BRAND_COLOR
     return {
-        "email_logo_url": logo_url_for_email(org),
+        "email_logo_url": logo_url_for_email(org) if org else product_logo_url(),
         "email_brand_name": getattr(org, "name", None) if org else None,
         "email_brand_color": brand_color,
         "email_brand_text_color": _readable_text_color(brand_color),

@@ -7,7 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="x-apple-disable-message-reformatting">
-  <title>BottleCRM</title>
+  <title>QwidX CRM</title>
 
   <!--[if mso]>
   <noscript>
@@ -75,7 +75,7 @@
 
     .btn-link {
       display: inline-block;
-      background-color: {{ email_brand_color|default:'#EA580C' }};
+      background-color: {{ email_brand_color|default:'#1E4A8A' }};
       color: {{ email_brand_text_color|default:'#FFFFFF' }} !important;
       font-size: 16px;
       font-weight: 600;
@@ -162,9 +162,9 @@
                   <td style="padding-bottom: 20px;">
                     {% block brandmark %}
                     {% if email_logo_url %}
-                    <img src="{{ email_logo_url }}" alt="{{ email_brand_name|default:'BottleCRM' }}" height="28" style="height:28px;max-height:28px;width:auto;display:block;border:0;outline:none;text-decoration:none;">
+                    <img src="{{ email_logo_url }}" alt="{{ email_brand_name|default:'QwidX CRM' }}" height="28" style="height:28px;max-height:28px;width:auto;display:block;border:0;outline:none;text-decoration:none;">
                     {% else %}
-                    <span style="font-size: 22px; font-weight: 700; color: {{ email_brand_color|default:'#EA580C' }}; text-decoration: none; letter-spacing: -0.5px;">{{ email_brand_name|default:'BottleCRM' }}</span>
+                    <span style="font-size: 22px; font-weight: 700; color: {{ email_brand_color|default:'#1E4A8A' }}; text-decoration: none; letter-spacing: -0.5px;">{{ email_brand_name|default:'QwidX CRM' }}</span>
                     {% endif %}
                     {% endblock brandmark %}
                   </td>
@@ -231,7 +231,7 @@
           <tr>
             <td style="padding: 24px 0; text-align: center;">
               <p style="margin: 0; font-size: 13px; font-weight: 400; color: #757575; line-height: 1.5;">
-                {% trans "Sent by BottleCRM" %}
+                {% trans "Sent by QwidX CRM" %}
               </p>
             </td>
           </tr>

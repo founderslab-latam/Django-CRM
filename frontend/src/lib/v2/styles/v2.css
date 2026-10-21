@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   BOTTLECRM v2: "Clearing"
+   QWIDX CRM v2: "Clearing"
    Scoped design system. Every selector is prefixed .v2- or nested under
    .v2-root so this file cannot leak into the v1 app (which uses orange as
    decoration and would be visually altered by any global override here).
 
    THE ONE RULE
-   Ember (#EA580C) marks something you can act on, or something that needs
-   you. Never a heading. Never an icon tint. Never "active chrome".
+   Ember (#1E4A8A, QwidX navy; the token keeps its old name) marks something
+   you can act on, or something that needs you. Never a heading. Never an icon tint. Never "active chrome".
    Everything else is ink, slate and paper.
 
    WHERE THE NUMBERS COME FROM
@@ -23,9 +23,9 @@
 
 .v2-root {
   /* ── palette ────────────────────────────────────────────────────────── */
-  --v2-ember: #ea580c; /* primary action, due-now */
-  --v2-ember-soft: rgba(234, 88, 12, 0.09);
-  --v2-ember-line: rgba(234, 88, 12, 0.28);
+  --v2-ember: #1e4a8a; /* primary action, due-now (QwidX navy) */
+  --v2-ember-soft: rgba(30, 74, 138, 0.09);
+  --v2-ember-line: rgba(30, 74, 138, 0.28);
   --v2-ink: #1c1917; /* all primary text, bulk-action bar */
   --v2-slate: #78716c; /* labels, secondary text, on-pace aging */
   --v2-paper: #fafaf9; /* app canvas */
@@ -57,9 +57,9 @@
 }
 
 .dark .v2-root {
-  --v2-ember: #fb8c3c;
-  --v2-ember-soft: rgba(251, 140, 60, 0.14);
-  --v2-ember-line: rgba(251, 140, 60, 0.32);
+  --v2-ember: #6aa6f0;
+  --v2-ember-soft: rgba(106, 166, 240, 0.14);
+  --v2-ember-line: rgba(106, 166, 240, 0.32);
   --v2-ink: #fafaf9;
   --v2-slate: #a8a29e;
   --v2-paper: #1c1917;
@@ -1178,7 +1178,7 @@ a.v2-setting:hover {
 }
 
 /* The Google mark keeps its own colours on a white tile so it stays itself on
-   the Ember button rather than turning into an orange-on-orange blob. */
+   the Ember button rather than turning into a blue-on-blue blob. */
 .v2-auth-gicon {
   width: 18px;
   height: 18px;

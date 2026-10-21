@@ -1,7 +1,7 @@
 <script>
   import '../../../app.css';
   import '$lib/v2/styles/v2.css';
-  import imgLogo from '$lib/assets/images/logo.png';
+  import BrandLogo from '$lib/v2/components/BrandLogo.svelte';
   import { TriangleAlert } from '@lucide/svelte';
   import { _ } from '$lib/i18n/index.js';
 
@@ -17,8 +17,7 @@
 <div class="v2-root v2-auth">
   <div class="v2-auth-box">
     <span class="v2-auth-brand">
-      <img src={imgLogo} alt="" />
-      <b>BottleCRM</b>
+      <BrandLogo />
     </span>
 
     <div class="v2-auth-card">

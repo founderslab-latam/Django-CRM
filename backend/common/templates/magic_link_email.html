@@ -1,9 +1,9 @@
 {% extends "root_email_template_new.html" %}
 {% load i18n %}
 
-{% block preheader %}{% trans "Your sign-in link for BottleCRM" %}{% endblock preheader %}
+{% block preheader %}{% trans "Your sign-in link for QwidX CRM" %}{% endblock preheader %}
 
-{% block heading %}{% trans "Sign in to BottleCRM" %}{% endblock heading %}
+{% block heading %}{% trans "Sign in to QwidX CRM" %}{% endblock heading %}
 
 {% block content_body %}
 <p style="margin:0 0 8px 0;">{% trans "Click the button below to sign in to your account. This link expires in 10 minutes." %}</p>
@@ -11,8 +11,8 @@
 
 {% block button_link %}
 <a class="btn-link" href="{{ magic_link_url }}"
-   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#EA580C' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
-  {% trans "Sign in to BottleCRM" %}
+   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#1E4A8A' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
+  {% trans "Sign in to QwidX CRM" %}
 </a>
 {% endblock button_link %}
 

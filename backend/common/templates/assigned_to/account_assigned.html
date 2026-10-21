@@ -1,7 +1,7 @@
 {% extends 'root_email_template_new.html' %}
 {% load i18n %}
 
-{% block preheader %}{% trans "An account has been assigned to you in BottleCRM" %}{% endblock preheader %}
+{% block preheader %}{% trans "An account has been assigned to you in QwidX CRM" %}{% endblock preheader %}
 
 {% block heading %}{% blocktrans with name=user.first_name|default:user.get_username %}Hi {{ name }},{% endblocktrans %}{% endblock heading %}
 
@@ -29,7 +29,7 @@
 
 {% block button_link %}
 <a class="btn-link" href="{{ url }}"
-   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#EA580C' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
+   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#1E4A8A' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
   {% trans "View Account" %}
 </a>
 {% endblock button_link %}

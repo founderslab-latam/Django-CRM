@@ -6,7 +6,7 @@
   import { _ } from '$lib/i18n/index.js';
 
   import imgGoogle from '$lib/assets/images/google.svg';
-  import imgLogo from '$lib/assets/images/logo.png';
+  import BrandLogo from '$lib/v2/components/BrandLogo.svelte';
   import { Mail, Check } from '@lucide/svelte';
   import LanguageSwitcher from '$lib/v2/components/LanguageSwitcher.svelte';
 
@@ -46,8 +46,7 @@
 <div class="v2-root v2-auth">
   <div class="v2-auth-box">
     <a href={resolve('/')} class="v2-auth-brand">
-      <img src={imgLogo} alt="" />
-      <b>{$_('common.app.name')}</b>
+      <BrandLogo />
     </a>
 
     <div class="v2-auth-card">

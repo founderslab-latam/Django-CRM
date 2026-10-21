@@ -8,7 +8,7 @@ export const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #fcd34d, #d97706)' // 6 amber
 ];
 
-export const WORKSPACE_GRADIENT = 'linear-gradient(135deg, #ea580c, #c2410c)';
+export const WORKSPACE_GRADIENT = 'linear-gradient(135deg, #1e4a8a, #1ccfe8)';
 
 // Stable string hash → bucket [0,6]. djb2-ish; only needs to be deterministic & well-spread.
 export function gradientFor(seed) {

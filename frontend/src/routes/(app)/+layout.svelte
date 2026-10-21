@@ -52,7 +52,7 @@
 </script>
 
 <svelte:head>
-  <title>BottleCRM v2</title>
+  <title>QwidX CRM</title>
   <meta name="robots" content="noindex" />
 </svelte:head>
 

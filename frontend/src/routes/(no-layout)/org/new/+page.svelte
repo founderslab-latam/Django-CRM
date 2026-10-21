@@ -4,7 +4,7 @@
   import '$lib/v2/styles/v2.css';
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
-  import imgLogo from '$lib/assets/images/logo.png';
+  import BrandLogo from '$lib/v2/components/BrandLogo.svelte';
   import { ArrowLeft, Check, AlertCircle } from '@lucide/svelte';
   import { _ } from '$lib/i18n/index.js';
 
@@ -48,8 +48,7 @@
 <div class="v2-root v2-auth">
   <div class="v2-auth-box">
     <a href={resolve('/')} class="v2-auth-brand">
-      <img src={imgLogo} alt="" />
-      <b>BottleCRM</b>
+      <BrandLogo />
     </a>
 
     <div class="v2-auth-card">
@@ -183,7 +182,8 @@
 
     <div class="v2-auth-foot">
       <a href={resolve('/org')} style="display:inline-flex;align-items:center;gap:5px">
-        <ArrowLeft size={13} /> {$_('org.new.back_link')}
+        <ArrowLeft size={13} />
+        {$_('org.new.back_link')}
       </a>
     </div>
   </div>

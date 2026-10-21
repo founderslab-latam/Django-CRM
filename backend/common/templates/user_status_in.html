@@ -1,9 +1,9 @@
 {% extends 'root_email_template_new.html' %}
 {% load i18n %}
 
-{% block preheader %}{% trans "Activate your BottleCRM account" %}{% endblock preheader %}
+{% block preheader %}{% trans "Activate your QwidX CRM account" %}{% endblock preheader %}
 
-{% block heading %}{% trans "Welcome to BottleCRM" %}{% endblock heading %}
+{% block heading %}{% trans "Welcome to QwidX CRM" %}{% endblock heading %}
 
 {% block content_body %}
 <p style="margin:0 0 8px 0;">{% trans "Thanks for creating an account. Click the button below to verify your email and activate your account." %}</p>
@@ -23,13 +23,13 @@
 
 {% block button_link %}
 <a class="btn-link" href="{{ complete_url }}"
-   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#EA580C' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
+   style="display:inline-block;padding:14px 32px;background-color:{{ email_brand_color|default:'#1E4A8A' }};color:{{ email_brand_text_color|default:'#ffffff' }};text-decoration:none;border-radius:6px;font-size:16px;font-weight:600;line-height:1;">
   {% trans "Verify Your Email" %}
 </a>
 {% endblock button_link %}
 
 {% block extra_content %}
 <p style="font-size:13px;color:#757575;margin:0;">
-  {% trans "Once activated, you'll have access to all BottleCRM features." %}
+  {% trans "Once activated, you'll have access to all QwidX CRM features." %}
 </p>
 {% endblock extra_content %}

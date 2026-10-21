@@ -71,8 +71,13 @@ def unregister(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # Also after 0032_backfill_...: founderslab-master shipped that same
+    # backfill as 0032 (already applied in prod) while this branch had it as
+    # 0033. Depending on both joins the two leaves; re-running is harmless
+    # (update_or_create).
     dependencies = [
         ("cases", "0032_emailmessage_comment"),
+        ("cases", "0032_backfill_inbound_mailbox_portal_tokens"),
         ("common", "0047_alter_portalaccesstoken_resource_type"),
     ]
 

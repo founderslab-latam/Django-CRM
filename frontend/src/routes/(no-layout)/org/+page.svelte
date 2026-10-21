@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import '../../../app.css';
   import '$lib/v2/styles/v2.css';
-  import imgLogo from '$lib/assets/images/logo.png';
+  import BrandLogo from '$lib/v2/components/BrandLogo.svelte';
   import { Building2, LogOut, Plus, ChevronRight } from '@lucide/svelte';
   import { enhance } from '$app/forms';
   import { _ } from '$lib/i18n/index.js';
@@ -24,17 +24,14 @@
 <div class="v2-root v2-auth">
   <div class="v2-auth-box">
     <a href={resolve('/')} class="v2-auth-brand">
-      <img src={imgLogo} alt="" />
-      <b>BottleCRM</b>
+      <BrandLogo />
     </a>
 
     <div class="v2-auth-card">
       <div class="v2-auth-head">
         <h1>{$_('org.select.heading')}</h1>
         <p>
-          {orgs.length
-            ? $_('org.select.subheading_has_orgs')
-            : $_('org.select.subheading_no_orgs')}
+          {orgs.length ? $_('org.select.subheading_has_orgs') : $_('org.select.subheading_no_orgs')}
         </p>
       </div>
 
@@ -93,7 +90,8 @@
 
     <div class="v2-auth-foot">
       <a href={resolve('/logout')} style="display:inline-flex;align-items:center;gap:5px">
-        <LogOut size={13} /> {$_('org.select.sign_out')}
+        <LogOut size={13} />
+        {$_('org.select.sign_out')}
       </a>
     </div>
   </div>

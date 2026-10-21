@@ -1,7 +1,7 @@
 {
   "common": {
     "app": {
-      "name": "BottleCRM"
+      "name": "QwidX CRM"
     },
     "tax_id": {
       "generic_label": "Tax ID",
@@ -133,8 +133,8 @@
   },
   "auth": {
     "login": {
-      "head_title": "Sign in · BottleCRM",
-      "meta_description": "Sign in to BottleCRM to manage your contacts, deals, and grow your business.",
+      "head_title": "Sign in · QwidX CRM",
+      "meta_description": "Sign in to QwidX CRM to manage your contacts, deals, and grow your business.",
       "heading": "Sign in",
       "subheading": "Welcome back. Choose how you'd like to continue.",
       "redirecting": "Redirecting…",
@@ -153,7 +153,7 @@
       "footer_github": "GitHub"
     },
     "verify": {
-      "head_title": "Verifying · BottleCRM",
+      "head_title": "Verifying · QwidX CRM",
       "error_heading": "Link expired or invalid",
       "back_to_sign_in": "Back to sign in",
       "signing_in_heading": "Signing you in…",
@@ -3488,8 +3488,8 @@
       "mark_all_read": "Mark all read",
       "empty_unread_title": "Nothing unread",
       "empty_all_title": "No notifications",
-      "empty_unread_body": "Everything here has been read. Notifications arrive for CRM ticket activity and updates from BottleCRM Support.",
-      "empty_all_body": "Notifications arrive for CRM ticket activity and updates from BottleCRM Support.",
+      "empty_unread_body": "Everything here has been read. Notifications arrive for CRM ticket activity and updates from QwidX CRM Support.",
+      "empty_all_body": "Notifications arrive for CRM ticket activity and updates from QwidX CRM Support.",
       "go_to_tickets": "Go to tickets",
       "get_help": "Get help",
       "verb_mentioned": "mentioned you on",
@@ -3630,7 +3630,7 @@
       "card_email_body": "For anything involving your data, billing or an account you cannot get into.",
       "unknown_browser": "Unknown browser",
       "empty_title": "No support tickets",
-      "empty_body": "When you need help with BottleCRM, open a ticket here. Replies and status changes stay attached to it.",
+      "empty_body": "When you need help with QwidX CRM, open a ticket here. Replies and status changes stay attached to it.",
       "empty_action": "Open a ticket",
       "col_ticket": "Ticket",
       "col_category": "Category",
@@ -3668,7 +3668,7 @@
       "submit": "Open ticket",
       "cancel": "Cancel",
       "error_incomplete": "Add a subject, choose a category, and describe what you need help with.",
-      "error_no_queue": "This deployment has no BottleCRM support queue. The help page lists the ways to reach us.",
+      "error_no_queue": "This deployment has no QwidX CRM support queue. The help page lists the ways to reach us.",
       "error_fallback": "Could not open this support ticket."
     },
     "detail": {
@@ -3901,31 +3901,31 @@
     "err_status_fallback": "Could not change that status."
   },
   "bounce": {
-    "head_title": "Signing you in · BottleCRM",
+    "head_title": "Signing you in · QwidX CRM",
     "status": "Signing you in…"
   },
   "org": {
     "select": {
-      "head_title": "Choose organisation · BottleCRM",
+      "head_title": "Choose organisation · QwidX CRM",
       "heading": "Choose an organisation",
       "subheading_has_orgs": "Pick the workspace you'd like to open.",
       "subheading_no_orgs": "Create your first workspace to get started.",
       "role_fallback": "member",
       "create_new": "Create new organisation",
       "empty_heading": "No organisations yet",
-      "empty_detail": "Create your first workspace to start using BottleCRM.",
+      "empty_detail": "Create your first workspace to start using QwidX CRM.",
       "empty_create_button": "Create organisation",
       "sign_out": "Sign out",
       "error_invalid_id": "Invalid Organization ID",
       "error_switch_failed": "Failed to switch organization"
     },
     "new": {
-      "head_title": "Create organisation · BottleCRM",
+      "head_title": "Create organisation · QwidX CRM",
       "heading": "Create organisation",
       "subheading": "Set up a new workspace for your team.",
       "name_label": "Organisation name",
       "name_placeholder": "e.g. Acme Inc.",
-      "name_hint": "This becomes your workspace name in BottleCRM.",
+      "name_hint": "This becomes your workspace name in QwidX CRM.",
       "timezone_label": "Time zone",
       "timezone_hint": "Sets when a day starts here, so \"due today\" and \"overdue\" mean what your team expects. You can change it later in Settings.",
       "pack_legend": "What kind of business is this?",

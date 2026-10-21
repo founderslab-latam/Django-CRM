@@ -478,8 +478,8 @@ msgid "Case"
 msgstr "Caso"
 
 #, python-format
-msgid "Or <a href=\"%(link)s\" style=\"color:#EA580C;\">open the survey</a> to leave a comment as well."
-msgstr "O <a href=\"%(link)s\" style=\"color:#EA580C;\">abre la encuesta</a> para dejar también un comentario."
+msgid "Or <a href=\"%(link)s\" style=\"color:#1E4A8A;\">open the survey</a> to leave a comment as well."
+msgstr "O <a href=\"%(link)s\" style=\"color:#1E4A8A;\">abre la encuesta</a> para dejar también un comentario."
 
 #, python-format
 msgid "Hello %(contact_name)s,"
@@ -641,15 +641,15 @@ msgstr "Demasiados scopes (máximo 32)."
 msgid "expires_at must be in the future."
 msgstr "expires_at debe ser una fecha futura."
 
-msgid "Welcome to BottleCRM"
-msgstr "Te damos la bienvenida a BottleCRM"
+msgid "Welcome to QwidX CRM"
+msgstr "Te damos la bienvenida a QwidX CRM"
 
 #, python-format
-msgid "Your BottleCRM sign-in code: %(code)s"
-msgstr "Tu código de acceso a BottleCRM: %(code)s"
+msgid "Your QwidX CRM sign-in code: %(code)s"
+msgstr "Tu código de acceso a QwidX CRM: %(code)s"
 
-msgid "Your BottleCRM sign-in link"
-msgstr "Tu enlace de acceso a BottleCRM"
+msgid "Your QwidX CRM sign-in link"
+msgstr "Tu enlace de acceso a QwidX CRM"
 
 #, python-format
 msgid "Your sign-in code: %(code)s"
@@ -664,8 +664,8 @@ msgstr "Cuenta desactivada"
 msgid "Your account has been deleted"
 msgstr "Tu cuenta fue eliminada"
 
-msgid "An account has been assigned to you in BottleCRM"
-msgstr "Se te asignó una cuenta en BottleCRM"
+msgid "An account has been assigned to you in QwidX CRM"
+msgstr "Se te asignó una cuenta en QwidX CRM"
 
 #, python-format
 msgid "%(created_by)s assigned an account to you."
@@ -680,8 +680,8 @@ msgstr "Asignado por"
 msgid "View Account"
 msgstr "Ver cuenta"
 
-msgid "A case has been assigned to you in BottleCRM"
-msgstr "Se te asignó un caso en BottleCRM"
+msgid "A case has been assigned to you in QwidX CRM"
+msgstr "Se te asignó un caso en QwidX CRM"
 
 #, python-format
 msgid "%(created_by)s assigned a case to you."
@@ -690,8 +690,8 @@ msgstr "%(created_by)s te asignó un caso."
 msgid "View Case"
 msgstr "Ver caso"
 
-msgid "A contact has been assigned to you in BottleCRM"
-msgstr "Se te asignó un contacto en BottleCRM"
+msgid "A contact has been assigned to you in QwidX CRM"
+msgstr "Se te asignó un contacto en QwidX CRM"
 
 #, python-format
 msgid "%(created_by)s assigned a contact to you."
@@ -703,8 +703,8 @@ msgstr "Contacto"
 msgid "View Contact"
 msgstr "Ver contacto"
 
-msgid "A lead has been assigned to you in BottleCRM"
-msgstr "Se te asignó un prospecto en BottleCRM"
+msgid "A lead has been assigned to you in QwidX CRM"
+msgstr "Se te asignó un prospecto en QwidX CRM"
 
 #, python-format
 msgid "%(created_by)s assigned a lead to you."
@@ -723,8 +723,8 @@ msgstr "Origen"
 msgid "View Lead"
 msgstr "Ver prospecto"
 
-msgid "An opportunity has been assigned to you in BottleCRM"
-msgstr "Se te asignó una oportunidad en BottleCRM"
+msgid "An opportunity has been assigned to you in QwidX CRM"
+msgstr "Se te asignó una oportunidad en QwidX CRM"
 
 #, python-format
 msgid "%(created_by)s assigned an opportunity to you."
@@ -736,20 +736,20 @@ msgstr "Oportunidad"
 msgid "View Opportunity"
 msgstr "Ver oportunidad"
 
-msgid "Your BottleCRM sign-in code"
-msgstr "Tu código de acceso a BottleCRM"
+msgid "Your QwidX CRM sign-in code"
+msgstr "Tu código de acceso a QwidX CRM"
 
-msgid "Sign in to BottleCRM"
-msgstr "Inicia sesión en BottleCRM"
+msgid "Sign in to QwidX CRM"
+msgstr "Inicia sesión en QwidX CRM"
 
-msgid "Enter this code in the BottleCRM mobile app to sign in. The code expires in 10 minutes."
-msgstr "Ingresa este código en la app móvil de BottleCRM para iniciar sesión. El código vence en 10 minutos."
+msgid "Enter this code in the QwidX CRM mobile app to sign in. The code expires in 10 minutes."
+msgstr "Ingresa este código en la app móvil de QwidX CRM para iniciar sesión. El código vence en 10 minutos."
 
 msgid "If you didn't request this code, you can safely ignore this email."
 msgstr "Si no solicitaste este código, puedes ignorar este correo sin problema."
 
-msgid "Your sign-in link for BottleCRM"
-msgstr "Tu enlace de acceso a BottleCRM"
+msgid "Your sign-in link for QwidX CRM"
+msgstr "Tu enlace de acceso a QwidX CRM"
 
 msgid "Click the button below to sign in to your account. This link expires in 10 minutes."
 msgstr "Haz clic en el botón de abajo para iniciar sesión en tu cuenta. Este enlace vence en 10 minutos."
@@ -767,11 +767,11 @@ msgstr "Vence en 10 minutos y solo se puede usar una vez."
 msgid "If you did not ask to sign in, you can ignore this email and nothing will happen."
 msgstr "Si no pediste iniciar sesión, puedes ignorar este correo y no pasará nada."
 
-msgid "Sent by BottleCRM"
-msgstr "Enviado por BottleCRM"
+msgid "Sent by QwidX CRM"
+msgstr "Enviado por QwidX CRM"
 
-msgid "Your BottleCRM account has been deleted"
-msgstr "Tu cuenta de BottleCRM se eliminó"
+msgid "Your QwidX CRM account has been deleted"
+msgstr "Tu cuenta de QwidX CRM se eliminó"
 
 msgid "Account Deleted"
 msgstr "Cuenta eliminada"
@@ -783,21 +783,21 @@ msgstr "Tu cuenta fue eliminada por %(deleted_by)s. Ya no puedes acceder a ella.
 msgid "If you believe this was a mistake, please contact your organization administrator."
 msgstr "Si crees que esto fue un error, comunícate con el administrador de tu organización."
 
-msgid "Your BottleCRM account has been activated"
-msgstr "Tu cuenta de BottleCRM se activó"
+msgid "Your QwidX CRM account has been activated"
+msgstr "Tu cuenta de QwidX CRM se activó"
 
 msgid "Account Activated"
 msgstr "Cuenta activada"
 
 #, python-format
-msgid "Your account has been activated by %(status_changed_user)s. You can now log in and access all BottleCRM features."
-msgstr "Tu cuenta fue activada por %(status_changed_user)s. Ya puedes iniciar sesión y acceder a todas las funciones de BottleCRM."
+msgid "Your account has been activated by %(status_changed_user)s. You can now log in and access all QwidX CRM features."
+msgstr "Tu cuenta fue activada por %(status_changed_user)s. Ya puedes iniciar sesión y acceder a todas las funciones de QwidX CRM."
 
 msgid "Log In"
 msgstr "Iniciar sesión"
 
-msgid "Your BottleCRM account has been deactivated"
-msgstr "Tu cuenta de BottleCRM se desactivó"
+msgid "Your QwidX CRM account has been deactivated"
+msgstr "Tu cuenta de QwidX CRM se desactivó"
 
 msgid "Account Deactivated"
 msgstr "Cuenta desactivada"
@@ -809,8 +809,8 @@ msgstr "Tu cuenta fue desactivada por %(status_changed_user)s. Recibirás un cor
 msgid "Please contact your admin if you have any questions."
 msgstr "Si tienes alguna duda, comunícate con tu administrador."
 
-msgid "Activate your BottleCRM account"
-msgstr "Activa tu cuenta de BottleCRM"
+msgid "Activate your QwidX CRM account"
+msgstr "Activa tu cuenta de QwidX CRM"
 
 msgid "Thanks for creating an account. Click the button below to verify your email and activate your account."
 msgstr "Gracias por crear una cuenta. Haz clic en el botón de abajo para verificar tu correo y activar tu cuenta."
@@ -824,8 +824,8 @@ msgstr "2 horas"
 msgid "Verify Your Email"
 msgstr "Verifica tu correo"
 
-msgid "Once activated, you'll have access to all BottleCRM features."
-msgstr "Una vez activada, tendrás acceso a todas las funciones de BottleCRM."
+msgid "Once activated, you'll have access to all QwidX CRM features."
+msgstr "Una vez activada, tendrás acceso a todas las funciones de QwidX CRM."
 
 msgid "Your account has been created. You can now set up your organization and start managing your contacts, deals, and more."
 msgstr "Tu cuenta se creó correctamente. Ya puedes configurar tu organización y empezar a gestionar tus contactos, negocios y mucho más."
@@ -2945,8 +2945,8 @@ msgstr ""
 msgid "A task can only be linked to one parent entity (Account, Opportunity, Case, or Lead). "
 msgstr ""
 
-msgid "A task has been assigned to you in BottleCRM"
-msgstr "Se te asignó una tarea en BottleCRM"
+msgid "A task has been assigned to you in QwidX CRM"
+msgstr "Se te asignó una tarea en QwidX CRM"
 
 #, python-format
 msgid "%(task_created_by)s assigned a task to you."

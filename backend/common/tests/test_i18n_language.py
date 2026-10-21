@@ -181,14 +181,15 @@ class TestLocalizedEmail:
         assert len(mail.outbox) == 1
         # The subject is built inside the same override; the es catalog ships a
         # translation, so it must not come out as the English source string.
-        assert mail.outbox[0].subject != "Welcome to BottleCRM"
+        assert mail.outbox[0].subject != "Welcome to QwidX CRM"
 
     def test_brand_context_without_org(self):
         ctx = brand_context(None)
-        assert ctx["email_logo_url"] is None
+        # Product mail carries the QwidX CRM wordmark from the frontend.
+        assert ctx["email_logo_url"].endswith("/qwidx-logo-email.png")
         assert ctx["email_brand_name"] is None
         # Always a usable colour, even with no org.
-        assert ctx["email_brand_color"] == "#EA580C"
+        assert ctx["email_brand_color"] == "#1E4A8A"
         assert ctx["email_brand_text_color"] in ("#ffffff", "#1a1a1a")
 
     def test_logo_url_needs_public_media_url(self, settings, org_a):

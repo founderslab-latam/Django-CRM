@@ -60,7 +60,7 @@
    */
   let {
     counts = {},
-    org = { name: 'BottleCRM' },
+    org = { name: 'QwidX CRM' },
     role = 'USER',
     isSuperuser = false,
     terminology = undefined,
