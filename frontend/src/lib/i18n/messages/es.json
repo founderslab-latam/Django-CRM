@@ -1,7 +1,7 @@
 {
   "common": {
     "app": {
-      "name": "BottleCRM"
+      "name": "QwidX CRM"
     },
     "tax_id": {
       "generic_label": "Identificación fiscal",
@@ -133,8 +133,8 @@
   },
   "auth": {
     "login": {
-      "head_title": "Iniciar sesión · BottleCRM",
-      "meta_description": "Inicia sesión en BottleCRM para gestionar tus contactos, negocios y hacer crecer tu empresa.",
+      "head_title": "Iniciar sesión · QwidX CRM",
+      "meta_description": "Inicia sesión en QwidX CRM para gestionar tus contactos, negocios y hacer crecer tu empresa.",
       "heading": "Iniciar sesión",
       "subheading": "Bienvenido de nuevo. Elige cómo quieres continuar.",
       "redirecting": "Redirigiendo…",
@@ -153,7 +153,7 @@
       "footer_github": "GitHub"
     },
     "verify": {
-      "head_title": "Verificando · BottleCRM",
+      "head_title": "Verificando · QwidX CRM",
       "error_heading": "El enlace venció o no es válido",
       "back_to_sign_in": "Volver a iniciar sesión",
       "signing_in_heading": "Iniciando sesión…",
@@ -3422,8 +3422,8 @@
       "mark_all_read": "Marcar todo como leído",
       "empty_unread_title": "Nada sin leer",
       "empty_all_title": "No hay notificaciones",
-      "empty_unread_body": "Todo lo de aquí ya se ha leído. Llegan notificaciones por la actividad de los tickets del CRM y por novedades de BottleCRM Support.",
-      "empty_all_body": "Llegan notificaciones por la actividad de los tickets del CRM y por novedades de BottleCRM Support.",
+      "empty_unread_body": "Todo lo de aquí ya se ha leído. Llegan notificaciones por la actividad de los tickets del CRM y por novedades de QwidX CRM Support.",
+      "empty_all_body": "Llegan notificaciones por la actividad de los tickets del CRM y por novedades de QwidX CRM Support.",
       "go_to_tickets": "Ir a tickets",
       "get_help": "Obtener ayuda",
       "verb_mentioned": "te mencionó en",
@@ -3564,7 +3564,7 @@
       "card_email_body": "Para cualquier cosa que involucre tus datos, la facturación o una cuenta a la que no puedes entrar.",
       "unknown_browser": "Navegador desconocido",
       "empty_title": "No hay tickets de soporte",
-      "empty_body": "Cuando necesites ayuda con BottleCRM, abre un ticket aquí. Las respuestas y los cambios de estado quedan adjuntos a él.",
+      "empty_body": "Cuando necesites ayuda con QwidX CRM, abre un ticket aquí. Las respuestas y los cambios de estado quedan adjuntos a él.",
       "empty_action": "Abrir un ticket",
       "col_ticket": "Ticket",
       "col_category": "Categoría",
@@ -3602,7 +3602,7 @@
       "submit": "Abrir ticket",
       "cancel": "Cancelar",
       "error_incomplete": "Agrega un asunto, elige una categoría y describe con qué necesitas ayuda.",
-      "error_no_queue": "Este despliegue no tiene una cola de soporte de BottleCRM. La página de ayuda lista las formas de contactarnos.",
+      "error_no_queue": "Este despliegue no tiene una cola de soporte de QwidX CRM. La página de ayuda lista las formas de contactarnos.",
       "error_fallback": "No se pudo abrir este ticket de soporte."
     },
     "detail": {
@@ -3835,31 +3835,31 @@
     "err_status_fallback": "No se pudo cambiar ese estado."
   },
   "bounce": {
-    "head_title": "Iniciando sesión · BottleCRM",
+    "head_title": "Iniciando sesión · QwidX CRM",
     "status": "Iniciando sesión…"
   },
   "org": {
     "select": {
-      "head_title": "Elegir organización · BottleCRM",
+      "head_title": "Elegir organización · QwidX CRM",
       "heading": "Elige una organización",
       "subheading_has_orgs": "Elige el espacio de trabajo que quieres abrir.",
       "subheading_no_orgs": "Crea tu primer espacio de trabajo para empezar.",
       "role_fallback": "miembro",
       "create_new": "Crear una organización nueva",
       "empty_heading": "Aún no hay organizaciones",
-      "empty_detail": "Crea tu primer espacio de trabajo para empezar a usar BottleCRM.",
+      "empty_detail": "Crea tu primer espacio de trabajo para empezar a usar QwidX CRM.",
       "empty_create_button": "Crear organización",
       "sign_out": "Cerrar sesión",
       "error_invalid_id": "ID de organización no válido",
       "error_switch_failed": "No se pudo cambiar de organización"
     },
     "new": {
-      "head_title": "Crear organización · BottleCRM",
+      "head_title": "Crear organización · QwidX CRM",
       "heading": "Crear organización",
       "subheading": "Configura un nuevo espacio de trabajo para tu equipo.",
       "name_label": "Nombre de la organización",
       "name_placeholder": "p. ej. Acme Inc.",
-      "name_hint": "Este será el nombre de tu espacio de trabajo en BottleCRM.",
+      "name_hint": "Este será el nombre de tu espacio de trabajo en QwidX CRM.",
       "timezone_label": "Zona horaria",
       "timezone_hint": "Define cuándo empieza el día aquí, para que \"vence hoy\" y \"vencido\" signifiquen lo que tu equipo espera. Puedes cambiarla después en Configuración.",
       "pack_legend": "¿Qué tipo de negocio es este?",

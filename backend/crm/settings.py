@@ -459,7 +459,7 @@ else:
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "BottleCRM API",
+    "TITLE": "QwidX CRM API",
     "DESCRIPTION": "Open source CRM application",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import '../../../../app.css';
   import '$lib/v2/styles/v2.css';
-  import imgLogo from '$lib/assets/images/logo.png';
+  import BrandLogo from '$lib/v2/components/BrandLogo.svelte';
   import { _ } from '$lib/i18n/index.js';
 
   let { data } = $props();
@@ -16,8 +16,7 @@
 <div class="v2-root v2-auth">
   <div class="v2-auth-box">
     <a href={resolve('/')} class="v2-auth-brand">
-      <img src={imgLogo} alt="" />
-      <b>BottleCRM</b>
+      <BrandLogo />
     </a>
 
     <div class="v2-auth-card" style="text-align:center">
@@ -26,7 +25,9 @@
           <h1>{$_('auth.verify.error_heading')}</h1>
           <p>{data.error}</p>
         </div>
-        <a href={resolve('/login')} class="v2-btn v2-btn-block">{$_('auth.verify.back_to_sign_in')}</a>
+        <a href={resolve('/login')} class="v2-btn v2-btn-block"
+          >{$_('auth.verify.back_to_sign_in')}</a
+        >
       {:else}
         <div
           class="v2-spin"

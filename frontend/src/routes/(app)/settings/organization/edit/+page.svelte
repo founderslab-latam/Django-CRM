@@ -280,7 +280,7 @@
         <div style="display:flex;gap:8px;align-items:center">
           <input
             type="color"
-            value={form.brand_color || '#EA580C'}
+            value={form.brand_color || '#1E4A8A'}
             oninput={(e) => (form.brand_color = e.currentTarget.value)}
             aria-label={$_('settings.organization.edit.brand_color')}
             style="width:44px;height:36px;padding:2px;flex:none"
@@ -289,7 +289,7 @@
             id="f-brand-color"
             name="brand_color"
             class="v2-input"
-            placeholder="#EA580C"
+            placeholder="#1E4A8A"
             bind:value={form.brand_color}
           />
         </div>

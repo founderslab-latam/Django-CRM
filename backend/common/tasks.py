@@ -99,7 +99,7 @@ def send_welcome_email(user_id):
 
     context = {"url": settings.FRONTEND_URL, **brand_context(None)}
     with localized_email(recipient=user_obj):
-        subject = _("Welcome to BottleCRM")
+        subject = _("Welcome to QwidX CRM")
         html_content = render_to_string("welcome_email.html", context=context)
 
     msg = EmailMessage(
@@ -145,7 +145,7 @@ def send_magic_link_email(token_id, raw_code=None):
             )
             return
         with localized_email(recipient=recipient):
-            subject = _("Your BottleCRM sign-in code: %(code)s") % {"code": raw_code}
+            subject = _("Your QwidX CRM sign-in code: %(code)s") % {"code": raw_code}
             html_content = render_to_string(
                 "magic_link_code_email.html",
                 {"code": raw_code, **brand_context(None)},
@@ -155,7 +155,7 @@ def send_magic_link_email(token_id, raw_code=None):
             f"{settings.FRONTEND_URL}/login/verify?token={magic_token.token}"
         )
         with localized_email(recipient=recipient):
-            subject = _("Your BottleCRM sign-in link")
+            subject = _("Your QwidX CRM sign-in link")
             html_content = render_to_string(
                 "magic_link_email.html",
                 {"magic_link_url": magic_link_url, **brand_context(None)},

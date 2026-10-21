@@ -120,7 +120,7 @@ export async function load(event) {
   const shell = {
     counts: /** @type {Record<string, number>} */ ({}),
     org: {
-      name: event.locals.org?.name || 'BottleCRM',
+      name: event.locals.org?.name || 'QwidX CRM',
       terminology: /** @type {Record<string, string> | undefined} */ (undefined),
       // The currency for figures that are sums rather than one record: pipeline
       // totals, invoice ageing, goal progress. A per-record currency cannot
